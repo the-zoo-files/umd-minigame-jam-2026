@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/CouchPlayerHud.uss?fileID=7433441132597879392&amp;guid=5d22cfdc1301d204d8ef64cc453064db&amp;type=3#CouchPlayerHud"/>
+    <ui:VisualElement name="hudRoot" picking-mode="Ignore" class="hud-root">
+        <ui:Label name="player1Name" text="Player 1" class="player-name player-one is-connected"/>
+        <ui:Label name="player2Name" text="Player 2" class="player-name player-two is-connected"/>
+        <ui:Label name="player3Name" text="Player 3" class="player-name player-three is-connected"/>
+        <ui:Label name="player4Name" text="Player 4" class="player-name player-four is-connected"/>
+    </ui:VisualElement>
+</ui:UXML>

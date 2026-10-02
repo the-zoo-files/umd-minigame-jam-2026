@@ -1,0 +1,55 @@
+:root {
+    --hud-edge: 28px;
+    --player-one: rgb(56, 199, 255);
+    --player-two: rgb(255, 97, 117);
+    --player-three: rgb(255, 209, 64);
+    --player-four: rgb(117, 230, 107);
+}
+
+.hud-root {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.player-name {
+    position: absolute;
+    padding: 10px 14px;
+    background-color: rgba(10, 15, 25, 0.82);
+    border-width: 2px;
+    border-radius: 4px;
+    color: rgb(245, 248, 255);
+    font-size: 22px;
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+    opacity: 0;
+}
+
+.player-name.is-connected {
+    opacity: 1;
+}
+
+.player-one {
+    top: var(--hud-edge);
+    left: var(--hud-edge);
+    border-color: var(--player-one);
+}
+
+.player-two {
+    top: var(--hud-edge);
+    right: var(--hud-edge);
+    border-color: var(--player-two);
+}
+
+.player-three {
+    right: var(--hud-edge);
+    bottom: var(--hud-edge);
+    border-color: var(--player-three);
+}
+
+.player-four {
+    bottom: var(--hud-edge);
+    left: var(--hud-edge);
+    border-color: var(--player-four);
+}
