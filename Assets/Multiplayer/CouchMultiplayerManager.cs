@@ -34,7 +34,7 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
-            controller.PlaceAtSpawn(playerInput.playerIndex);
+            controller.InitializePlayer();
         }
     }
 }

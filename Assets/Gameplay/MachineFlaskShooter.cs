@@ -53,8 +53,8 @@ namespace UmdJam.Gameplay
                 return;
             }
 
-            PickupFlask flask = Instantiate(flaskPrefab, launchPoint.position, Random.rotation);
-            Rigidbody body = flask.GetComponent<Rigidbody>();
+            // Preserve the random draw order used by existing launch tuning.
+            Quaternion rotation = Random.rotation;
 
             Vector2 quadrant = QuadrantSigns[TakeNextQuadrant()];
             Vector3 target = new(
@@ -62,7 +62,16 @@ namespace UmdJam.Gameplay
                 landingHeight,
                 quadrant.y * Random.Range(quadrantLandingRange.x, quadrantLandingRange.y));
 
-            body.linearVelocity = CalculateBallisticVelocity(launchPoint.position, target);
+            if (!Ballistics.TryCalculateVelocity(launchPoint.position, target, launchApexHeight, out Vector3 velocity))
+            {
+                Debug.LogError("Cannot launch flask: check trajectory settings and downward-only gravity.", this);
+                enabled = false;
+                return;
+            }
+
+            PickupFlask flask = Instantiate(flaskPrefab, launchPoint.position, rotation);
+            Rigidbody body = flask.GetComponent<Rigidbody>();
+            body.linearVelocity = velocity;
             body.angularVelocity = Random.onUnitSphere * spinSpeed;
             spawnedFlasks.Add(flask);
         }
@@ -87,20 +96,6 @@ namespace UmdJam.Gameplay
             int quadrant = quadrantBag[lastIndex];
             quadrantBag.RemoveAt(lastIndex);
             return quadrant;
-        }
-
-        private Vector3 CalculateBallisticVelocity(Vector3 origin, Vector3 target)
-        {
-            float gravity = Mathf.Abs(Physics.gravity.y);
-            float verticalSpeed = Mathf.Sqrt(2f * gravity * launchApexHeight);
-            float apexY = origin.y + launchApexHeight;
-            float riseTime = verticalSpeed / gravity;
-            float fallTime = Mathf.Sqrt(2f * Mathf.Max(0.01f, apexY - target.y) / gravity);
-            float flightTime = riseTime + fallTime;
-
-            Vector3 horizontalDisplacement = target - origin;
-            horizontalDisplacement.y = 0f;
-            return horizontalDisplacement / flightTime + Vector3.up * verticalSpeed;
         }
 
         private void RemoveDestroyedFlasks()

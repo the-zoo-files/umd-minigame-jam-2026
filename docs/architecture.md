@@ -18,6 +18,7 @@ Assets/
 ├── Gameplay/
 │   ├── MachineFlaskShooter.cs
 │   ├── PickupFlask.cs
+│   ├── Ballistics.cs
 │   └── FlaskPlaceholder.prefab
 ├── Multiplayer/
 │   ├── CouchMultiplayerManager.cs
@@ -43,6 +44,7 @@ Owns world interactions and physics objects.
 
 - `MachineFlaskShooter` schedules and launches flask instances.
 - `PickupFlask` owns free-flight, collision response, held state, and the transition between physics and attachment modes.
+- `Ballistics` calculates and validates launch velocities for both machine and player throws.
 
 ### `UmdJam.Multiplayer`
 
@@ -108,8 +110,8 @@ The three child names are runtime contracts because the controller finds the dir
 
 1. `CouchMultiplayerManager.Awake` configures and enables `PlayerInputManager` joining.
 2. The Input System instantiates `Player.prefab` for a keyboard/mouse or gamepad device.
-3. `CouchPlayerController.Awake` caches required components and actions, assigns the quadrant spawn, name, and color, then raises `PlayerJoined`.
-4. `CouchMultiplayerManager.OnPlayerJoined` also calls `PlaceAtSpawn`; this makes placement robust against Input System lifecycle ordering.
+3. `CouchPlayerController.Awake` caches required components. `PlayerInput.OnEnable` completes identity assignment, device pairing, and action cloning.
+4. `CouchMultiplayerManager.OnPlayerJoined` calls the controller's idempotent `InitializePlayer`, which caches the paired actions, assigns spawn/name/color, and publishes `PlayerJoined`. `Start` provides the same initialization for standalone players. Player numbering is cached for safe teardown notifications.
 5. `CouchPlayerHud` receives the event and applies `is-connected` to the player's label.
 
 Player slots proceed clockwise:
@@ -150,7 +152,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 ## Current Architectural Limits
 
 - Spawn positions and player colors are static arrays in `CouchPlayerController`.
-- Ballistic velocity calculation is duplicated by the player and machine. Extract a shared utility if a third caller appears or trajectory rules diverge.
+- Ballistic launches support finite, downward-only gravity; unsupported trajectories fail before changing flask state.
 - The HUD supports exactly four player labels.
 - The active flask cap counts spawned instances until they are destroyed; resting flasks remain active.
-- No automated test assembly exists yet; validation currently relies on script validation and Play Mode smoke tests.
+- `Assets/Editor/GameplaySmokeTests.cs` provides repeatable Play Mode checks through an Editor menu or batch command. It is an Editor-only harness, not a separate test assembly.

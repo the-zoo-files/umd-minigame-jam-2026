@@ -68,8 +68,14 @@ namespace UmdJam.Gameplay
             bounceCount++;
         }
 
-        public void PickUp(Transform holdPoint)
+        public bool TryPickUp(Transform holdPoint)
         {
+            if (IsHeld || holdPoint == null || !isActiveAndEnabled ||
+                holdPoint == transform || holdPoint.IsChildOf(transform))
+            {
+                return false;
+            }
+
             IsHeld = true;
             currentHoldPoint = holdPoint;
             bounceCount = 0;
@@ -87,10 +93,16 @@ namespace UmdJam.Gameplay
 
             transform.SetParent(holdPoint, false);
             transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            return true;
         }
 
-        public void Throw(Vector3 launchVelocity)
+        public bool TryThrow(Vector3 launchVelocity)
         {
+            if (!IsHeld || !isActiveAndEnabled || !Ballistics.IsFinite(launchVelocity))
+            {
+                return false;
+            }
+
             bounceCount = 0;
             currentHoldPoint = null;
             transform.SetParent(null, true);
@@ -107,6 +119,7 @@ namespace UmdJam.Gameplay
             body.linearVelocity = launchVelocity;
             body.angularVelocity = Random.onUnitSphere * 8f;
             IsHeld = false;
+            return true;
         }
     }
 }

@@ -35,6 +35,18 @@ Do not edit Unity YAML by hand while the Editor is connected. Do not modify `Lib
 
 ## Minimum Smoke Tests
 
+### Repeatable gameplay checks
+
+Run **Tools > UmdJam > Run Gameplay Smoke Tests** outside Play Mode. The harness opens `Game.unity`, enters Play Mode, uses temporary virtual gamepads, and returns to Edit Mode. Save any authored scene changes first. It checks four-player initialization and paired actions, HUD state, contact pickup and release, rejected transitions/trajectories, machine launch validation, material cleanup, rejoining, and missing-reference diagnostics. Unexpected runtime warnings and errors fail the run; intentional invalid-configuration errors are explicitly matched.
+
+For unattended validation with the project closed in other Editors:
+
+```powershell
+& 'C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe' -batchmode -nographics -projectPath $PWD -executeMethod UmdJam.Editor.GameplaySmokeTests.Run -logFile smoke.log
+```
+
+Do not add `-quit`: the harness exits after leaving Play Mode, with exit code 0 on success and 1 on failure. This complements manual visual and physical-controller checks.
+
 ### Multiplayer changes
 
 - Join Player 1 with keyboard/mouse.
