@@ -24,7 +24,7 @@ Players spawn clockwise around the arena:
 | 3 | `(6, 1, -6)` | bottom-right | yellow |
 | 4 | `(-6, 1, -6)` | bottom-left | green |
 
-`CouchPlayerController.Awake` applies player identity and initial placement. `CouchMultiplayerManager` repeats placement from the join callback to protect against Input System callback ordering.
+`CouchPlayerController.Awake` caches components. The manager's join callback invokes `InitializePlayer` after Input System pairing and action cloning; `Start` is the fallback for standalone players. Initialization runs once, applying identity, placement, colors, paired actions, and the roster event. Missing required actions or an invalid player index disables the controller with one diagnostic. A missing hold point disables only pickup with one diagnostic. Each player owns and destroys its two instantiated color materials.
 
 ## Player Movement
 
@@ -59,7 +59,7 @@ Landing coordinates use both X and Z magnitudes in `quadrantLandingRange` (curre
 
 ## Ballistic Formula
 
-Both machine and player throws derive a launch velocity from an origin, target, gravity, and desired apex height.
+Both machine and player throws use `Ballistics.TryCalculateVelocity` as the single implementation of trajectory calculation and validation.
 
 Given gravity magnitude `g` and apex rise `h`:
 
@@ -72,7 +72,7 @@ horizontal    = horizontalDisplacement / flightTime
 velocity      = horizontal + up * verticalSpeed
 ```
 
-This produces a predictable parabola and landing point under the current global gravity. If project gravity changes, trajectories automatically adapt.
+This produces a predictable parabola under the current global gravity. Downward gravity magnitude changes are supported. Non-finite inputs/results, negative apex rise, targets above the apex, and zero/upward/lateral gravity are rejected. A rejected player throw retains its held flask; a rejected machine launch creates no flask and disables the shooter with one diagnostic.
 
 ## Pickup and Attachment
 
@@ -84,6 +84,8 @@ Pickup succeeds only when:
 - the candidate has `PickupFlask` in its parent chain;
 - the flask is not already held;
 - the player's `HoldPoint` reference exists.
+
+`PickupFlask.TryPickUp` owns the transition guard and returns success; it rejects an already-held or disabled flask, a null socket, and a socket inside the flask itself. The controller assigns its held reference only on success. Contact callbacks skip component searches when pickup is unavailable or the player already carries a flask. `TryThrow` rejects free/disabled flasks and non-finite velocity without changing state.
 
 While held, a flask:
 
@@ -98,10 +100,10 @@ Do not replace this with a physics joint unless swaying or breakable attachment 
 
 Pressing the attack action while carrying a flask:
 
-1. moves it to `ThrowPoint` at the front-center of the player;
-2. restores dynamic Rigidbody behavior;
-3. calculates a forward ballistic target;
-4. applies the launch velocity and randomized spin.
+1. calculates and validates the forward ballistic target from `ThrowPoint`;
+2. transitions the held flask to dynamic Rigidbody behavior, applying velocity and spin;
+3. places it at `ThrowPoint` before the next physics step;
+4. clears the controller's held reference only after a successful release.
 
 Current defaults:
 
@@ -139,6 +141,6 @@ After penalties and score events are applied, the manager sets `Time.timeScale` 
 
 - Replace `FlaskPlaceholder.prefab` visuals or point/physics tuning through a `Flask` definition without changing the pickup contract.
 - Add flask effects inside `PickupFlask` or a new sibling component rather than inside player input code.
-- Extract a shared ballistic utility when another system needs trajectories.
+- Use `Ballistics.TryCalculateVelocity` when another system needs trajectories.
 - Move player slots and colors to a configuration asset if designers need to tune them frequently.
 - Replace the active-flask limit with pooling only when profiling or gameplay scale justifies it.

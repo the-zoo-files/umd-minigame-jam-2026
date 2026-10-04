@@ -78,11 +78,12 @@ namespace UmdJam.Gameplay
             bounceCount++;
         }
 
-        public void PickUp(Transform holdPoint)
+        public bool TryPickUp(Transform holdPoint)
         {
-            if (isCollected)
+            if (isCollected || IsHeld || holdPoint == null || !isActiveAndEnabled ||
+                holdPoint == transform || holdPoint.IsChildOf(transform))
             {
-                return;
+                return false;
             }
 
             IsHeld = true;
@@ -102,10 +103,16 @@ namespace UmdJam.Gameplay
 
             transform.SetParent(holdPoint, false);
             transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            return true;
         }
 
-        public void Throw(Vector3 launchVelocity, int playerNumber)
+        public bool TryThrow(Vector3 launchVelocity, int playerNumber = 0)
         {
+            if (!IsHeld || !isActiveAndEnabled || !Ballistics.IsFinite(launchVelocity))
+            {
+                return false;
+            }
+
             bounceCount = 0;
             currentHoldPoint = null;
             transform.SetParent(null, true);
@@ -123,10 +130,17 @@ namespace UmdJam.Gameplay
             body.angularVelocity = Random.onUnitSphere * ThrownSpinSpeed;
             lastThrowerPlayerNumber = playerNumber;
             IsHeld = false;
+            return true;
         }
 
-        public void ThrowDirectly(Vector3 target, int playerNumber, float duration, Action onArrived)
+        public bool TryThrowDirectly(Vector3 target, int playerNumber, float duration, Action onArrived)
         {
+            if (!IsHeld || !isActiveAndEnabled || !Ballistics.IsFinite(target) ||
+                playerNumber <= 0 || float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0f)
+            {
+                return false;
+            }
+
             bounceCount = 0;
             currentHoldPoint = null;
             transform.SetParent(null, true);
@@ -153,10 +167,11 @@ namespace UmdJam.Gameplay
             {
                 transform.position = target;
                 onArrived?.Invoke();
-                return;
+                return true;
             }
 
             StartCoroutine(MoveDirectly(target, duration, onArrived));
+            return true;
         }
 
         public void Initialize(Flask definition)

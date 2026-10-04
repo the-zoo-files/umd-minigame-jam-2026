@@ -47,8 +47,12 @@ namespace UmdJam.Multiplayer
         private InputAction moveAction;
         private InputAction attackAction;
         private PickupFlask heldFlask;
+        private Material bodyMaterial;
+        private Material directionMaterial;
+        private bool initializationAttempted;
+        private bool pickupConfigured;
 
-        public int PlayerNumber => playerInput.playerIndex + 1;
+        public int PlayerNumber { get; private set; }
         public string DisplayName => $"Player {PlayerNumber}";
         public int Score { get; private set; }
 
@@ -82,23 +86,61 @@ namespace UmdJam.Multiplayer
         {
             characterController = GetComponent<CharacterController>();
             playerInput = GetComponent<PlayerInput>();
-            moveAction = playerInput.actions.FindAction("Player/Move", true);
-            attackAction = playerInput.actions.FindAction("Player/Attack", true);
+        }
 
-            int slot = Mathf.Clamp(playerInput.playerIndex, 0, SpawnPositions.Length - 1);
+        private void Start()
+        {
+            InitializePlayer();
+        }
+
+        public void InitializePlayer()
+        {
+            if (initializationAttempted)
+            {
+                return;
+            }
+
+            initializationAttempted = true;
+            // PlayerInput completes device pairing and action cloning in OnEnable.
+            // Initialize from its joined callback, with Start as the standalone fallback.
+            if (playerInput == null)
+            {
+                playerInput = GetComponent<PlayerInput>();
+            }
+
+            moveAction = playerInput.actions?.FindAction("Player/Move");
+            attackAction = playerInput.actions?.FindAction("Player/Attack");
+            if (moveAction == null || attackAction == null ||
+                playerInput.playerIndex < 0 || playerInput.playerIndex >= SpawnPositions.Length)
+            {
+                Debug.LogError("Player requires Move and Attack actions and a player index from 0 to 3.", this);
+                enabled = false;
+                return;
+            }
+
+            pickupConfigured = holdPoint != null;
+            if (!pickupConfigured)
+            {
+                Debug.LogError("Player prefab is missing its flask hold point. Pickup is disabled.", this);
+            }
+
+            int slot = playerInput.playerIndex;
+            PlayerNumber = slot + 1;
             PlaceAtSpawn(slot);
             gameObject.name = DisplayName;
 
             Renderer playerRenderer = GetComponent<Renderer>();
             if (playerRenderer != null)
             {
-                playerRenderer.material.color = PlayerColors[slot];
+                bodyMaterial = playerRenderer.material;
+                bodyMaterial.color = PlayerColors[slot];
             }
 
             Transform directionGizmo = transform.Find("DirectionGizmo");
             if (directionGizmo != null && directionGizmo.TryGetComponent(out Renderer gizmoRenderer))
             {
-                gizmoRenderer.material.color = PlayerColors[slot];
+                directionMaterial = gizmoRenderer.material;
+                directionMaterial.color = PlayerColors[slot];
             }
 
             if (!activePlayers.Contains(this))
@@ -129,6 +171,11 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
+            if (moveAction == null || attackAction == null)
+            {
+                return;
+            }
+
             Vector2 input = moveAction.ReadValue<Vector2>();
             Vector3 movement = new(input.x, 0f, input.y);
             characterController.SimpleMove(movement * moveSpeed);
@@ -150,34 +197,31 @@ namespace UmdJam.Multiplayer
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
-            TryPickUp(hit.collider.GetComponentInParent<PickupFlask>());
+            TryPickUp(hit.collider);
         }
 
         private void OnTriggerEnter(Collider other)
         {
-            TryPickUp(other.GetComponentInParent<PickupFlask>());
+            TryPickUp(other);
         }
 
         private void OnTriggerStay(Collider other)
         {
-            TryPickUp(other.GetComponentInParent<PickupFlask>());
+            TryPickUp(other);
         }
 
-        private void TryPickUp(PickupFlask flask)
+        private void TryPickUp(Collider other)
         {
-            if (heldFlask != null || flask == null || flask.IsHeld || flask.IsCollected)
+            if (!isActiveAndEnabled || !pickupConfigured || holdPoint == null || heldFlask != null)
             {
                 return;
             }
 
-            if (holdPoint == null)
+            PickupFlask flask = other.GetComponentInParent<PickupFlask>();
+            if (flask != null && flask.TryPickUp(holdPoint))
             {
-                Debug.LogError("Player prefab is missing its flask hold point.", this);
-                return;
+                heldFlask = flask;
             }
-
-            heldFlask = flask;
-            heldFlask.PickUp(holdPoint);
         }
 
         private void ThrowHeldFlask()
@@ -188,19 +232,10 @@ namespace UmdJam.Multiplayer
             }
 
             PickupFlask flaskToThrow = heldFlask;
-            heldFlask = null;
-
-            if (throwPoint != null)
-            {
-                flaskToThrow.transform.SetPositionAndRotation(
-                    throwPoint.position,
-                    Quaternion.LookRotation(transform.forward, Vector3.up));
-            }
-
-            Vector3 origin = flaskToThrow.transform.position;
+            Vector3 origin = throwPoint != null ? throwPoint.position : flaskToThrow.transform.position;
             if (PlayerFlaskCollector.TryGetNearby(PlayerNumber, transform.position, out PlayerFlaskCollector collector))
             {
-                flaskToThrow.ThrowDirectly(
+                if (flaskToThrow.TryThrowDirectly(
                     collector.CollectionPoint,
                     PlayerNumber,
                     directThrowDuration,
@@ -210,31 +245,47 @@ namespace UmdJam.Multiplayer
                         {
                             collector.Collect(flaskToThrow);
                         }
-                    });
+                    }))
+                {
+                    heldFlask = null;
+                }
+
                 return;
             }
 
             Vector3 target = origin + transform.forward * throwDistance;
             target.y = throwLandingHeight;
-            flaskToThrow.Throw(CalculateBallisticVelocity(origin, target), PlayerNumber);
-        }
+            if (!Ballistics.TryCalculateVelocity(origin, target, throwApexHeight, out Vector3 velocity))
+            {
+                Debug.LogError("Cannot throw flask: check trajectory settings and downward-only gravity.", this);
+                return;
+            }
 
-        private Vector3 CalculateBallisticVelocity(Vector3 origin, Vector3 target)
-        {
-            float gravity = Mathf.Abs(Physics.gravity.y);
-            float verticalSpeed = Mathf.Sqrt(2f * gravity * throwApexHeight);
-            float apexY = origin.y + throwApexHeight;
-            float riseTime = verticalSpeed / gravity;
-            float fallTime = Mathf.Sqrt(2f * Mathf.Max(0.01f, apexY - target.y) / gravity);
-            float flightTime = riseTime + fallTime;
+            if (flaskToThrow.TryThrow(velocity, PlayerNumber))
+            {
+                if (throwPoint != null)
+                {
+                    flaskToThrow.transform.SetPositionAndRotation(
+                        origin,
+                        Quaternion.LookRotation(transform.forward, Vector3.up));
+                }
 
-            Vector3 horizontalDisplacement = target - origin;
-            horizontalDisplacement.y = 0f;
-            return horizontalDisplacement / flightTime + Vector3.up * verticalSpeed;
+                heldFlask = null;
+            }
         }
 
         private void OnDestroy()
         {
+            if (bodyMaterial != null)
+            {
+                Destroy(bodyMaterial);
+            }
+
+            if (directionMaterial != null)
+            {
+                Destroy(directionMaterial);
+            }
+
             if (!activePlayers.Remove(this))
             {
                 return;
