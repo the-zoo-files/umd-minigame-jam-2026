@@ -11,6 +11,12 @@ Keep those responsibilities separate so UI Builder and design tooling can edit s
 
 ## HUD Layout Contract
 
+The document contains `connectionMenu` and `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the initial local multiplayer menu, headed **Players**, with a **Start Game** action. The button remains disabled until every selected player has its required device(s). The menu uses four color-coded cards, a pink count selector, and a dark background; graphics are UI Toolkit elements and need no external art.
+
+Connection bindings are `playerCount`, `connectionStatus`, `previousPlayerCount`, `nextPlayerCount`, and `startGame`. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states are `is-selected`, `is-connected`, and `is-disconnected`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list.
+
+Menu wording: **Players**, **Start Game**, **Leave**, **Waiting for player**, **Connected**, **Reconnect device**, **Not selected**, **Open slot**, **Ready to start**, and **{connected} / {selected} connected**. Input hints describe joining, leaving, count changes, and starting.
+
 The UXML root is `hudRoot`. Player labels must retain these names:
 
 | Element name | Position |
@@ -25,6 +31,8 @@ All labels use `player-name`, one player-specific class, and the runtime state c
 The `roundTimer` label is inside the full-width `timerContainer`, which anchors it at the top center without fixed-width spacers. It displays the ceiling of the remaining round time in `mm:ss` format and reaches `00:00` before the game pauses.
 
 The labels intentionally include `is-connected` in UXML so they remain visible by default in UI Builder. At runtime, `CouchPlayerHud.OnEnable` removes or applies that class based on actual player state.
+
+The connection menu is the default document preview. To inspect the gameplay labels in UI Builder, temporarily remove `is-hidden` from `gameplayHud` and add it to `connectionMenu`; restore the default classes before saving. Runtime visibility is always derived from lobby state.
 
 ## Styling Conventions
 

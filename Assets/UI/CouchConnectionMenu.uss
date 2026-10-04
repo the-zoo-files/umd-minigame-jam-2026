@@ -1,0 +1,238 @@
+.is-hidden {
+    display: none;
+}
+
+.connection-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(15, 12, 43, 0.97);
+    align-items: center;
+    justify-content: center;
+    color: rgb(247, 246, 255);
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+}
+
+.connection-content {
+    width: 88%;
+    max-width: 1600px;
+    align-items: center;
+}
+
+.connection-eyebrow {
+    font-size: 17px;
+    color: rgb(167, 158, 203);
+    margin-bottom: 8px;
+    -unity-font-style: bold;
+}
+
+.connection-title {
+    font-size: 48px;
+    -unity-font-style: bold;
+    margin-bottom: 22px;
+}
+
+.player-count-selector {
+    width: 84%;
+    height: 120px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgb(224, 13, 91);
+    border-width: 4px;
+    border-color: rgb(252, 114, 164);
+    border-radius: 64px;
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+.count-arrow {
+    width: 80px;
+    height: 80px;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 40px;
+    color: rgb(255, 233, 119);
+    font-size: 72px;
+    -unity-text-align: middle-center;
+}
+
+.count-arrow:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+}
+
+.count-arrow:disabled {
+    opacity: 0.25;
+}
+
+.player-count {
+    font-size: 72px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.connection-subtitle {
+    margin-top: 14px;
+    margin-bottom: 36px;
+    font-size: 19px;
+    color: rgb(189, 181, 218);
+}
+
+.connection-cards {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.connection-card {
+    width: 23.5%;
+    height: 310px;
+    padding: 20px 12px;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.025);
+    border-width: 2px;
+    border-color: rgb(70, 62, 106);
+    border-radius: 16px;
+    color: rgb(108, 101, 140);
+}
+
+.connection-card.is-selected {
+    background-color: rgb(40, 33, 70);
+    border-color: rgb(139, 127, 179);
+    color: rgb(222, 216, 242);
+}
+
+.connection-card.is-connected {
+    background-color: rgb(246, 243, 255);
+    color: rgb(37, 25, 64);
+    border-width: 4px;
+}
+
+.slot-one.is-connected { border-color: var(--player-one); }
+.slot-two.is-connected { border-color: var(--player-two); }
+.slot-three.is-connected { border-color: var(--player-three); }
+.slot-four.is-connected { border-color: var(--player-four); }
+
+.connection-card.is-disconnected {
+    border-color: rgb(255, 181, 102);
+}
+
+.slot-title {
+    font-size: 19px;
+    -unity-font-style: bold;
+}
+
+.controller-icon {
+    width: 120px;
+    height: 76px;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    border-width: 3px;
+    border-color: rgb(123, 111, 159);
+    border-radius: 24px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.is-connected .controller-icon {
+    background-color: rgb(48, 31, 84);
+    border-color: rgb(48, 31, 84);
+    color: rgb(246, 243, 255);
+}
+
+.controller-dpad { font-size: 46px; -unity-font-style: bold; }
+.controller-buttons { font-size: 25px; }
+
+.slot-device {
+    font-size: 21px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.slot-state {
+    margin-top: 9px;
+    font-size: 16px;
+    -unity-text-align: middle-center;
+}
+
+.slot-leave {
+    margin-top: 14px;
+    padding: 4px 18px;
+    font-size: 15px;
+    border-width: 0;
+    border-radius: 12px;
+    background-color: rgb(226, 220, 240);
+    color: rgb(62, 44, 93);
+}
+
+.slot-leave:hover { background-color: rgb(209, 196, 233); }
+
+.connection-status {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-size: 19px;
+}
+
+.start-game {
+    width: 420px;
+    height: 74px;
+    margin: 0;
+    background-color: rgb(249, 246, 255);
+    color: rgb(39, 25, 69);
+    border-width: 2px;
+    border-color: rgb(249, 246, 255);
+    border-radius: 40px;
+    font-size: 29px;
+    -unity-font-style: bold;
+}
+
+.start-game:hover {
+    background-color: rgb(255, 233, 119);
+    border-color: rgb(255, 233, 119);
+}
+
+.start-game:disabled {
+    background-color: rgb(62, 52, 88);
+    border-color: rgb(92, 80, 123);
+    color: rgb(169, 159, 194);
+}
+
+.connection-controls {
+    margin-top: 28px;
+    font-size: 16px;
+    color: rgb(167, 158, 203);
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.keyboard-keys {
+    display: none;
+    font-size: 22px;
+    -unity-font-style: bold;
+}
+
+.is-keyboard .controller-icon {
+    border-radius: 8px;
+}
+
+.is-keyboard .controller-dpad,
+.is-keyboard .controller-buttons {
+    display: none;
+}
+
+.is-keyboard .keyboard-keys {
+    display: flex;
+}
+
+.controller-dpad,
+.controller-buttons {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    -unity-text-align: middle-center;
+}

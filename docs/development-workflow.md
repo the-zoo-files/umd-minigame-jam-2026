@@ -49,6 +49,10 @@ Do not add `-quit`: the harness exits after leaving Play Mode, with exit code 0 
 
 ### Multiplayer changes
 
+- Run **Tools > UmdJam > Run Connection Menu Smoke Tests** for selected-count bounds, simultaneous joining, duplicate/full-slot rejection, disconnect/reconnect readiness, leaving/rejoining, keyboard/mouse plus gamepads, and round-start/end gating. It captures the empty and ready menu into `.utmp/connection-menu-*.png` with a graphics-enabled Editor.
+- The connection menu is wired in `Game.unity`. **Tools > UmdJam > Configure Connection Menu** can restore its component and serialized references using Editor APIs.
+- Verify pointer controls and the count selector at 16:9 and 4:3, confirm controls remain readable, and confirm leaving an occupied high-numbered slot permits reducing the count.
+
 - Join Player 1 with keyboard/mouse.
 - Join additional players with controllers when device access is available.
 - Confirm unique player numbers, quadrant positions, colors, and HUD labels.

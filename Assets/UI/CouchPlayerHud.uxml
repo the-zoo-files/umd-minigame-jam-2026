@@ -1,12 +1,60 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/CouchPlayerHud.uss?fileID=7433441132597879392&amp;guid=5d22cfdc1301d204d8ef64cc453064db&amp;type=3#CouchPlayerHud"/>
+    <Style src="CouchConnectionMenu.uss"/>
     <ui:VisualElement name="hudRoot" picking-mode="Ignore" class="hud-root">
-        <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
-            <ui:Label name="roundTimer" text="01:00" class="round-timer"/>
+        <ui:VisualElement name="gameplayHud" picking-mode="Ignore" class="hud-root is-hidden">
+            <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
+                <ui:Label name="roundTimer" text="01:00" class="round-timer"/>
+            </ui:VisualElement>
+            <ui:Label name="player1Name" text="Player 1&#10;Score: 0" class="player-name player-one is-connected"/>
+            <ui:Label name="player2Name" text="Player 2&#10;Score: 0" class="player-name player-two is-connected"/>
+            <ui:Label name="player3Name" text="Player 3&#10;Score: 0" class="player-name player-three is-connected"/>
+            <ui:Label name="player4Name" text="Player 4&#10;Score: 0" class="player-name player-four is-connected"/>
         </ui:VisualElement>
-        <ui:Label name="player1Name" text="Player 1&#10;Score: 0" class="player-name player-one is-connected"/>
-        <ui:Label name="player2Name" text="Player 2&#10;Score: 0" class="player-name player-two is-connected"/>
-        <ui:Label name="player3Name" text="Player 3&#10;Score: 0" class="player-name player-three is-connected"/>
-        <ui:Label name="player4Name" text="Player 4&#10;Score: 0" class="player-name player-four is-connected"/>
+        <ui:VisualElement name="connectionMenu" class="connection-menu">
+            <ui:VisualElement class="connection-content">
+                <ui:Label text="LOCAL MULTIPLAYER" class="connection-eyebrow"/>
+                <ui:Label text="Players" class="connection-title"/>
+                <ui:VisualElement class="player-count-selector">
+                    <ui:Button name="previousPlayerCount" text="‹" tooltip="Fewer players" focusable="false" class="count-arrow"/>
+                    <ui:Label name="playerCount" text="2" class="player-count"/>
+                    <ui:Button name="nextPlayerCount" text="›" tooltip="More players" focusable="false" class="count-arrow"/>
+                </ui:VisualElement>
+                <ui:Label text="1–4 players · One screen" class="connection-subtitle"/>
+                <ui:VisualElement class="connection-cards">
+                    <ui:VisualElement name="connectionPlayer1" class="connection-card slot-one is-selected">
+                        <ui:Label text="PLAYER 1" class="slot-title"/>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:Label name="connectionDevice1" text="Waiting for player" class="slot-device"/>
+                        <ui:Label name="connectionState1" text="Press A / Enter to join" class="slot-state"/>
+                        <ui:Button name="leavePlayer1" text="Leave" focusable="false" class="slot-leave is-hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="connectionPlayer2" class="connection-card slot-two is-selected">
+                        <ui:Label text="PLAYER 2" class="slot-title"/>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:Label name="connectionDevice2" text="Waiting for player" class="slot-device"/>
+                        <ui:Label name="connectionState2" text="Press A / Enter to join" class="slot-state"/>
+                        <ui:Button name="leavePlayer2" text="Leave" focusable="false" class="slot-leave is-hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three">
+                        <ui:Label text="PLAYER 3" class="slot-title"/>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:Label name="connectionDevice3" text="Not selected" class="slot-device"/>
+                        <ui:Label name="connectionState3" text="Open slot" class="slot-state"/>
+                        <ui:Button name="leavePlayer3" text="Leave" focusable="false" class="slot-leave is-hidden"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="connectionPlayer4" class="connection-card slot-four">
+                        <ui:Label text="PLAYER 4" class="slot-title"/>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:Label name="connectionDevice4" text="Not selected" class="slot-device"/>
+                        <ui:Label name="connectionState4" text="Open slot" class="slot-state"/>
+                        <ui:Button name="leavePlayer4" text="Leave" focusable="false" class="slot-leave is-hidden"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="connectionStatus" text="0 / 2 connected" class="connection-status"/>
+                <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
+                <ui:Label text="← → / D-pad: Players   ·   Enter / A: Join   ·   Space / Menu: Start   ·   Esc / B: Leave" class="connection-controls"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

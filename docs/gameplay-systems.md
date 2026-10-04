@@ -2,6 +2,17 @@
 
 ## Controls and Joining
 
+The game starts at a local connection menu. All players share one screen; online play and split-screen are not implemented. Select **Players** (1–4, default 2), connect the selected devices, then choose **Start Game**. The round timer, player movement/pickup, and physics wait until the round starts.
+
+- Left/Right arrows or gamepad D-pad: change the selected player count.
+- Enter or gamepad south button (A/Cross): join the lowest available selected slot.
+- Space or gamepad Menu/Start: start when every selected slot has a connected device. The device issuing this command must already be paired to a player. The mouse can also activate **Start Game**.
+- Escape or gamepad east button (B/Circle): leave that device's slot before starting. Each occupied card also has a **Leave** button, including when its controller is disconnected.
+- One keyboard/mouse player is supported; every additional player needs a gamepad.
+- The count cannot shrink past an occupied slot. Disconnecting a required device blocks starting until it reconnects or the player leaves. Joining and lobby changes lock when the round starts.
+
+Lobby actions are owned by `CouchMultiplayerManager` and use the new Input System. They are separate from paired gameplay actions, allowing unpaired devices to join without driving an existing player. `SelectedPlayerCount` is authoritative in that manager; cards and readiness are derived from the paired `PlayerInput` roster.
+
 The project uses `Assets/InputSystem_Actions.inputactions` and `PlayerInputManager`.
 
 - Up to four local players may join.
@@ -131,7 +142,7 @@ Bounce is only applied for sufficiently strong contacts with an upward-facing no
 
 ## Round Lifecycle and Zone Penalties
 
-`GameManager` starts a round at the serialized `roundDuration`, which defaults to 60 seconds. It publishes the remaining time for the HUD and ends the round when the timer reaches zero.
+`GameManager` initializes the serialized `roundDuration` (default 60 seconds) and waits at time scale zero. The connection menu starts the round only when the selected roster is connected. `HasStarted` and `IsRoundOver` define `IsPlaying`; it publishes remaining time for the HUD and ends the round when the timer reaches zero.
 
 The four `GameManager/PlayerZones` box colliders cover the arena quadrants in the same clockwise order as player slots. At round end, each active `PickupFlask` is assigned to at most one zone based on its world position. Its configured `Flask.Points` value is subtracted from that player's score. Scores are not clamped, so zone penalties can make a score negative.
 

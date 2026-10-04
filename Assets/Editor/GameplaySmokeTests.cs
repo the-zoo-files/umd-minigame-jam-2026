@@ -33,8 +33,16 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run Gameplay Smoke Tests")]
         public static void Run()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", false);
             // Batch executeMethod runs before delayed Editor startup work (such as search indexing).
             // Start the measured Play Mode session after those callbacks have completed.
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
+        [MenuItem("Tools/UmdJam/Run Connection Menu Smoke Tests")]
+        public static void RunConnectionMenu()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", true);
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
@@ -64,7 +72,8 @@ namespace UmdJam.Editor
 
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                exercise = Exercise();
+                exercise = SessionState.GetBool("UmdJam.SmokeTests.ConnectionMenu", false)
+                    ? ConnectionMenuSmokeTests.Exercise() : Exercise();
             }
             else if (state == PlayModeStateChange.EnteredEditMode)
             {
@@ -138,6 +147,8 @@ namespace UmdJam.Editor
                 MachineFlaskShooter machine = Object.FindAnyObjectByType<MachineFlaskShooter>();
                 machine.enabled = false;
                 PlayerInputManager manager = Object.FindAnyObjectByType<PlayerInputManager>();
+                CouchMultiplayerManager lobby = manager.GetComponent<CouchMultiplayerManager>();
+                Require(lobby.TrySetPlayerCount(4), "Four-player lobby");
                 GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Multiplayer/Player.prefab");
                 PickupFlask flaskPrefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Gameplay/FlaskPlaceholder.prefab");
                 List<CouchPlayerController> players = new();
@@ -166,6 +177,7 @@ namespace UmdJam.Editor
 
                 yield return null;
                 Require(CouchPlayerController.ActivePlayers.Count == 4, "One roster entry per player");
+                Require(lobby.TryStartGame(), "Start gameplay smoke test round");
                 VisualElement root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
                 for (int i = 1; i <= 4; i++)
                 {
@@ -174,6 +186,13 @@ namespace UmdJam.Editor
 
                 CheckBallistics();
                 Physics.gravity = originalGravity;
+                // The scene now places collectors near spawns. Exercise the ballistic path,
+                // not the newer direct-to-collector transfer that intentionally skips gravity.
+                CharacterController mover = players[0].GetComponent<CharacterController>();
+                mover.enabled = false;
+                players[0].transform.position = new Vector3(-3f, 1f, 3f);
+                mover.enabled = true;
+                Require(!PlayerFlaskCollector.TryGetNearby(1, players[0].transform.position, out _), "Outside direct collection range");
                 Transform socket = Get<Transform>(players[0], "holdPoint");
                 PickupFlask flask = Object.Instantiate(flaskPrefab, players[0].transform.position, Quaternion.identity);
                 Rigidbody body = flask.GetComponent<Rigidbody>();
@@ -227,7 +246,7 @@ namespace UmdJam.Editor
                 Require(bodyMaterial == null && markerMaterial == null, "Owned materials destroyed");
                 Require(CouchPlayerController.ActivePlayers.Count == 3, "Player removed from roster");
                 Require(!root.Q<Label>("player1Name").ClassListContains("is-connected"), "Disconnected HUD");
-                PlayerInput replacement = manager.JoinPlayer(0, controlScheme: "Gamepad", pairWithDevice: devices[0]);
+                PlayerInput replacement = PlayerInput.Instantiate(playerPrefab, 0, controlScheme: "Gamepad", pairWithDevice: devices[0]);
                 Require(replacement.GetComponent<CouchPlayerController>().PlayerNumber == 1, "Rejoin identity");
                 Require(CouchPlayerController.ActivePlayers.Count == 4, "Rejoin roster");
 

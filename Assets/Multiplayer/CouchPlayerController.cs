@@ -166,7 +166,7 @@ namespace UmdJam.Multiplayer
 
         private void Update()
         {
-            if (GameManager.Instance != null && GameManager.Instance.IsRoundOver)
+            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
             {
                 return;
             }
@@ -212,6 +212,11 @@ namespace UmdJam.Multiplayer
 
         private void TryPickUp(Collider other)
         {
+            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
+            {
+                return;
+            }
+
             if (!isActiveAndEnabled || !pickupConfigured || holdPoint == null || heldFlask != null)
             {
                 return;

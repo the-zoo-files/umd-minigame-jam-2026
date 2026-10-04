@@ -8,6 +8,7 @@ namespace UmdJam.Multiplayer
     {
         public static event Action<float> RoundTimeChanged;
         public static event Action RoundEnded;
+        public static event Action RoundStarted;
 
         public static GameManager Instance { get; private set; }
 
@@ -18,6 +19,22 @@ namespace UmdJam.Multiplayer
 
         public float RemainingTime => remainingTime;
         public bool IsRoundOver { get; private set; }
+        public bool HasStarted { get; private set; }
+        public bool IsPlaying => HasStarted && !IsRoundOver;
+
+        public bool TryStartRound()
+        {
+            if (!isActiveAndEnabled || HasStarted || IsRoundOver)
+            {
+                return false;
+            }
+
+            HasStarted = true;
+            Time.timeScale = 1f;
+            RoundTimeChanged?.Invoke(remainingTime);
+            RoundStarted?.Invoke();
+            return true;
+        }
 
         private void Awake()
         {
@@ -29,7 +46,7 @@ namespace UmdJam.Multiplayer
             }
 
             Instance = this;
-            Time.timeScale = 1f;
+            Time.timeScale = 0f;
             remainingTime = roundDuration;
 
             if (!HasValidZones())
@@ -46,7 +63,7 @@ namespace UmdJam.Multiplayer
 
         private void Update()
         {
-            if (IsRoundOver)
+            if (!IsPlaying)
             {
                 return;
             }
@@ -73,7 +90,7 @@ namespace UmdJam.Multiplayer
 
         public void EndRound()
         {
-            if (IsRoundOver)
+            if (!IsPlaying)
             {
                 return;
             }

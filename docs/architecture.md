@@ -31,6 +31,8 @@ Assets/
 ├── Scenes/
 │   └── Game.unity
 ├── UI/
+│   ├── CouchConnectionMenu.cs
+│   ├── CouchConnectionMenu.uss
 │   ├── CouchPlayerHud.cs
 │   ├── CouchPlayerHud.uxml
 │   ├── CouchPlayerHud.uss
@@ -56,6 +58,7 @@ Owns world interactions and physics objects.
 Owns local player joining and per-player behavior.
 
 - `CouchMultiplayerManager` configures `PlayerInputManager` and places joined players.
+- It also owns the selected lobby count, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
 - `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
 - `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
@@ -65,6 +68,7 @@ Owns local player joining and per-player behavior.
 Owns runtime UI Toolkit presentation.
 
 - `CouchPlayerHud` maps player events to named UXML labels and USS state classes.
+- `CouchConnectionMenu` presents lobby state in the same `UIDocument`, references `CouchMultiplayerManager`, and never keeps a separate roster or readiness state. Its appearance lives in `CouchConnectionMenu.uss`.
 
 Dependencies currently flow in one direction:
 
@@ -118,7 +122,7 @@ The three child names are runtime contracts because the controller finds the dir
 
 ### Player joining
 
-1. `CouchMultiplayerManager.Awake` configures and enables `PlayerInputManager` joining.
+1. `CouchMultiplayerManager.Awake` configures manual `PlayerInputManager` joining. Lobby join actions explicitly assign a device to an empty selected slot; joining is disabled when the selected slots are full or play starts.
 2. The Input System instantiates `Player.prefab` for a keyboard/mouse or gamepad device.
 3. `CouchPlayerController.Awake` caches required components. `PlayerInput.OnEnable` completes identity assignment, device pairing, and action cloning.
 4. `CouchMultiplayerManager.OnPlayerJoined` calls the controller's idempotent `InitializePlayer`, which caches the paired actions, assigns spawn/name/color, and publishes `PlayerJoined`. `Start` provides the same initialization for standalone players. Player numbering is cached for safe teardown notifications.
