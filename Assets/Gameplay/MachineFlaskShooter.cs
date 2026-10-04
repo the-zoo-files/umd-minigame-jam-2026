@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace UmdJam.Gameplay
 {
     public sealed class MachineFlaskShooter : MonoBehaviour
     {
-        [SerializeField] private PickupFlask flaskPrefab;
-        [SerializeField] private Transform launchPoint;
+        [SerializeField] private Flask[] flasks;
+        [SerializeField, FormerlySerializedAs("launchPoint")] private Transform spawnPoint;
         [SerializeField] private float launchInterval = 2.5f;
         [SerializeField] private float launchApexHeight = 4.5f;
         [SerializeField] private Vector2 quadrantLandingRange = new(4.5f, 8f);
@@ -46,14 +47,16 @@ namespace UmdJam.Gameplay
 
         private void LaunchFlask()
         {
-            if (flaskPrefab == null || launchPoint == null)
+            Flask flaskDefinition = TakeRandomFlask();
+            if (flaskDefinition == null || flaskDefinition.Prefab == null || spawnPoint == null)
             {
-                Debug.LogError("The flask machine is missing its prefab or launch point.", this);
+                Debug.LogError("The flask spawner is missing a flask definition, prefab, or spawn point.", this);
                 enabled = false;
                 return;
             }
 
-            PickupFlask flask = Instantiate(flaskPrefab, launchPoint.position, Random.rotation);
+            PickupFlask flask = Instantiate(flaskDefinition.Prefab, spawnPoint.position, Random.rotation);
+            flask.Initialize(flaskDefinition);
             Rigidbody body = flask.GetComponent<Rigidbody>();
 
             Vector2 quadrant = QuadrantSigns[TakeNextQuadrant()];
@@ -62,9 +65,19 @@ namespace UmdJam.Gameplay
                 landingHeight,
                 quadrant.y * Random.Range(quadrantLandingRange.x, quadrantLandingRange.y));
 
-            body.linearVelocity = CalculateBallisticVelocity(launchPoint.position, target);
+            body.linearVelocity = CalculateBallisticVelocity(spawnPoint.position, target);
             body.angularVelocity = Random.onUnitSphere * spinSpeed;
             spawnedFlasks.Add(flask);
+        }
+
+        private Flask TakeRandomFlask()
+        {
+            if (flasks == null || flasks.Length == 0)
+            {
+                return null;
+            }
+
+            return flasks[Random.Range(0, flasks.Length)];
         }
 
         private int TakeNextQuadrant()

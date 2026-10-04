@@ -65,13 +65,32 @@ Do not edit Unity YAML by hand while the Editor is connected. Do not modify `Lib
 - Verify the predicted throw apex and distance match serialized tuning.
 - Confirm collision, gravity, and interpolation are restored after release.
 - Let the flask land and confirm it settles after the configured small bounce count.
+- Throw a flask into the matching player collector and confirm the configured points are awarded once.
+- Throw a flask into another player's collector and confirm no score is awarded and the flask remains active.
+- Stand inside the matching collector's padded bounds and confirm throwing uses the direct kinematic transfer and awards points.
+- Stand outside the padded bounds and confirm throwing still uses the normal ballistic physics path.
+
+### Flask definition or spawner changes
+
+- Confirm the spawner emits the prefab selected by its `Flask` definition from `FlaskSpawner/FlaskSpawnPoint`.
+- Confirm the spawned Rigidbody receives mass, damping, gravity, interpolation, and collision-detection values from the definition.
+- Change the definition's point value and confirm the collector and HUD use the new value.
 
 ### UI changes
 
 - Open the UXML in UI Builder and confirm all four default labels are visible.
 - Enter Play Mode and confirm disconnected labels are hidden.
 - Join players in order and confirm labels appear clockwise.
+- Score a flask and confirm the matching label updates without affecting the other scores.
 - Test at more than one aspect ratio.
+
+### Round manager changes
+
+- Confirm a new round starts at the serialized duration and the top-center HUD timer counts down in `mm:ss` format.
+- Place known flask configurations in each player zone and confirm the configured point values are deducted from the matching scores exactly once.
+- Confirm a flask on a shared zone boundary is assigned to only one player.
+- Confirm the timer displays `00:00`, player input stops, and `Time.timeScale` becomes zero after penalties are applied.
+- Exit Play Mode and confirm `Time.timeScale` returns to one.
 
 ## Console Policy
 

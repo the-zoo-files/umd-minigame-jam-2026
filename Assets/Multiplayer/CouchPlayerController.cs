@@ -27,6 +27,7 @@ namespace UmdJam.Multiplayer
 
         public static event Action<CouchPlayerController> PlayerJoined;
         public static event Action<CouchPlayerController> PlayerLeft;
+        public static event Action<CouchPlayerController> ScoreChanged;
 
         public static IReadOnlyList<CouchPlayerController> ActivePlayers => activePlayers;
 
@@ -37,6 +38,7 @@ namespace UmdJam.Multiplayer
         [SerializeField] private float throwDistance = 8f;
         [SerializeField] private float throwApexHeight = 3f;
         [SerializeField] private float throwLandingHeight = 0.35f;
+        [SerializeField, Min(0f)] private float directThrowDuration = 0.2f;
         [SerializeField] private Transform holdPoint;
         [SerializeField] private Transform throwPoint;
 
@@ -48,6 +50,33 @@ namespace UmdJam.Multiplayer
 
         public int PlayerNumber => playerInput.playerIndex + 1;
         public string DisplayName => $"Player {PlayerNumber}";
+        public int Score { get; private set; }
+
+        public static void AddScore(int playerNumber, int points)
+        {
+            if (points > 0)
+            {
+                ChangeScore(playerNumber, points);
+            }
+        }
+
+        public static void ChangeScore(int playerNumber, int amount)
+        {
+            if (amount == 0)
+            {
+                return;
+            }
+
+            foreach (CouchPlayerController player in activePlayers)
+            {
+                if (player != null && player.PlayerNumber == playerNumber)
+                {
+                    player.Score += amount;
+                    ScoreChanged?.Invoke(player);
+                    return;
+                }
+            }
+        }
 
         private void Awake()
         {
@@ -95,6 +124,11 @@ namespace UmdJam.Multiplayer
 
         private void Update()
         {
+            if (GameManager.Instance != null && GameManager.Instance.IsRoundOver)
+            {
+                return;
+            }
+
             Vector2 input = moveAction.ReadValue<Vector2>();
             Vector3 movement = new(input.x, 0f, input.y);
             characterController.SimpleMove(movement * moveSpeed);
@@ -131,7 +165,7 @@ namespace UmdJam.Multiplayer
 
         private void TryPickUp(PickupFlask flask)
         {
-            if (heldFlask != null || flask == null || flask.IsHeld)
+            if (heldFlask != null || flask == null || flask.IsHeld || flask.IsCollected)
             {
                 return;
             }
@@ -164,9 +198,25 @@ namespace UmdJam.Multiplayer
             }
 
             Vector3 origin = flaskToThrow.transform.position;
+            if (PlayerFlaskCollector.TryGetNearby(PlayerNumber, transform.position, out PlayerFlaskCollector collector))
+            {
+                flaskToThrow.ThrowDirectly(
+                    collector.CollectionPoint,
+                    PlayerNumber,
+                    directThrowDuration,
+                    () =>
+                    {
+                        if (collector != null)
+                        {
+                            collector.Collect(flaskToThrow);
+                        }
+                    });
+                return;
+            }
+
             Vector3 target = origin + transform.forward * throwDistance;
             target.y = throwLandingHeight;
-            flaskToThrow.Throw(CalculateBallisticVelocity(origin, target));
+            flaskToThrow.Throw(CalculateBallisticVelocity(origin, target), PlayerNumber);
         }
 
         private Vector3 CalculateBallisticVelocity(Vector3 origin, Vector3 target)

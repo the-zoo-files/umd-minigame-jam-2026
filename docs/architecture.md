@@ -17,11 +17,15 @@ The prototype is local couch multiplayer for up to four players. There is no net
 Assets/
 ├── Gameplay/
 │   ├── MachineFlaskShooter.cs
+│   ├── Flask.cs
 │   ├── PickupFlask.cs
+│   ├── DefaultFlask.asset
 │   └── FlaskPlaceholder.prefab
 ├── Multiplayer/
 │   ├── CouchMultiplayerManager.cs
 │   ├── CouchPlayerController.cs
+│   ├── GameManager.cs
+│   ├── PlayerFlaskCollector.cs
 │   └── Player.prefab
 ├── Scenes/
 │   └── Game.unity
@@ -41,7 +45,8 @@ Unity-generated `.meta` files are required companions to their assets and must r
 
 Owns world interactions and physics objects.
 
-- `MachineFlaskShooter` schedules and launches flask instances.
+- `Flask` is the designer-facing definition for a flask prefab, point value, and physics tuning.
+- `MachineFlaskShooter` schedules and launches flask instances from configured `Flask` definitions.
 - `PickupFlask` owns free-flight, collision response, held state, and the transition between physics and attachment modes.
 
 ### `UmdJam.Multiplayer`
@@ -49,7 +54,9 @@ Owns world interactions and physics objects.
 Owns local player joining and per-player behavior.
 
 - `CouchMultiplayerManager` configures `PlayerInputManager` and places joined players.
-- `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, assigns player identity, and publishes join/leave events.
+- `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
+- `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
+- `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
 
 ### `UmdJam.UI`
 
@@ -71,10 +78,12 @@ Gameplay does not depend on UI or multiplayer types. Keep that boundary when add
 
 ### Game scene
 
-`Assets/Scenes/Game.unity` contains the stationary arena camera, play surface, player join manager, HUD document, and the flask machine. The machine uses two scene cylinders:
+`Assets/Scenes/Game.unity` contains the stationary arena camera, play surface, player join manager, HUD document, flask spawner, and four collectors.
 
-- `Cylinder` owns `MachineFlaskShooter`.
-- `Cylinder (1)` contains `FlaskLaunchPoint`, which is assigned as the shooter's launch origin.
+- `FlaskSpawner` owns `MachineFlaskShooter` and the grouped machine visuals.
+- `FlaskSpawner/FlaskSpawnPoint` is assigned as the shooter's launch origin.
+- `Collectors` contains `Collector_P1` through `Collector_P4`; each has a trigger collider and matching `PlayerFlaskCollector.playerNumber`.
+- `GameManager/PlayerZones` contains `Player1Zone` through `Player4Zone`; the non-rendering box colliders cover the four arena quadrants in clockwise player order.
 
 ### Player prefab
 
@@ -96,6 +105,7 @@ The three child names are runtime contracts because the controller finds the dir
 `Assets/Gameplay/FlaskPlaceholder.prefab` requires:
 
 - `PickupFlask`
+- a `Flask` definition
 - `Rigidbody`
 - at least one `Collider`
 - a visible renderer
@@ -134,8 +144,12 @@ Snap to ThrowPoint
     ↓
 Dynamic ballistic throw
     ↓
-Small settling bounce / rest
+Matching player collector → configured points awarded and flask destroyed
+    or
+World collision → small settling bounce / rest
 ```
+
+The collector branch can happen at any point after a player throw. Entering another player's collector does not consume the flask or award points.
 
 Held flasks disable their colliders, gravity, collision detection, and Rigidbody interpolation. They are parented to `HoldPoint` and locked to it in `LateUpdate`. Throwing restores the free-flight settings.
 
@@ -145,7 +159,8 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 - Use static events for the small, global player roster (`PlayerJoined` and `PlayerLeft`).
 - Subscribe in `OnEnable` and unsubscribe in `OnDisable` for listeners.
 - Avoid global lookups in normal gameplay loops. Editor smoke tests may use object lookup for inspection.
-- Keep authoritative state with its owner: `PickupFlask.IsHeld` belongs to the flask, while the player's current held reference belongs to the controller.
+- Keep authoritative state with its owner: `PickupFlask.IsHeld` and last-thrower identity belong to the flask, while the held reference and score belong to the player controller.
+- `GameManager.RoundTimeChanged` drives the HUD timer without creating a gameplay-to-UI dependency.
 
 ## Current Architectural Limits
 

@@ -40,7 +40,7 @@ Keep movement camera-independent unless the control design changes explicitly. C
 
 ## Machine Launches
 
-`MachineFlaskShooter` is attached to the machine base. Its serialized `launchPoint` is the child transform on the upper cylinder.
+`MachineFlaskShooter` is attached to the `FlaskSpawner` root. Its serialized `spawnPoint` is `FlaskSpawner/FlaskSpawnPoint`.
 
 The machine:
 
@@ -50,6 +50,8 @@ The machine:
 - randomizes the landing coordinates inside the selected quadrant;
 - calculates a ballistic velocity with a configured apex;
 - adds randomized angular velocity.
+
+The shooter's `flasks` array contains `Flask` definitions. A definition selects the underlying `PickupFlask` prefab and provides its point value, Rigidbody properties, fall-speed cap, bounce behavior, and spin tuning. Add another definition to introduce a flask variant without duplicating spawner logic.
 
 The shuffled bag contains each quadrant once. It is shuffled and consumed before being refilled, so every four machine launches serve each quadrant exactly once in random order.
 
@@ -109,6 +111,10 @@ Current defaults:
 
 The target follows `transform.forward`, so the direction marker previews the horizontal throw direction.
 
+Each throw records the throwing player's number on the flask. A flask can only score in the matching `Collector_P1` through `Collector_P4` trigger under `Collectors`. A successful collection awards the definition's configured points, raises `CouchPlayerController.ScoreChanged`, and destroys the flask so it cannot score twice. A flask entering another player's collector remains in play.
+
+Before calculating a ballistic throw, the controller checks whether the player's position is inside their collector's world-space collider bounds expanded by `directThrowPadding`. When in range, the flask skips dynamic physics and follows a short kinematic transfer to the collector center, then scores normally. `directThrowDuration` controls this transfer time. Throws outside the expanded bounds continue to use the standard ballistic path.
+
 ## Stylized Flask Physics
 
 `PickupFlask` applies bounded arcade behavior:
@@ -121,9 +127,17 @@ The target follows `transform.forward`, so the direction marker previews the hor
 
 Bounce is only applied for sufficiently strong contacts with an upward-facing normal. These safeguards prevent wall hits from creating vertical hops and keep flasks from bouncing indefinitely.
 
+## Round Lifecycle and Zone Penalties
+
+`GameManager` starts a round at the serialized `roundDuration`, which defaults to 60 seconds. It publishes the remaining time for the HUD and ends the round when the timer reaches zero.
+
+The four `GameManager/PlayerZones` box colliders cover the arena quadrants in the same clockwise order as player slots. At round end, each active `PickupFlask` is assigned to at most one zone based on its world position. Its configured `Flask.Points` value is subtracted from that player's score. Scores are not clamped, so zone penalties can make a score negative.
+
+After penalties and score events are applied, the manager sets `Time.timeScale` to zero. Player input is ignored once the round is over. Destroying the manager restores the time scale for scene changes and Play Mode shutdown.
+
 ## Safe Extension Points
 
-- Replace `FlaskPlaceholder.prefab` visuals without changing the `PickupFlask` contract.
+- Replace `FlaskPlaceholder.prefab` visuals or point/physics tuning through a `Flask` definition without changing the pickup contract.
 - Add flask effects inside `PickupFlask` or a new sibling component rather than inside player input code.
 - Extract a shared ballistic utility when another system needs trajectories.
 - Move player slots and colors to a configuration asset if designers need to tune them frequently.

@@ -155,7 +155,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2e52e41ad504cf469a0495ceac95a2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Gameplay.PickupFlask
-  maximumFallSpeed: 14
-  impactSpinBoost: 2.5
-  firstBounceSpeed: 1.5
-  maximumBounces: 1
+  flask: {fileID: 11400000, guid: b094750f52da8f6479ccd5d3130976d7, type: 2}

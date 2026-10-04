@@ -4,7 +4,7 @@
 
 - `Assets/UI/CouchPlayerHud.uxml`: hierarchy, element names, default label text, and editing-time state.
 - `Assets/UI/CouchPlayerHud.uss`: visual styling, corner anchors, colors, typography, and connected-state visibility.
-- `Assets/UI/CouchPlayerHud.cs`: player-event binding and runtime class toggling.
+- `Assets/UI/CouchPlayerHud.cs`: player and score event binding, label text updates, and runtime class toggling.
 - `Assets/UI/Fonts/CascadiaMono.ttf`: monospaced HUD font.
 
 Keep those responsibilities separate so UI Builder and design tooling can edit structure and presentation without absorbing gameplay logic.
@@ -20,7 +20,9 @@ The UXML root is `hudRoot`. Player labels must retain these names:
 | `player3Name` | bottom-right |
 | `player4Name` | bottom-left |
 
-All labels use `player-name`, one player-specific class, and the runtime state class `is-connected`.
+All labels use `player-name`, one player-specific class, and the runtime state class `is-connected`. Their text contains the player name and current score on separate lines.
+
+The `roundTimer` label is inside the full-width `timerContainer`, which anchors it at the top center without fixed-width spacers. It displays the ceiling of the remaining round time in `mm:ss` format and reaches `00:00` before the game pauses.
 
 The labels intentionally include `is-connected` in UXML so they remain visible by default in UI Builder. At runtime, `CouchPlayerHud.OnEnable` removes or applies that class based on actual player state.
 
@@ -73,6 +75,8 @@ Use additional semantic classes for future states (`is-ready`, `is-stunned`, or 
 - Query elements once in `OnEnable` and cache them.
 - Log a contextual error when a required named element is absent.
 - Subscribe to player events after the visual tree is available.
+- Subscribe to `ScoreChanged` and update only the matching cached label.
+- Subscribe to `GameManager.RoundTimeChanged` and cache the `roundTimer` label alongside player labels.
 - Replay the existing active-player list after subscribing so scene reloads and enable-order differences produce the same HUD.
 - Unsubscribe in `OnDisable`.
 - Keep displayed player numbering one-based.
