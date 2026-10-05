@@ -238,6 +238,14 @@ namespace UmdJam.Editor
                 Invoke(machine, "LaunchFlask");
                 Require(Get<List<PickupFlask>>(machine, "spawnedFlasks").Count == 1, "Valid machine launch");
 
+                IEnumerator pooling = CheckPooling(machine, socket);
+                while (pooling.MoveNext())
+                {
+                    yield return pooling.Current;
+                }
+
+                CheckHudTimer(root);
+
                 Material bodyMaterial = players[0].GetComponent<Renderer>().sharedMaterial;
                 Material markerMaterial = players[0].transform.Find("DirectionGizmo").GetComponent<Renderer>().sharedMaterial;
                 Object.Destroy(players[0].gameObject);
@@ -283,6 +291,15 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(CouchPlayerController.ActivePlayers.Count == 0, "Roster cleaned up");
+
+                PickupFlask pooled = Get<List<PickupFlask>>(machine, "spawnedFlasks")[0];
+                Require(pooled.TryPickUp(machine.transform) && pooled.TryThrow(Vector3.up, 1) &&
+                    pooled.TryCollect(1, out _), "Return flask before owner teardown");
+                GameObject machineObject = machine.gameObject;
+                Object.Destroy(machine);
+                yield return null;
+                yield return null;
+                Require(pooled == null && machineObject != null, "Removing spawner component destroys its inactive pool");
             }
             finally
             {
@@ -292,6 +309,87 @@ namespace UmdJam.Editor
                     InputSystem.RemoveDevice(device);
                 }
             }
+        }
+
+        private static IEnumerator CheckPooling(MachineFlaskShooter machine, Transform socket)
+        {
+            List<PickupFlask> active = Get<List<PickupFlask>>(machine, "spawnedFlasks");
+            PickupFlask flask = active[0];
+            Rigidbody body = flask.GetComponent<Rigidbody>();
+            Vector3 originalScale = flask.transform.localScale;
+            Require(flask.TryPickUp(socket) && flask.TryThrow(Vector3.up, 1), "Pool test throw");
+            Require(!flask.TryCollect(2, out _), "Wrong collector cannot return flask");
+            Require(flask.TryCollect(1, out int points) && points == flask.PointValue, "Pooled collection points");
+            Require(!flask.gameObject.activeSelf && active.Count == 0, "Collected flask leaves active cap immediately");
+            Require(!flask.TryCollect(1, out _) && !flask.TryPickUp(socket), "Inactive flask cannot score or be picked up");
+            yield return null;
+            Require(flask != null, "Collected machine flask retained for reuse");
+            Invoke(machine, "LaunchFlask");
+            Require(active.Count == 1 && active[0] == flask, "Machine reuses collected instance");
+            Require(!flask.IsHeld && !flask.IsCollected && flask.LastThrowerPlayerNumber == 0, "Ownership reset");
+            Require(!flask.TryCollect(1, out _), "Old thrower cannot score reused flask");
+            Require(flask.transform.parent == null && flask.transform.localScale == originalScale, "Spawn transform reset");
+            Require(!body.isKinematic && body.detectCollisions && body.useGravity, "Reused dynamic physics");
+            Require(body.interpolation == RigidbodyInterpolation.Interpolate && body.linearVelocity.y > 0, "Reused interpolation and launch");
+            foreach (Collider collider in flask.GetComponentsInChildren<Collider>())
+            {
+                Require(collider.enabled, "Reused collider enabled");
+            }
+
+            bool arrived = false;
+            Require(flask.TryPickUp(socket), "Reused flask pickup");
+            Require(flask.TryThrowDirectly(socket.position + Vector3.up, 1, 0.02f,
+                () => { arrived = flask.TryCollect(1, out _); }), "Direct transfer before reuse");
+            float deadline = Time.realtimeSinceStartup + 3f;
+            while (!arrived && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+            Require(arrived && !flask.gameObject.activeSelf, "Direct transfer returns to pool");
+            Invoke(machine, "LaunchFlask");
+            Require(active[0] == flask && !body.isKinematic && body.detectCollisions, "Direct transfer state reset");
+
+            bool staleCallback = false;
+            Require(flask.TryPickUp(socket) && flask.TryThrowDirectly(socket.position, 1, 0.02f,
+                () => staleCallback = true), "Start cancellable transfer");
+            Require(flask.TryCollect(1, out _), "Collect during transfer");
+            Invoke(machine, "LaunchFlask");
+            float until = Time.time + 0.05f;
+            while (Time.time < until)
+            {
+                yield return null;
+            }
+            Require(!staleCallback && !flask.IsCollected, "Old transfer cannot affect reused flask");
+
+            int cap = Get<int>(machine, "maximumActiveFlasks");
+            Set(machine, "maximumActiveFlasks", 1);
+            Set(machine, "launchTimer", 0f);
+            Invoke(machine, "Update");
+            Require(active.Count == 1, "Active cap still enforced after reuse");
+            Set(machine, "maximumActiveFlasks", cap);
+
+            Require(flask.TryPickUp(socket) && flask.TryThrow(Vector3.up, 1) && flask.TryCollect(1, out _), "Return before external destruction");
+            Object.Destroy(flask.gameObject);
+            yield return null;
+            Invoke(machine, "LaunchFlask");
+            Require(active.Count == 1 && active[0] != null && active[0] != flask, "Destroyed pool entry replaced");
+        }
+
+        private static void CheckHudTimer(VisualElement root)
+        {
+            UmdJam.UI.CouchPlayerHud hud = Object.FindAnyObjectByType<UmdJam.UI.CouchPlayerHud>();
+            Label label = root.Q<Label>("roundTimer");
+            Invoke(hud, "OnRoundTimeChanged", 59.9f);
+            string first = label.text;
+            Invoke(hud, "OnRoundTimeChanged", 59.1f);
+            Require(ReferenceEquals(first, label.text), "Same displayed second retains timer string");
+            Invoke(hud, "OnRoundTimeChanged", 59f);
+            Require(label.text == "00:59", "Timer second boundary");
+            Invoke(hud, "OnRoundTimeChanged", 0f);
+            Require(label.text == "00:00", "Timer reaches zero");
+            hud.enabled = false;
+            hud.enabled = true;
+            Require(Get<int>(hud, "displayedSeconds") == Mathf.CeilToInt(GameManager.Instance.RemainingTime), "Reenabled HUD refreshes timer");
         }
 
         private static void CheckBallistics()

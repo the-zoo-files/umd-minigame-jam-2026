@@ -24,8 +24,24 @@ namespace UmdJam.Gameplay
         };
 
         private readonly List<PickupFlask> spawnedFlasks = new();
+        private readonly Dictionary<Flask, Stack<PickupFlask>> pooledFlasks = new();
         private readonly List<int> quadrantBag = new();
         private float launchTimer = 0.75f;
+
+        private void OnDestroy()
+        {
+            foreach (Stack<PickupFlask> available in pooledFlasks.Values)
+            {
+                foreach (PickupFlask flask in available)
+                {
+                    if (flask != null)
+                    {
+                        Destroy(flask.gameObject);
+                    }
+                }
+            }
+            pooledFlasks.Clear();
+        }
 
         private void Update()
         {
@@ -71,12 +87,58 @@ namespace UmdJam.Gameplay
                 return;
             }
 
-            PickupFlask flask = Instantiate(flaskDefinition.Prefab, spawnPoint.position, rotation);
-            flask.Initialize(flaskDefinition);
+            PickupFlask flask = TakeFlask(flaskDefinition, spawnPoint.position, rotation);
             Rigidbody body = flask.GetComponent<Rigidbody>();
             body.linearVelocity = velocity;
             body.angularVelocity = Random.onUnitSphere * spinSpeed;
             spawnedFlasks.Add(flask);
+        }
+
+        internal void ReturnToPool(PickupFlask flask, Flask definition)
+        {
+            if (!spawnedFlasks.Remove(flask))
+            {
+                return;
+            }
+
+            flask.gameObject.SetActive(false);
+            // Inactive instances are owned by the machine and die with its scene object.
+            flask.transform.SetParent(transform, false);
+            if (!pooledFlasks.TryGetValue(definition, out Stack<PickupFlask> available))
+            {
+                available = new Stack<PickupFlask>();
+                pooledFlasks.Add(definition, available);
+            }
+
+            if (available.Count < maximumActiveFlasks)
+            {
+                available.Push(flask);
+            }
+            else
+            {
+                Destroy(flask.gameObject);
+            }
+        }
+
+        private PickupFlask TakeFlask(Flask definition, Vector3 position, Quaternion rotation)
+        {
+            if (pooledFlasks.TryGetValue(definition, out Stack<PickupFlask> available))
+            {
+                while (available.Count > 0)
+                {
+                    PickupFlask reused = available.Pop();
+                    if (reused != null)
+                    {
+                        reused.ResetForSpawn(definition, position, rotation);
+                        return reused;
+                    }
+                }
+            }
+
+            PickupFlask created = Instantiate(definition.Prefab, position, rotation);
+            created.Initialize(definition);
+            created.BindPool(this, definition);
+            return created;
         }
 
         private Flask TakeRandomFlask()

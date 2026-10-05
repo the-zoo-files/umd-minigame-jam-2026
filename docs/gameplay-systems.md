@@ -124,7 +124,7 @@ Current defaults:
 
 The target follows `transform.forward`, so the direction marker previews the horizontal throw direction.
 
-Each throw records the throwing player's number on the flask. A flask can only score in the matching `Collector_P1` through `Collector_P4` trigger under `Collectors`. A successful collection awards the definition's configured points, raises `CouchPlayerController.ScoreChanged`, and destroys the flask so it cannot score twice. A flask entering another player's collector remains in play.
+Each throw records the throwing player's number on the flask. A flask can only score in the matching `Collector_P1` through `Collector_P4` trigger under `Collectors`. A successful collection awards the definition's configured points, raises `CouchPlayerController.ScoreChanged`, and returns machine-spawned flasks to their pool (or destroys standalone flasks). The collection guard prevents duplicate scoring. A flask entering another player's collector remains in play.
 
 Before calculating a ballistic throw, the controller checks whether the player's position is inside their collector's world-space collider bounds expanded by `directThrowPadding`. When in range, the flask skips dynamic physics and follows a short kinematic transfer to the collector center, then scores normally. `directThrowDuration` controls this transfer time. Throws outside the expanded bounds continue to use the standard ballistic path.
 
@@ -154,4 +154,4 @@ After penalties and score events are applied, the manager sets `Time.timeScale` 
 - Add flask effects inside `PickupFlask` or a new sibling component rather than inside player input code.
 - Use `Ballistics.TryCalculateVelocity` when another system needs trajectories.
 - Move player slots and colors to a configuration asset if designers need to tune them frequently.
-- Replace the active-flask limit with pooling only when profiling or gameplay scale justifies it.
+- Machine flasks are pooled by definition on collection. Reuse resets ownership, bounce count, transform/scale, colliders, Rigidbody state, and any direct-transfer coroutine. The active cap excludes pooled instances; each definition retains at most that cap. New instances are created on demand, so first-use creation still has a cost.

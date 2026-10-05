@@ -10,11 +10,13 @@ namespace UmdJam.UI
     {
         private readonly Dictionary<int, Label> labels = new();
         private Label timerLabel;
+        private int displayedSeconds = -1;
 
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             labels.Clear();
+            displayedSeconds = -1;
             timerLabel = root.Q<Label>("roundTimer");
             if (timerLabel == null)
             {
@@ -81,6 +83,12 @@ namespace UmdJam.UI
             }
 
             int totalSeconds = Mathf.CeilToInt(Mathf.Max(0f, remainingTime));
+            if (totalSeconds == displayedSeconds)
+            {
+                return;
+            }
+
+            displayedSeconds = totalSeconds;
             int minutes = totalSeconds / 60;
             int seconds = totalSeconds % 60;
             timerLabel.text = $"{minutes:00}:{seconds:00}";

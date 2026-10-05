@@ -17,6 +17,10 @@ namespace UmdJam.Gameplay
         private int bounceCount;
         private int lastThrowerPlayerNumber;
         private bool isCollected;
+        private MachineFlaskShooter poolOwner;
+        private Flask poolDefinition;
+        private Vector3 spawnScale;
+        private bool[] spawnColliderStates;
 
         private float MaximumFallSpeed => flask != null ? flask.MaximumFallSpeed : 14f;
         private float ImpactSpinBoost => flask != null ? flask.ImpactSpinBoost : 2.5f;
@@ -33,7 +37,45 @@ namespace UmdJam.Gameplay
         {
             body = GetComponent<Rigidbody>();
             flaskColliders = GetComponentsInChildren<Collider>();
+            spawnScale = transform.localScale;
+            spawnColliderStates = new bool[flaskColliders.Length];
+            for (int i = 0; i < flaskColliders.Length; i++)
+            {
+                spawnColliderStates[i] = flaskColliders[i].enabled;
+            }
             ApplyDefinition();
+        }
+
+        internal void BindPool(MachineFlaskShooter owner, Flask definition)
+        {
+            poolOwner = owner;
+            poolDefinition = definition;
+        }
+
+        internal void ResetForSpawn(Flask definition, Vector3 position, Quaternion rotation)
+        {
+            StopAllCoroutines();
+            IsHeld = false;
+            isCollected = false;
+            currentHoldPoint = null;
+            lastThrowerPlayerNumber = 0;
+            bounceCount = 0;
+            transform.SetParent(null, false);
+            transform.localScale = spawnScale;
+            transform.SetPositionAndRotation(position, rotation);
+            body.isKinematic = false;
+            body.detectCollisions = true;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            Initialize(definition);
+            body.position = position;
+            body.rotation = rotation;
+            for (int i = 0; i < flaskColliders.Length; i++)
+            {
+                flaskColliders[i].enabled = spawnColliderStates[i];
+            }
+            gameObject.SetActive(true);
+            body.WakeUp();
         }
 
         private void LateUpdate()
@@ -183,14 +225,21 @@ namespace UmdJam.Gameplay
         public bool TryCollect(int playerNumber, out int points)
         {
             points = 0;
-            if (isCollected || IsHeld || playerNumber <= 0 || lastThrowerPlayerNumber != playerNumber)
+            if (isCollected || IsHeld || !isActiveAndEnabled || playerNumber <= 0 || lastThrowerPlayerNumber != playerNumber)
             {
                 return false;
             }
 
             isCollected = true;
             points = PointValue;
-            Destroy(gameObject);
+            if (poolOwner != null)
+            {
+                poolOwner.ReturnToPool(this, poolDefinition);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
             return true;
         }
 

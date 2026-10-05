@@ -47,6 +47,12 @@ For unattended validation with the project closed in other Editors:
 
 Do not add `-quit`: the harness exits after leaving Play Mode, with exit code 0 on success and 1 on failure. This complements manual visual and physical-controller checks.
 
+The gameplay harness also checks pooled flask reuse, active-cap accounting, duplicate collection, physics/transform reset, completed and interrupted direct transfers, destroyed pool entries, and HUD timer boundaries/re-enabling. When the working project is already open, run batch validation against a separate copy of `Assets`, `Packages`, and `ProjectSettings`; do not interrupt the user's Editor session.
+
+### Rendering performance
+
+The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The arena uses real-time shadowed lights, soft shadows, and screen-space ambient occlusion. Changing shadow resolution/distance, light coverage, or ambient occlusion can change the image; retain these settings until a graphics-enabled player profile and visual comparison justify a specific adjustment. Headless smoke tests validate gameplay and lifecycle behavior, not GPU performance.
+
 ### Multiplayer changes
 
 - Run **Tools > UmdJam > Run Connection Menu Smoke Tests** for selected-count bounds, simultaneous joining, duplicate/full-slot rejection, disconnect/reconnect readiness, leaving/rejoining, keyboard/mouse plus gamepads, and round-start/end gating. It captures the empty and ready menu into `.utmp/connection-menu-*.png` with a graphics-enabled Editor.
