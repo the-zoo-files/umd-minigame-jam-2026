@@ -202,14 +202,6 @@
     color: rgb(169, 159, 194);
 }
 
-.connection-controls {
-    margin-top: 28px;
-    font-size: 16px;
-    color: rgb(167, 158, 203);
-    -unity-text-align: middle-center;
-    white-space: normal;
-}
-
 .keyboard-keys {
     display: none;
     font-size: 22px;

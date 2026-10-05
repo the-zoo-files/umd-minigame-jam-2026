@@ -26,14 +26,14 @@
                         <ui:Label text="PLAYER 1" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
                         <ui:Label name="connectionDevice1" text="Waiting for player" class="slot-device"/>
-                        <ui:Label name="connectionState1" text="Press A / Enter to join" class="slot-state"/>
+                        <ui:Label name="connectionState1" text="Not connected" class="slot-state"/>
                         <ui:Button name="leavePlayer1" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer2" class="connection-card slot-two is-selected">
                         <ui:Label text="PLAYER 2" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
                         <ui:Label name="connectionDevice2" text="Waiting for player" class="slot-device"/>
-                        <ui:Label name="connectionState2" text="Press A / Enter to join" class="slot-state"/>
+                        <ui:Label name="connectionState2" text="Not connected" class="slot-state"/>
                         <ui:Button name="leavePlayer2" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three">
@@ -53,7 +53,6 @@
                 </ui:VisualElement>
                 <ui:Label name="connectionStatus" text="0 / 2 connected" class="connection-status"/>
                 <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
-                <ui:Label text="← → / D-pad: Players   ·   Enter / A: Join   ·   Space / Menu: Start   ·   Esc / B: Leave" class="connection-controls"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

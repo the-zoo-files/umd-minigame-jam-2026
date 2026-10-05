@@ -145,7 +145,7 @@ namespace UmdJam.UI
                     : (player.currentControlScheme == "Keyboard&Mouse" ? "Keyboard / Mouse" : "Controller");
                 stateLabels[slot].text = isConnected ? "Connected"
                     : player != null ? "Reconnect device"
-                    : isSelected ? "Press A / Enter to join" : "Open slot";
+                    : isSelected ? "Not connected" : "Open slot";
                 leaveButtons[slot].EnableInClassList("is-hidden", player == null);
             }
 
