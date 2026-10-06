@@ -19,6 +19,8 @@ CPU controls are `addCpuN` and `cpuDifficultyN`. Empty selected slots show **Add
 
 Menu wording: **Players**, **Start Game**, **Leave**, **Waiting for player**, **Connected**, **Reconnect device**, **Not selected**, **Open slot**, **Ready to start**, and **{ready} / {selected} ready**. Waiting selected slots show **Not connected**; the menu omits keybind instructions.
 
+A CPU navigation failure displays **CPU cannot reach its collector. Check arena navigation and try again.** The manager owns this failure state and throttles repeated unchanged start attempts to one per unscaled second. A lobby change clears the failure and permits an immediate fresh attempt.
+
 The UXML root is `hudRoot`. Player labels must retain these names:
 
 | Element name | Position |

@@ -371,6 +371,51 @@ namespace UmdJam.Editor
             }
             Require(!staleCallback && !flask.IsCollected, "Old transfer cannot affect reused flask");
 
+            PlayerFlaskCollector collector = PlayerFlaskCollector.GetForPlayer(1);
+            Require(flask.TryPickUp(socket) && collector.TryTransfer(flask, 0.1f), "Collector transfer begins");
+            Require(!flask.TryPickUp(socket), "In-flight transfer cannot be taken by another player");
+            collector.enabled = false;
+            yield return null;
+            yield return null;
+            Require(!body.isKinematic && body.detectCollisions && flask.IsAvailable,
+                "Disabled collector releases transfer to free physics");
+            collector.enabled = true;
+            bool disabledCallback = false;
+            Require(flask.TryPickUp(socket) && flask.TryThrowDirectly(socket.position, 1, 0.1f,
+                () => disabledCallback = true), "Component-disable transfer begins");
+            flask.enabled = false;
+            flask.enabled = true;
+            Require(!body.isKinematic && flask.IsAvailable, "Disable restores physics immediately");
+            // Keep the recovered flask away from player touch triggers while checking that the
+            // cancelled callback cannot fire later; normal contact would correctly pick it up.
+            body.position = new Vector3(0f, 15f, -8f);
+            flask.transform.position = body.position;
+            Physics.SyncTransforms();
+            until = Time.time + 0.15f;
+            while (Time.time < until) yield return null;
+            Require(!disabledCallback && !body.isKinematic && flask.IsAvailable,
+                $"Disabling flask cancels callback and restores physics: callback={disabledCallback}, " +
+                $"kinematic={body.isKinematic}, available={flask.IsAvailable}, held={flask.IsHeld}, " +
+                $"collected={flask.IsCollected}, position={flask.transform.position}, parent={flask.transform.parent}");
+            Require(flask.TryPickUp(socket) && flask.TryThrowDirectly(socket.position, 1, 0f, null),
+                "Zero-duration transfer completes immediately");
+            Require(flask.IsAvailable && !body.isKinematic, "Unconsumed transfer remains recoverable");
+
+            // Warm the cached receiver delegate and lifecycle path before measuring transfer setup.
+            Require(flask.TryPickUp(socket) && collector.TryTransfer(flask, 1f), "Warm transfer setup");
+            flask.enabled = false;
+            flask.enabled = true;
+            long allocationsBefore = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 200; i++)
+            {
+                if (!flask.TryPickUp(socket) || !collector.TryTransfer(flask, 1f))
+                    throw new InvalidOperationException("Repeated transfer setup failed");
+                flask.enabled = false;
+                flask.enabled = true;
+            }
+            Require(GC.GetAllocatedBytesForCurrentThread() == allocationsBefore,
+                "Warmed direct transfer setup/cancellation allocates no managed memory");
+
             int cap = Get<int>(machine, "maximumActiveFlasks");
             Set(machine, "maximumActiveFlasks", 1);
             Set(machine, "launchTimer", 0f);
@@ -412,6 +457,13 @@ namespace UmdJam.Editor
             Vector3 landing = origin + velocity * flightTime + 0.5f * Physics.gravity * flightTime * flightTime;
             Require(Vector3.Distance(landing, target) < 0.001f, "Ballistic landing point");
             Require(Mathf.Abs(velocity.y * velocity.y / 19.62f - 3) < 0.001f, "Ballistic apex");
+            Require(!Ballistics.TryCalculateVelocity(origin, origin + Vector3.right, 0f, out _),
+                "Zero-rise equal-height trajectory has no positive-time solution");
+            Vector3 apexTarget = origin + Vector3.right * 2f + Vector3.up * 3f;
+            Require(Ballistics.TryCalculateVelocity(origin, apexTarget, 3f, out velocity), "Target at apex supported");
+            flightTime = 2f / velocity.x;
+            landing = origin + velocity * flightTime + 0.5f * Physics.gravity * flightTime * flightTime;
+            Require(Vector3.Distance(landing, apexTarget) < 0.001f, "Apex target lands exactly without synthetic fall time");
             Require(!Ballistics.TryCalculateVelocity(origin, target, -1, out _), "Negative apex rejected");
             Require(!Ballistics.TryCalculateVelocity(origin, target, float.NaN, out _), "NaN apex rejected");
             Require(!Ballistics.TryCalculateVelocity(origin, target, float.PositiveInfinity, out _), "Infinite apex rejected");

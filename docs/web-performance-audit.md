@@ -94,3 +94,15 @@ A direct throw creates a captured callback in `CouchPlayerController.ThrowHeldFl
 5. Address small transfer allocations and lifecycle/configuration edge cases with focused tests.
 
 The desktop timing probe does not justify a browser frame-rate guarantee or a rendering-quality reduction by itself.
+
+## Implemented follow-up
+
+- Static navigation now prebakes through Editor APIs and is regenerated/route-validated before builds. Runtime registers compatible data, retains the spawn checks, and falls back to the same shared bake configuration when needed. Teardown preserves shared assets and destroys owned fallback data, including failed registrations.
+- Web build postprocessing installs a canvas resolution budget independent of DPR, bounded by a 1920-pixel longest edge and 1920×1080 pixels. The visible CSS size/aspect ratio and render effects remain unchanged; high-DPI/large displays intentionally use fewer render pixels. Resize/fullscreen/hidden-canvas behavior and build-loader integration have dedicated checks.
+- A fixed 64-entry exact-endpoint cache reuses unchanged return-route distances. Failed and successful static queries are bounded, changed destinations miss the cache, and replacing navigation clears it. Bot cadence and decision weights remain unchanged; scheduling/query throttling was deferred to preserve response timing without browser profiling evidence.
+- Direct transfers now use flask-owned animation state and a cached collector delegate, removing the captured callback and coroutine iterator. Disable/lost-receiver/unconsumed-completion recovery restores free physics; callbacks clear before pooling to protect immediate reuse.
+- Start failures now have lobby feedback and an unscaled retry throttle. Zero-rise/equal-height trajectories reject an impossible positive-time solution, and targets exactly at the apex use the exact fall time.
+
+Real Web build profiling remains required: this Editor installation lacks Web Build Support. Heap sizing, decoded texture residency, shadow/HDR tradeoffs, tab pause policy, and physics catch-up limits remain measurement/product decisions. They were not changed speculatively.
+
+Validation completed in a separate hidden Unity project copy: navigation bake/route validation, CPU suite, gameplay suite, graphical connection-menu suite, build-loader integration checks, and Node canvas-resolution tests all passed. The suites measured zero managed allocations for 200 warmed distance-cache hits and 200 warmed direct-transfer setup/cancellation cycles. These allocation checks exclude scoring/HUD updates and do not measure browser or GPU frame time. Every Play Mode suite returned to Edit Mode before exit.

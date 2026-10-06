@@ -1,7 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Action = System.Action;
+using System;
+using Random = UnityEngine.Random;
 
 namespace UmdJam.Gameplay
 {
@@ -24,6 +24,16 @@ namespace UmdJam.Gameplay
         private Flask poolDefinition;
         private Vector3 spawnScale;
         private bool[] spawnColliderStates;
+        private bool isTransferring;
+        private Vector3 transferOrigin;
+        private Quaternion transferRotation;
+        private Vector3 transferTarget;
+        private float transferDuration;
+        private float transferElapsed;
+        private Action transferCallback;
+        private Action<PickupFlask> transferReceiverCallback;
+        private Behaviour transferReceiver;
+        private bool requiresReceiver;
 
         private float MaximumFallSpeed => flask != null ? flask.MaximumFallSpeed : 14f;
         private float ImpactSpinBoost => flask != null ? flask.ImpactSpinBoost : 2.5f;
@@ -48,7 +58,11 @@ namespace UmdJam.Gameplay
             if (!activeFlasks.Contains(this)) activeFlasks.Add(this);
         }
 
-        private void OnDisable() => activeFlasks.Remove(this);
+        private void OnDisable()
+        {
+            activeFlasks.Remove(this);
+            CancelTransfer();
+        }
 
         private void Awake()
         {
@@ -71,7 +85,7 @@ namespace UmdJam.Gameplay
 
         internal void ResetForSpawn(Flask definition, Vector3 position, Quaternion rotation)
         {
-            StopAllCoroutines();
+            ClearTransfer();
             IsHeld = false;
             isCollected = false;
             currentHoldPoint = null;
@@ -105,9 +119,27 @@ namespace UmdJam.Gameplay
             transform.SetPositionAndRotation(currentHoldPoint.position, currentHoldPoint.rotation);
         }
 
+        private void Update()
+        {
+            if (!isTransferring) return;
+            if (requiresReceiver && (transferReceiver == null || !transferReceiver.isActiveAndEnabled))
+            {
+                CancelTransfer();
+                return;
+            }
+
+            transferElapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(transferElapsed / transferDuration);
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+            transform.SetPositionAndRotation(
+                Vector3.Lerp(transferOrigin, transferTarget, easedProgress),
+                Quaternion.AngleAxis(360f * easedProgress, Vector3.up) * transferRotation);
+            if (transferElapsed >= transferDuration) CompleteTransfer();
+        }
+
         private void FixedUpdate()
         {
-            if (IsHeld || body.linearVelocity.y >= -MaximumFallSpeed)
+            if (IsHeld || body.isKinematic || body.linearVelocity.y >= -MaximumFallSpeed)
             {
                 return;
             }
@@ -139,7 +171,7 @@ namespace UmdJam.Gameplay
 
         public bool TryPickUp(Transform holdPoint)
         {
-            if (isCollected || IsHeld || holdPoint == null || !isActiveAndEnabled ||
+            if (isCollected || IsHeld || isTransferring || holdPoint == null || !isActiveAndEnabled ||
                 holdPoint == transform || holdPoint.IsChildOf(transform))
             {
                 return false;
@@ -194,6 +226,26 @@ namespace UmdJam.Gameplay
 
         public bool TryThrowDirectly(Vector3 target, int playerNumber, float duration, Action onArrived)
         {
+            if (!BeginTransfer(target, playerNumber, duration)) return false;
+            transferCallback = onArrived;
+            if (duration == 0f) CompleteTransfer();
+            return true;
+        }
+
+        public bool TryThrowDirectly(Vector3 target, int playerNumber, float duration,
+            Behaviour receiver, Action<PickupFlask> onArrived)
+        {
+            if (receiver == null || !receiver.isActiveAndEnabled || onArrived == null ||
+                !BeginTransfer(target, playerNumber, duration)) return false;
+            transferReceiver = receiver;
+            requiresReceiver = true;
+            transferReceiverCallback = onArrived;
+            if (duration == 0f) CompleteTransfer();
+            return true;
+        }
+
+        private bool BeginTransfer(Vector3 target, int playerNumber, float duration)
+        {
             if (!IsHeld || !isActiveAndEnabled || !Ballistics.IsFinite(target) ||
                 playerNumber <= 0 || float.IsNaN(duration) || float.IsInfinity(duration) || duration < 0f)
             {
@@ -221,15 +273,12 @@ namespace UmdJam.Gameplay
 
             lastThrowerPlayerNumber = playerNumber;
             IsHeld = false;
-
-            if (duration <= 0f)
-            {
-                transform.position = target;
-                onArrived?.Invoke();
-                return true;
-            }
-
-            StartCoroutine(MoveDirectly(target, duration, onArrived));
+            transferOrigin = transform.position;
+            transferRotation = transform.rotation;
+            transferTarget = target;
+            transferDuration = duration;
+            transferElapsed = 0f;
+            isTransferring = true;
             return true;
         }
 
@@ -248,6 +297,7 @@ namespace UmdJam.Gameplay
             }
 
             isCollected = true;
+            ClearTransfer();
             points = PointValue;
             if (poolOwner != null)
             {
@@ -260,25 +310,52 @@ namespace UmdJam.Gameplay
             return true;
         }
 
-        private IEnumerator MoveDirectly(Vector3 target, float duration, Action onArrived)
+        private void CompleteTransfer()
         {
-            Vector3 origin = transform.position;
-            Quaternion originRotation = transform.rotation;
-            float elapsed = 0f;
-
-            while (elapsed < duration)
+            transform.position = transferTarget;
+            Action callback = transferCallback;
+            Action<PickupFlask> receiverCallback = transferReceiverCallback;
+            // Clear before invoking: collection can pool and immediately reuse this instance.
+            ClearTransfer();
+            try
             {
-                elapsed += Time.deltaTime;
-                float progress = Mathf.Clamp01(elapsed / duration);
-                float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
-                transform.SetPositionAndRotation(
-                    Vector3.Lerp(origin, target, easedProgress),
-                    Quaternion.AngleAxis(360f * easedProgress, Vector3.up) * originRotation);
-                yield return null;
+                callback?.Invoke();
+                receiverCallback?.Invoke(this);
             }
+            finally
+            {
+                if (!isCollected && !IsHeld && !isTransferring && body.isKinematic) RestoreFreePhysics();
+            }
+        }
 
-            transform.position = target;
-            onArrived?.Invoke();
+        private void CancelTransfer()
+        {
+            if (!isTransferring) return;
+            ClearTransfer();
+            RestoreFreePhysics();
+        }
+
+        private void ClearTransfer()
+        {
+            isTransferring = false;
+            transferCallback = null;
+            transferReceiverCallback = null;
+            transferReceiver = null;
+            requiresReceiver = false;
+        }
+
+        private void RestoreFreePhysics()
+        {
+            body.isKinematic = false;
+            body.detectCollisions = true;
+            body.useGravity = freeUseGravity;
+            body.interpolation = freeInterpolation;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            for (int i = 0; i < flaskColliders.Length; i++)
+            {
+                if (flaskColliders[i] != null) flaskColliders[i].enabled = spawnColliderStates[i];
+            }
         }
 
         private void ApplyDefinition()

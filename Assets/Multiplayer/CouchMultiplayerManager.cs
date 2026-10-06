@@ -20,6 +20,9 @@ namespace UmdJam.Multiplayer
         private bool refreshPending;
         private readonly HashSet<CouchPlayerController> leavingPlayers = new();
         private CpuNavigation navigation;
+        private float retryStartAt;
+
+        public string StartFailure { get; private set; }
 
         public int SelectedPlayerCount => selectedPlayerCount;
         public bool IsLobbyOpen => gameManager != null && !gameManager.HasStarted;
@@ -214,6 +217,8 @@ namespace UmdJam.Multiplayer
             {
                 return false;
             }
+            if (Time.unscaledTime < retryStartAt) return false;
+            StartFailure = null;
 
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {
@@ -221,7 +226,10 @@ namespace UmdJam.Multiplayer
                 if (player.IsCpu && (!navigation.Build(gameManager.ArenaBounds, player.GetComponent<CharacterController>()) ||
                     !player.Cpu.CanNavigate()))
                 {
+                    StartFailure = "CPU cannot reach its collector. Check arena navigation and try again.";
+                    retryStartAt = Time.unscaledTime + 1f;
                     Debug.LogError("CPU players need a walkable path from their spawn to their collector.", this);
+                    LobbyChanged?.Invoke();
                     return false;
                 }
             }
@@ -400,6 +408,8 @@ namespace UmdJam.Multiplayer
 
         private void RefreshLobby()
         {
+            StartFailure = null;
+            retryStartAt = 0f;
             bool hasEmptySlot = false;
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {

@@ -51,6 +51,16 @@ The gameplay harness also checks pooled flask reuse, active-cap accounting, dupl
 
 ### Rendering performance
 
+Web builds automatically receive the resolution policy in `Assets/Editor/browser-resolution.js` through `BrowserBuildPostprocessor`. The backing buffer follows the canvas CSS aspect ratio at at most one render pixel per CSS pixel, with a 1920-pixel longest edge and 1920×1080 pixel budget. Browser DPR does not multiply the render buffer; small canvases retain their native CSS resolution. Resize/fullscreen events and `ResizeObserver` update only changed dimensions; hidden canvases retain their last valid buffer. The shader/effects pipeline is unchanged, but high-DPI/large displays intentionally render fewer pixels. This uses Unity's documented `matchWebGLToCanvasSize` option. A custom loader/template must integrate the policy explicitly if it does not use the standard `createUnityInstance(canvas, config, ...)` call; unsupported templates fail the build rather than silently losing the cap.
+
+Run `node tools/tests/browser-resolution.test.cjs` for resolution bounds, hidden/resized/fullscreen canvases, unchanged-buffer reuse, and observer fallback. Run **Tools > UmdJam > Validate Browser Build Integration** (`UmdJam.Editor.BrowserBuildChecks.Run`) for generated-loader integration, repeated processing, and unsupported-template rejection. These checks do not substitute for running a real Web player.
+
+### Navigation baking
+
+**Tools > UmdJam > Bake CPU Navigation** (`UmdJam.Editor.CpuNavigationBaker.Bake`) creates `Assets/Resources/CpuNavigation/Game.asset` through Editor APIs. The build preprocessor regenerates it and checks every spawn-to-collector route before a build. The bake shares `CpuNavigation.CreateBuildSettings` and `CpuNavigation.Bake` with runtime fallback; save authored scene edits before baking. Scene path, bounds, capsule/build settings, and Editor dependency hash guard compatibility. Scene teardown removes only the registration, preserving the shared asset for subsequent rounds.
+
+The CPU suite checks baked-data use across scene restarts, settings mismatch rejection, exact cached path distances, invalid inputs, and zero managed allocations for 200 warmed cache hits. The gameplay suite checks exact apex/zero-rise ballistic boundaries, collector disappearance/disable recovery, interrupted transfer reuse, and zero managed allocations across 200 warmed transfer setup/cancellation cycles.
+
 The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The arena uses real-time shadowed lights, soft shadows, and screen-space ambient occlusion. Changing shadow resolution/distance, light coverage, or ambient occlusion can change the image; retain these settings until a graphics-enabled player profile and visual comparison justify a specific adjustment. Headless smoke tests validate gameplay and lifecycle behavior, not GPU performance.
 
 ### Multiplayer changes

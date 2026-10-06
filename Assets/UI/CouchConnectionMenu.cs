@@ -214,7 +214,8 @@ namespace UmdJam.UI
                 }
             }
 
-            statusLabel.text = multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready";
+            statusLabel.text = multiplayer.StartFailure ??
+                (multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready");
         }
     }
 }

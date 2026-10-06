@@ -195,8 +195,8 @@ namespace UmdJam.Multiplayer
                 if (!TryRoute(intercept, out float distance)) continue;
                 float pickupTime = distance / player.MoveSpeed;
                 float returnDistance = CpuNavigation.PlanarDistance(intercept, collector.ApproachPoint(intercept));
-                if (settings.StrategyWeight > 0f && !navigation.TryPath(intercept, collector.ApproachPoint(intercept),
-                    returnPath, returnCorners, out _, out returnDistance)) continue;
+                if (settings.StrategyWeight > 0f && !navigation.TryDistance(intercept, collector.ApproachPoint(intercept),
+                    returnPath, returnCorners, out returnDistance)) continue;
                 float returnTime = returnDistance / player.MoveSpeed;
                 float cost = 0.3f + pickupTime + returnTime * settings.StrategyWeight;
                 float value = Mathf.Max(0.1f, flask.PointValue);

@@ -63,6 +63,9 @@ namespace UmdJam.Editor
                 Require(lobby.GetParticipant(1).IsCpu && PlayerInput.all.Count == 1 && lobby.CanStart, "Mixed roster ready");
                 Require(!lobby.TryJoin(device), "Duplicate human rejected");
                 Require(lobby.TryStartGame(), "Mixed round starts with navigation");
+                CpuNavigation map = Object.FindAnyObjectByType<CpuNavigation>();
+                Require(map.UsesBakedData, "Compatible prebaked arena is registered instead of rebuilt at runtime");
+                CheckNavigation(map, lobby.GetParticipant(1));
                 Require(!lobby.TrySetPlayerColor(0, 17) && !lobby.TryCyclePlayerColor(1, 1), "Colors lock after start");
                 Require(!lobby.TryAddCpu(0) && !lobby.TrySetCpuDifficulty(1, CpuDifficulty.God), "CPU changes lock during round");
                 Require(root.Q<Label>("player4Name").text.StartsWith("CPU 4"), "HUD identifies CPU");
@@ -108,6 +111,8 @@ namespace UmdJam.Editor
                 Require(lobby.TrySetPlayerCount(4), "CPU-only match selection");
                 for (int i = 0; i < 4; i++) Require(lobby.TryAddCpu(i, (CpuDifficulty)i), "CPU-only roster");
                 Require(PlayerInput.all.Count == 0 && lobby.TryStartGame(), "CPU-only round starts without devices");
+                Require(Object.FindAnyObjectByType<CpuNavigation>().UsesBakedData,
+                    "Scene restart preserves and reuses the shared baked navigation asset");
                 for (int i = 0; i < 4; i++)
                 {
                     Object.Instantiate(prefab, lobby.GetParticipant(i).transform.position, Quaternion.identity);
@@ -132,6 +137,32 @@ namespace UmdJam.Editor
         private static void Require(bool condition, string message)
         {
             if (!condition) throw new InvalidOperationException(message);
+        }
+
+        private static void CheckNavigation(CpuNavigation map, CouchPlayerController player)
+        {
+            UnityEngine.AI.NavMeshPath path = new();
+            Vector3[] corners = new Vector3[64];
+            Vector3 from = player.transform.position;
+            Vector3 home = PlayerFlaskCollector.GetForPlayer(player.PlayerNumber).ApproachPoint(from);
+            Require(map.TryPath(from, home, path, corners, out _, out float expected), "Baseline navigation route");
+            Require(map.TryDistance(from, home, path, corners, out float actual) && Mathf.Abs(expected - actual) < 0.0001f,
+                "Cached route distance matches full path");
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 200; i++)
+            {
+                if (!map.TryDistance(from, home, path, corners, out actual) || actual != expected)
+                    throw new InvalidOperationException("Identical static route cache changed its result");
+            }
+            Require(GC.GetAllocatedBytesForCurrentThread() == before, "Warmed static route cache allocates no managed memory");
+            Require(!map.TryPath(new Vector3(float.NaN, 0f, 0f), home, path, corners, out _, out _) &&
+                !map.TryPath(from, home, null, corners, out _, out _) &&
+                !map.TryPath(from, home, path, new Vector3[1], out _, out _), "Invalid route requests rejected");
+            CpuNavigationBake bake = Resources.Load<CpuNavigationBake>("CpuNavigation/Game");
+            UnityEngine.AI.NavMeshBuildSettings settings = CpuNavigation.CreateBuildSettings(player.GetComponent<CharacterController>());
+            Require(bake.Matches(player.gameObject.scene.path, GameManager.Instance.ArenaBounds, settings), "Bake contract matches capsule and arena");
+            settings.agentRadius += 0.1f;
+            Require(!bake.Matches(player.gameObject.scene.path, GameManager.Instance.ArenaBounds, settings), "Changed capsule rejects bake");
         }
     }
 }

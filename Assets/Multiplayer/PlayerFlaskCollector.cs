@@ -16,8 +16,10 @@ namespace UmdJam.Multiplayer
         private Material collectorMaterial;
         private Color idleColor;
         private int colorProperty;
+        private System.Action<PickupFlask> transferCompleted;
 
         public Vector3 CollectionPoint => collectorCollider.bounds.center;
+        public int PlayerNumber => playerNumber;
 
         public static PlayerFlaskCollector GetForPlayer(int number)
         {
@@ -30,7 +32,9 @@ namespace UmdJam.Multiplayer
 
         public Vector3 ApproachPoint(Vector3 from)
         {
-            Bounds bounds = collectorCollider.bounds;
+            // Editor baking also reads the same destination before Awake has cached the collider.
+            Collider collider = collectorCollider != null ? collectorCollider : GetComponent<Collider>();
+            Bounds bounds = collider.bounds;
             bounds.Expand(Mathf.Max(0f, directThrowPadding - 0.2f) * 2f);
             Vector3 point = bounds.ClosestPoint(from);
             point.y = from.y;
@@ -39,6 +43,7 @@ namespace UmdJam.Multiplayer
 
         private void Awake()
         {
+            transferCompleted = Collect;
             collectorCollider = GetComponent<Collider>();
             if (TryGetComponent(out Renderer collectorRenderer) && collectorRenderer.sharedMaterial != null)
             {
@@ -114,12 +119,18 @@ namespace UmdJam.Multiplayer
 
         public void Collect(PickupFlask flask)
         {
-            if (flask == null || !flask.TryCollect(playerNumber, out int points))
+            if (!isActiveAndEnabled || flask == null || !flask.TryCollect(playerNumber, out int points))
             {
                 return;
             }
 
             CouchPlayerController.AddScore(playerNumber, points);
+        }
+
+        public bool TryTransfer(PickupFlask flask, float duration)
+        {
+            return isActiveAndEnabled && flask != null && flask.TryThrowDirectly(
+                CollectionPoint, playerNumber, duration, this, transferCompleted);
         }
 
         private bool ContainsWithPadding(Vector3 position)

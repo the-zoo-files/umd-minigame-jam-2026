@@ -27,6 +27,7 @@ Assets/
 │   ├── CouchPlayerController.cs
 │   ├── CpuPlayerController.cs
 │   ├── CpuNavigation.cs
+│   ├── CpuNavigationBake.cs
 │   ├── CpuDifficulty.cs
 │   ├── CpuSettings.cs
 │   ├── PlayerColorPalette.cs
@@ -35,6 +36,8 @@ Assets/
 │   └── Player.prefab
 ├── Scenes/
 │   └── Game.unity
+├── Resources/
+│   └── CpuNavigation/Game.asset
 ├── UI/
 │   ├── CouchConnectionMenu.cs
 │   ├── CouchConnectionMenu.uss
@@ -66,7 +69,7 @@ Owns local player joining and per-player behavior.
 - It also owns the selected lobby count, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
 - `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
 - Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
-- `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Difficulty profiles live in its serialized `CpuSettings` fields. `CpuNavigation` builds one scene-owned NavMesh from physical arena geometry before CPU rounds and releases it on teardown; bots still move with `CharacterController`, not a second movement system.
+- `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Difficulty profiles live in its serialized `CpuSettings` fields. `CpuNavigation` registers compatible prebaked navigation before CPU rounds, with runtime baking as a fallback. `CpuNavigationBaker` regenerates and validates the static arena bake before builds using the same capsule configuration and geometry exclusions. Registrations and owned fallback data are released on teardown; shared baked assets are preserved. Bots still move with `CharacterController`, not a second movement system.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
 - `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
 
@@ -174,6 +177,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 - Use static events for the small, global player roster (`PlayerJoined` and `PlayerLeft`).
 - `PickupFlask.ActiveFlasks` tracks enabled flasks across pooling cycles. CPU targeting checks `IsAvailable`, excluding held, collected, inactive, and direct-transfer flasks. Gameplay owns this registry and has no dependency on CPU code.
 - Subscribe in `OnEnable` and unsubscribe in `OnDisable` for listeners.
+- Direct-transfer animation state belongs to `PickupFlask`, including receiver validity, completion, cancellation, and pooling reset. Collectors cache their completion delegate once; throws allocate neither a captured callback nor a coroutine.
 - Avoid global lookups in normal gameplay loops. Editor smoke tests may use object lookup for inspection.
 - Keep authoritative state with its owner: `PickupFlask.IsHeld` and last-thrower identity belong to the flask, while the held reference and score belong to the player controller.
 - `GameManager.RoundTimeChanged` drives the HUD timer without creating a gameplay-to-UI dependency.

@@ -57,6 +57,8 @@ namespace UmdJam.Multiplayer
         public int ColorIndex { get; private set; } = -1;
         public Color PlayerColor => PlayerColorPalette.Get(ColorIndex).Color;
 
+        public static Vector3 GetSpawnPosition(int slot) => SpawnPositions[slot];
+
         public static bool IsColorAvailable(int index, CouchPlayerController owner = null)
         {
             if (!PlayerColorPalette.IsValid(index)) return false;
@@ -314,17 +316,7 @@ namespace UmdJam.Multiplayer
             Vector3 origin = throwPoint != null ? throwPoint.position : flaskToThrow.transform.position;
             if (PlayerFlaskCollector.TryGetNearby(PlayerNumber, transform.position, out PlayerFlaskCollector collector))
             {
-                if (flaskToThrow.TryThrowDirectly(
-                    collector.CollectionPoint,
-                    PlayerNumber,
-                    directThrowDuration,
-                    () =>
-                    {
-                        if (collector != null)
-                        {
-                            collector.Collect(flaskToThrow);
-                        }
-                    }))
+                if (collector.TryTransfer(flaskToThrow, directThrowDuration))
                 {
                     heldFlask = null;
                 }

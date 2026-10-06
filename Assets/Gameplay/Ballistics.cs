@@ -25,7 +25,7 @@ namespace UmdJam.Gameplay
 
             float verticalSpeed = Mathf.Sqrt(2f * gravityMagnitude * apexHeight);
             float riseTime = verticalSpeed / gravityMagnitude;
-            float fallTime = Mathf.Sqrt(2f * Mathf.Max(0.01f, apexY - target.y) / gravityMagnitude);
+            float fallTime = Mathf.Sqrt(2f * (apexY - target.y) / gravityMagnitude);
             float flightTime = riseTime + fallTime;
             if (!IsFinite(flightTime) || flightTime <= 0f)
             {
