@@ -101,7 +101,6 @@ namespace UmdJam.Editor
                     Vector3 destination = collectors[slot].ApproachPoint(spawn);
                     if (!NavMesh.SamplePosition(spawn, out NavMeshHit start, 2f, filter) ||
                         !NavMesh.SamplePosition(destination, out NavMeshHit end, 2f, filter) ||
-                        CpuNavigation.PlanarDistance(destination, end.position) > 0.8f ||
                         !NavMesh.CalculatePath(start.position, end.position, filter, path) ||
                         path.status != NavMeshPathStatus.PathComplete)
                         throw new BuildFailedException($"CPU navigation cannot reach collector {slot + 1} from its spawn.");

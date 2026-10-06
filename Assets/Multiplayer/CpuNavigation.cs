@@ -121,7 +121,6 @@ namespace UmdJam.Multiplayer
             destination.y = from.y;
             if (!IsReady || !NavMesh.SamplePosition(from, out NavMeshHit start, 2f, filter) ||
                 !NavMesh.SamplePosition(destination, out NavMeshHit end, 2f, filter) ||
-                PlanarDistance(destination, end.position) > 0.8f ||
                 !NavMesh.CalculatePath(start.position, end.position, filter, path) ||
                 path.status != NavMeshPathStatus.PathComplete)
             {
