@@ -29,6 +29,11 @@
                         <ui:Label name="connectionState1" text="Not connected" class="slot-state"/>
                         <ui:Button name="addCpu1" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty1" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
+                        <ui:VisualElement name="colorSelector1" class="color-selector is-hidden">
+                            <ui:Button name="previousColor1" text="‹" tooltip="Previous available color" class="color-arrow"/>
+                            <ui:Label name="playerColor1" text="Color" class="color-name"/>
+                            <ui:Button name="nextColor1" text="›" tooltip="Next available color" class="color-arrow"/>
+                        </ui:VisualElement>
                         <ui:Button name="leavePlayer1" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer2" class="connection-card slot-two is-selected">
@@ -38,6 +43,11 @@
                         <ui:Label name="connectionState2" text="Not connected" class="slot-state"/>
                         <ui:Button name="addCpu2" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty2" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
+                        <ui:VisualElement name="colorSelector2" class="color-selector is-hidden">
+                            <ui:Button name="previousColor2" text="‹" tooltip="Previous available color" class="color-arrow"/>
+                            <ui:Label name="playerColor2" text="Color" class="color-name"/>
+                            <ui:Button name="nextColor2" text="›" tooltip="Next available color" class="color-arrow"/>
+                        </ui:VisualElement>
                         <ui:Button name="leavePlayer2" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three">
@@ -47,6 +57,11 @@
                         <ui:Label name="connectionState3" text="Open slot" class="slot-state"/>
                         <ui:Button name="addCpu3" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty3" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
+                        <ui:VisualElement name="colorSelector3" class="color-selector is-hidden">
+                            <ui:Button name="previousColor3" text="‹" tooltip="Previous available color" class="color-arrow"/>
+                            <ui:Label name="playerColor3" text="Color" class="color-name"/>
+                            <ui:Button name="nextColor3" text="›" tooltip="Next available color" class="color-arrow"/>
+                        </ui:VisualElement>
                         <ui:Button name="leavePlayer3" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer4" class="connection-card slot-four">
@@ -56,6 +71,11 @@
                         <ui:Label name="connectionState4" text="Open slot" class="slot-state"/>
                         <ui:Button name="addCpu4" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty4" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
+                        <ui:VisualElement name="colorSelector4" class="color-selector is-hidden">
+                            <ui:Button name="previousColor4" text="‹" tooltip="Previous available color" class="color-arrow"/>
+                            <ui:Label name="playerColor4" text="Color" class="color-name"/>
+                            <ui:Button name="nextColor4" text="›" tooltip="Next available color" class="color-arrow"/>
+                        </ui:VisualElement>
                         <ui:Button name="leavePlayer4" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                 </ui:VisualElement>

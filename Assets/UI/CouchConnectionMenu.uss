@@ -90,7 +90,7 @@
 
 .connection-card {
     width: 23.5%;
-    height: 360px;
+    height: 405px;
     padding: 20px 12px;
     align-items: center;
     background-color: rgba(255, 255, 255, 0.025);
@@ -112,10 +112,6 @@
     border-width: 4px;
 }
 
-.slot-one.is-connected { border-color: var(--player-one); }
-.slot-two.is-connected { border-color: var(--player-two); }
-.slot-three.is-connected { border-color: var(--player-three); }
-.slot-four.is-connected { border-color: var(--player-four); }
 
 .connection-card.is-disconnected {
     border-color: rgb(255, 181, 102);
@@ -232,3 +228,8 @@
 .cpu-icon { display: none; font-size: 26px; -unity-font-style: bold; }
 .is-cpu .cpu-icon { display: flex; }
 .is-cpu .controller-dpad, .is-cpu .controller-buttons { display: none; }
+
+.color-selector { flex-direction: row; align-items: center; justify-content: space-between; width: 190px; height: 34px; margin-top: 12px; border-radius: 12px; flex-shrink: 0; }
+.color-name { font-size: 16px; -unity-font-style: bold; }
+.color-arrow { width: 34px; height: 34px; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; font-size: 26px; }
+.color-arrow:hover { background-color: rgba(127, 127, 127, 0.35); }

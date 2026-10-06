@@ -163,7 +163,7 @@ namespace UmdJam.Editor
                 PickupFlask flaskPrefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Gameplay/FlaskPlaceholder.prefab");
                 List<CouchPlayerController> players = new();
                 Vector3[] spawns = { new(-6, 1, 6), new(6, 1, 6), new(6, 1, -6), new(-6, 1, -6) };
-                Color[] colors = { new(0.22f, 0.78f, 1f), new(1f, 0.38f, 0.46f), new(1f, 0.82f, 0.25f), new(0.46f, 0.9f, 0.42f) };
+                Color[] colors = { PlayerColorPalette.Get(10).Color, PlayerColorPalette.Get(0).Color, PlayerColorPalette.Get(5).Color, PlayerColorPalette.Get(11).Color };
 
                 for (int i = 0; i < 4; i++)
                 {

@@ -1,9 +1,5 @@
 :root {
     --hud-edge: 28px;
-    --player-one: rgb(56, 199, 255);
-    --player-two: rgb(255, 97, 117);
-    --player-three: rgb(255, 209, 64);
-    --player-four: rgb(117, 230, 107);
 }
 
 .hud-root {
@@ -53,23 +49,19 @@
 .player-one {
     top: var(--hud-edge);
     left: var(--hud-edge);
-    border-color: var(--player-one);
 }
 
 .player-two {
     top: var(--hud-edge);
     right: var(--hud-edge);
-    border-color: var(--player-two);
 }
 
 .player-three {
     right: var(--hud-edge);
     bottom: var(--hud-edge);
-    border-color: var(--player-three);
 }
 
 .player-four {
     bottom: var(--hud-edge);
     left: var(--hud-edge);
-    border-color: var(--player-four);
 }

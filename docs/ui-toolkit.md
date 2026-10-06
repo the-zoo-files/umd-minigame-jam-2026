@@ -43,11 +43,10 @@ Global HUD tokens live under `:root`:
 ```css
 :root {
     --hud-edge: 28px;
-    --player-one: rgb(56, 199, 255);
 }
 ```
 
-Use custom properties for values shared by several selectors. Keep player colors aligned with `CouchPlayerController.PlayerColors` until a shared design-token solution is introduced.
+Use custom properties for values shared by several selectors. Player colors come from `PlayerColorPalette` and the controller's `ColorIndex`. Runtime inline border colors reflect that selection; USS controls layout rather than duplicating the palette.
 
 Corner labels use absolute positioning:
 
@@ -110,3 +109,7 @@ When adding a per-player HUD element:
 4. bind state in `CouchPlayerHud` or a focused HUD component;
 5. keep the four corners symmetrical unless the design intentionally differs;
 6. confirm default UI Builder visibility and runtime disconnected behavior.
+
+## Ready-Up Color Selection
+
+Each occupied card exposes `colorSelectorN`, `playerColorN`, `previousColorN`, and `nextColorN`. Arrow buttons call the manager's validated color-cycling operation. The name and swatch share the palette color, with contrasting text for dark/light entries. Empty cards hide the selector. Selection is event-driven and does not add per-frame palette or material work. HUD corner classes define position only; color is applied from participant state.

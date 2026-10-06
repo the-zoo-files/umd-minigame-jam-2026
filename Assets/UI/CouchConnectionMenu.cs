@@ -27,6 +27,12 @@ namespace UmdJam.UI
         private readonly Button[] difficultyButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] cpuCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] difficultyCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly VisualElement[] colorSelectors = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] colorLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] previousColorButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] nextColorButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] previousColorCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] nextColorCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
 
         private void OnEnable()
         {
@@ -55,9 +61,14 @@ namespace UmdJam.UI
                 leaveButtons[slot] = root.Q<Button>($"leavePlayer{number}");
                 cpuButtons[slot] = root.Q<Button>($"addCpu{number}");
                 difficultyButtons[slot] = root.Q<Button>($"cpuDifficulty{number}");
+                colorSelectors[slot] = root.Q($"colorSelector{number}");
+                colorLabels[slot] = root.Q<Label>($"playerColor{number}");
+                previousColorButtons[slot] = root.Q<Button>($"previousColor{number}");
+                nextColorButtons[slot] = root.Q<Button>($"nextColor{number}");
                 if (cards[slot] == null || deviceLabels[slot] == null ||
                     stateLabels[slot] == null || leaveButtons[slot] == null ||
-                    cpuButtons[slot] == null || difficultyButtons[slot] == null)
+                    cpuButtons[slot] == null || difficultyButtons[slot] == null || colorSelectors[slot] == null ||
+                    colorLabels[slot] == null || previousColorButtons[slot] == null || nextColorButtons[slot] == null)
                 {
                     Debug.LogError($"Connection menu is missing elements for Player {number}.", this);
                     enabled = false;
@@ -71,6 +82,10 @@ namespace UmdJam.UI
                 difficultyCallbacks[slot] = () => CycleDifficulty(playerSlot);
                 cpuButtons[slot].clicked += cpuCallbacks[slot];
                 difficultyButtons[slot].clicked += difficultyCallbacks[slot];
+                previousColorCallbacks[slot] = () => multiplayer.TryCyclePlayerColor(playerSlot, -1);
+                nextColorCallbacks[slot] = () => multiplayer.TryCyclePlayerColor(playerSlot, 1);
+                previousColorButtons[slot].clicked += previousColorCallbacks[slot];
+                nextColorButtons[slot].clicked += nextColorCallbacks[slot];
             }
 
             previousButton.clicked += PreviousCount;
@@ -110,6 +125,10 @@ namespace UmdJam.UI
                 if (cpuButtons[slot] != null && cpuCallbacks[slot] != null) cpuButtons[slot].clicked -= cpuCallbacks[slot];
                 if (difficultyButtons[slot] != null && difficultyCallbacks[slot] != null)
                     difficultyButtons[slot].clicked -= difficultyCallbacks[slot];
+                if (previousColorButtons[slot] != null && previousColorCallbacks[slot] != null)
+                    previousColorButtons[slot].clicked -= previousColorCallbacks[slot];
+                if (nextColorButtons[slot] != null && nextColorCallbacks[slot] != null)
+                    nextColorButtons[slot].clicked -= nextColorCallbacks[slot];
             }
         }
 
@@ -178,6 +197,21 @@ namespace UmdJam.UI
                 cpuButtons[slot].EnableInClassList("is-hidden", participant != null || !isSelected);
                 difficultyButtons[slot].EnableInClassList("is-hidden", !isCpu);
                 if (isCpu) difficultyButtons[slot].text = participant.Cpu.Difficulty.ToString();
+                colorSelectors[slot].EnableInClassList("is-hidden", participant == null);
+                StyleColor border = participant != null ? new StyleColor(participant.PlayerColor) : new StyleColor(StyleKeyword.Null);
+                cards[slot].style.borderTopColor = border;
+                cards[slot].style.borderRightColor = border;
+                cards[slot].style.borderBottomColor = border;
+                cards[slot].style.borderLeftColor = border;
+                if (participant != null)
+                {
+                    PlayerColorPalette.Entry color = PlayerColorPalette.Get(participant.ColorIndex);
+                    colorLabels[slot].text = color.Name;
+                    colorSelectors[slot].style.backgroundColor = color.Color;
+                    colorLabels[slot].style.color = color.TextColor;
+                    previousColorButtons[slot].style.color = color.TextColor;
+                    nextColorButtons[slot].style.color = color.TextColor;
+                }
             }
 
             statusLabel.text = multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready";

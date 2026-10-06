@@ -39,6 +39,7 @@ namespace UmdJam.UI
             CouchPlayerController.PlayerJoined += OnPlayerJoined;
             CouchPlayerController.PlayerLeft += OnPlayerLeft;
             CouchPlayerController.ScoreChanged += OnScoreChanged;
+            CouchPlayerController.ColorChanged += OnScoreChanged;
             GameManager.RoundTimeChanged += OnRoundTimeChanged;
 
             foreach (CouchPlayerController player in CouchPlayerController.ActivePlayers)
@@ -57,6 +58,7 @@ namespace UmdJam.UI
             CouchPlayerController.PlayerJoined -= OnPlayerJoined;
             CouchPlayerController.PlayerLeft -= OnPlayerLeft;
             CouchPlayerController.ScoreChanged -= OnScoreChanged;
+            CouchPlayerController.ColorChanged -= OnScoreChanged;
             GameManager.RoundTimeChanged -= OnRoundTimeChanged;
         }
 
@@ -102,6 +104,10 @@ namespace UmdJam.UI
             }
 
             label.text = $"{player.DisplayName}\nScore: {player.Score}";
+            label.style.borderTopColor = player.PlayerColor;
+            label.style.borderRightColor = player.PlayerColor;
+            label.style.borderBottomColor = player.PlayerColor;
+            label.style.borderLeftColor = player.PlayerColor;
             label.EnableInClassList("is-connected", isConnected);
         }
 

@@ -20,8 +20,14 @@ namespace UmdJam.Editor
             PanelSettings panel = null;
             RenderTexture capture = null;
             RenderTexture previousTarget = null;
+            InputSettings settings = InputSystem.settings;
+            InputSettings.BackgroundBehavior originalBackgroundBehavior = settings.backgroundBehavior;
+            InputSettings.EditorInputBehaviorInPlayMode originalEditorBehavior = settings.editorInputBehaviorInPlayMode;
             try
             {
+                // Hidden batch Editors have no focused Game view. Route synthetic devices as in a player.
+                settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+                settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 yield return null;
                 CouchMultiplayerManager lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
                 GameManager round = GameManager.Instance;
@@ -72,6 +78,7 @@ namespace UmdJam.Editor
                 yield return null;
                 Require(!lobby.CanStart, "Disconnected controller blocks start");
                 Require(root.Q<Label>("connectionState2").text == "Reconnect device", "Reconnect prompt");
+                Require(!lobby.TrySetPlayerColor(0, lobby.GetParticipant(1).ColorIndex), "Disconnected player keeps its color");
                 Require(!lobby.TryStartGame(), "Start rejects disconnected controller");
                 InputSystem.AddDevice(second);
                 yield return null;
@@ -97,6 +104,21 @@ namespace UmdJam.Editor
                 Require(lobby.TryJoin(third), "Fourth player joins");
                 Require(lobby.CanStart && PlayerInput.all.Count == 4, "Four players ready");
                 Require(root.Q<Label>("connectionDevice3").text == "Keyboard / Mouse", "Keyboard card");
+                int keyboardColor = lobby.GetParticipant(2).ColorIndex;
+                int firstColor = lobby.GetParticipant(0).ColorIndex;
+                yield return null;
+                yield return null;
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.E));
+                yield return null;
+                yield return null;
+                Require(lobby.GetParticipant(2).ColorIndex != keyboardColor && lobby.GetParticipant(0).ColorIndex == firstColor,
+                    $"Paired keyboard color command (before={keyboardColor}, after={lobby.GetParticipant(2).ColorIndex}, first={lobby.GetParticipant(0).ColorIndex}, paired={PlayerInput.FindFirstPairedToDevice(keyboard)}, pressed={keyboard.eKey.isPressed})");
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Q));
+                yield return null;
+                yield return null;
+                Require(lobby.GetParticipant(2).ColorIndex == keyboardColor, "Previous color command reverses selection");
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
                 yield return null;
                 yield return null;
                 SaveCapture(capture, ".utmp/connection-menu-ready.png");
@@ -138,13 +160,26 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(lobby.GetParticipant(3).Cpu.Difficulty == CpuDifficulty.Hacker, "Difficulty button cycles from Pro");
+                int originalColor = lobby.GetParticipant(3).ColorIndex;
+                using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+                {
+                    submit.target = root.Q<Button>("nextColor4");
+                    root.Q<Button>("nextColor4").SendEvent(submit);
+                }
+                yield return null;
+                yield return null;
+                Require(lobby.GetParticipant(3).ColorIndex != originalColor, "CPU color button changes selection");
+                Require(root.Q<Label>("playerColor4").text == PlayerColorPalette.Get(lobby.GetParticipant(3).ColorIndex).Name,
+                    "Color button label follows selection");
                 yield return null;
                 yield return null;
                 Rect cpuCard = root.Q("connectionPlayer4").worldBound;
                 Rect difficultyBounds = root.Q("cpuDifficulty4").worldBound;
                 Rect removeBounds = root.Q("leavePlayer4").worldBound;
+                Rect colorBounds = root.Q("colorSelector4").worldBound;
                 Require(cpuCard.Contains(difficultyBounds.min) && cpuCard.Contains(difficultyBounds.max) &&
                     cpuCard.Contains(removeBounds.min) && cpuCard.Contains(removeBounds.max), "CPU controls fit card at 4:3");
+                Require(cpuCard.Contains(colorBounds.min) && cpuCard.Contains(colorBounds.max), "Color selector fits 4:3 card");
                 SaveCapture(capture, ".utmp/connection-menu-cpu.png");
                 Require(lobby.TryLeave(3), "Remove CPU before human rejoin");
                 yield return null;
@@ -169,6 +204,8 @@ namespace UmdJam.Editor
             }
             finally
             {
+                settings.editorInputBehaviorInPlayMode = originalEditorBehavior;
+                settings.backgroundBehavior = originalBackgroundBehavior;
                 if (panel != null) panel.targetTexture = previousTarget;
                 if (capture != null)
                 {

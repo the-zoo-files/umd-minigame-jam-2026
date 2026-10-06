@@ -29,6 +29,7 @@ Assets/
 │   ├── CpuNavigation.cs
 │   ├── CpuDifficulty.cs
 │   ├── CpuSettings.cs
+│   ├── PlayerColorPalette.cs
 │   ├── GameManager.cs
 │   ├── PlayerFlaskCollector.cs
 │   └── Player.prefab
@@ -179,7 +180,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 
 ## Current Architectural Limits
 
-- Spawn positions and player colors are static arrays in `CouchPlayerController`.
+- Spawn positions remain a static array in `CouchPlayerController`. `PlayerColorPalette` owns the 18 selectable color names/RGB values and preferred slot defaults. Each controller owns its selected `ColorIndex`; uniqueness is derived from the shared participant roster, with no separate reservation table.
 - Ballistic launches support finite, downward-only gravity; unsupported trajectories fail before changing flask state.
 - The HUD supports exactly four player labels.
 - The active flask cap counts live spawned instances; resting flasks remain active. Collected machine flasks are deactivated and reused by definition, with at most the active cap retained per definition. Inactive instances are children of their machine and are cleaned up with it. Standalone flasks are still destroyed on collection.

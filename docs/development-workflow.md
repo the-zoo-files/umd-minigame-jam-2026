@@ -55,6 +55,8 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Multiplayer changes
 
+- The CPU suite also exercises all 18 colors, duplicate rejection, wraparound/occupied-color skipping, invalid requests, material/marker/HUD updates, pending-removal reservations, released-color reuse, and mixed-roster join fallback. The connection-menu suite checks the actual color-arrow event and its layout at 4:3.
+
 - Run **Tools > UmdJam > Run CPU Smoke Tests** (`UmdJam.Editor.GameplaySmokeTests.RunCpu` in batch mode) for difficulty selection, device-free CPU creation, mixed/CPU-only rosters, removal/start races, obstacle navigation, actual pickup/delivery/scoring at every level, round-end stopping, and scene reload cleanup. Run the existing gameplay and connection-menu suites as regressions after changes to shared player or lobby code.
 
 - Run **Tools > UmdJam > Run Connection Menu Smoke Tests** for selected-count bounds, simultaneous joining, duplicate/full-slot rejection, disconnect/reconnect readiness, leaving/rejoining, keyboard/mouse plus gamepads, and round-start/end gating. It captures the empty and ready menu into `.utmp/connection-menu-*.png` with a graphics-enabled Editor.

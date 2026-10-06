@@ -17,17 +17,10 @@ namespace UmdJam.Multiplayer
             new(-6f, 1f, -6f)
         };
 
-        private static readonly Color[] PlayerColors =
-        {
-            new(0.22f, 0.78f, 1f),
-            new(1f, 0.38f, 0.46f),
-            new(1f, 0.82f, 0.25f),
-            new(0.46f, 0.9f, 0.42f)
-        };
-
         public static event Action<CouchPlayerController> PlayerJoined;
         public static event Action<CouchPlayerController> PlayerLeft;
         public static event Action<CouchPlayerController> ScoreChanged;
+        public static event Action<CouchPlayerController> ColorChanged;
 
         public static IReadOnlyList<CouchPlayerController> ActivePlayers => activePlayers;
 
@@ -61,6 +54,33 @@ namespace UmdJam.Multiplayer
         public bool IsCarrying => heldFlask != null;
         public string DisplayName => IsCpu ? $"CPU {PlayerNumber}" : $"Player {PlayerNumber}";
         public int Score { get; private set; }
+        public int ColorIndex { get; private set; } = -1;
+        public Color PlayerColor => PlayerColorPalette.Get(ColorIndex).Color;
+
+        public static bool IsColorAvailable(int index, CouchPlayerController owner = null)
+        {
+            if (!PlayerColorPalette.IsValid(index)) return false;
+            foreach (CouchPlayerController player in activePlayers)
+            {
+                // Disconnected and pending-leave participants keep their colors until teardown.
+                if (player != null && player != owner && player.ColorIndex == index) return false;
+            }
+            return true;
+        }
+
+        internal bool TrySetColor(int index)
+        {
+            if (PlayerNumber == 0 || !isActiveAndEnabled ||
+                (GameManager.Instance != null && GameManager.Instance.HasStarted) || !IsColorAvailable(index, this))
+            {
+                return false;
+            }
+            if (ColorIndex == index) return true;
+            ColorIndex = index;
+            ApplyColor();
+            ColorChanged?.Invoke(this);
+            return true;
+        }
 
         public void InitializeCpu(int slot, CpuPlayerController driver)
         {
@@ -151,6 +171,20 @@ namespace UmdJam.Multiplayer
             }
 
             PlayerNumber = slot + 1;
+            int preferred = PlayerColorPalette.DefaultForSlot(slot);
+            for (int offset = 0; offset < PlayerColorPalette.Count; offset++)
+            {
+                int candidate = (preferred + offset) % PlayerColorPalette.Count;
+                if (!IsColorAvailable(candidate, this)) continue;
+                ColorIndex = candidate;
+                break;
+            }
+            if (ColorIndex < 0)
+            {
+                Debug.LogError("No unique player color is available.", this);
+                enabled = false;
+                return;
+            }
             PlaceAtSpawn(slot);
             gameObject.name = DisplayName;
 
@@ -158,15 +192,14 @@ namespace UmdJam.Multiplayer
             if (playerRenderer != null)
             {
                 bodyMaterial = playerRenderer.material;
-                bodyMaterial.color = PlayerColors[slot];
             }
 
             Transform directionGizmo = transform.Find("DirectionGizmo");
             if (directionGizmo != null && directionGizmo.TryGetComponent(out Renderer gizmoRenderer))
             {
                 directionMaterial = gizmoRenderer.material;
-                directionMaterial.color = PlayerColors[slot];
             }
+            ApplyColor();
 
             if (!activePlayers.Contains(this))
             {
@@ -187,6 +220,12 @@ namespace UmdJam.Multiplayer
             characterController.enabled = false;
             transform.position = SpawnPositions[slot];
             characterController.enabled = wasEnabled;
+        }
+
+        private void ApplyColor()
+        {
+            if (bodyMaterial != null) bodyMaterial.color = PlayerColor;
+            if (directionMaterial != null) directionMaterial.color = PlayerColor;
         }
 
         private void Update()

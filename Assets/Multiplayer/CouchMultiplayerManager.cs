@@ -108,6 +108,27 @@ namespace UmdJam.Multiplayer
             return true;
         }
 
+        public bool TrySetPlayerColor(int slot, int colorIndex)
+        {
+            CouchPlayerController player = GetParticipant(slot);
+            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || leavingPlayers.Contains(player) ||
+                !player.TrySetColor(colorIndex)) return false;
+            RefreshLobby();
+            return true;
+        }
+
+        public bool TryCyclePlayerColor(int slot, int direction)
+        {
+            CouchPlayerController player = GetParticipant(slot);
+            if (player == null || (direction != -1 && direction != 1)) return false;
+            for (int offset = 1; offset < PlayerColorPalette.Count; offset++)
+            {
+                int index = (player.ColorIndex + direction * offset + PlayerColorPalette.Count) % PlayerColorPalette.Count;
+                if (CouchPlayerController.IsColorAvailable(index, player)) return TrySetPlayerColor(slot, index);
+            }
+            return false;
+        }
+
         public static bool IsConnected(PlayerInput player)
         {
             return player != null && player.isActiveAndEnabled &&
@@ -238,6 +259,8 @@ namespace UmdJam.Multiplayer
             });
             AddButton("Previous", "<Keyboard>/leftArrow", "<Gamepad>/dpad/left", _ => TrySetPlayerCount(selectedPlayerCount - 1));
             AddButton("Next", "<Keyboard>/rightArrow", "<Gamepad>/dpad/right", _ => TrySetPlayerCount(selectedPlayerCount + 1));
+            AddButton("PreviousColor", "<Keyboard>/q", "<Gamepad>/leftShoulder", context => ChangeDeviceColor(context.control.device, -1));
+            AddButton("NextColor", "<Keyboard>/e", "<Gamepad>/rightShoulder", context => ChangeDeviceColor(context.control.device, 1));
             AddButton("Start", "<Keyboard>/space", "<Gamepad>/start", context =>
             {
                 if (PlayerInput.FindFirstPairedToDevice(context.control.device) != null)
@@ -328,6 +351,12 @@ namespace UmdJam.Multiplayer
             RefreshLobby();
             // PlayerInput may announce its join before the controller finishes enabling.
             refreshPending = true;
+        }
+
+        private void ChangeDeviceColor(InputDevice device, int direction)
+        {
+            PlayerInput player = PlayerInput.FindFirstPairedToDevice(device);
+            if (player != null) TryCyclePlayerColor(player.playerIndex, direction);
         }
 
         private void OnPlayerLeft(PlayerInput player)

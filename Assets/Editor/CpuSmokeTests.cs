@@ -34,6 +34,7 @@ namespace UmdJam.Editor
                 }
                 Require(PlayerInput.all.Count == 0, "CPU creation does not register or pair PlayerInput");
                 Require(CouchPlayerController.ActivePlayers.Count == 4 && lobby.CanStart, "CPU roster ready");
+                PlayerColorSmokeTests.Check(lobby, root);
                 lobby.GetParticipant(0).Cpu.enabled = false;
                 Require(!lobby.CanStart, "Disabled CPU driver blocks start");
                 lobby.GetParticipant(0).Cpu.enabled = true;
@@ -46,15 +47,23 @@ namespace UmdJam.Editor
                 yield return null;
                 Require(lobby.GetParticipant(3).transform.position == pausedPosition, "CPU waits in lobby");
 
+                int releasedColor = lobby.GetParticipant(0).ColorIndex;
                 Require(lobby.TryLeave(0) && !lobby.TryStartGame() && !lobby.TryLeave(0), "Pending removal blocks start and duplicate leave");
+                Require(!lobby.TrySetPlayerColor(1, releasedColor) && !lobby.TrySetPlayerColor(0, 1), "Pending leave keeps its color reserved");
                 yield return null;
                 yield return null;
+                Require(CouchPlayerController.IsColorAvailable(releasedColor) && lobby.TrySetPlayerColor(1, releasedColor),
+                    "Leaving releases color after teardown");
+                Require(lobby.TrySetPlayerColor(1, PlayerColorPalette.DefaultForSlot(0)), "Reserve next human's preferred color");
                 device = InputSystem.AddDevice<Gamepad>();
                 Require(lobby.TryJoin(device), "Human joins CPU vacancy");
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(0).devices.Count == 1, "Human pairing preserved");
+                Require(lobby.GetParticipant(0).ColorIndex != lobby.GetParticipant(1).ColorIndex,
+                    "Human joining chooses an unused color when its preferred color is taken");
                 Require(lobby.GetParticipant(1).IsCpu && PlayerInput.all.Count == 1 && lobby.CanStart, "Mixed roster ready");
                 Require(!lobby.TryJoin(device), "Duplicate human rejected");
                 Require(lobby.TryStartGame(), "Mixed round starts with navigation");
+                Require(!lobby.TrySetPlayerColor(0, 17) && !lobby.TryCyclePlayerColor(1, 1), "Colors lock after start");
                 Require(!lobby.TryAddCpu(0) && !lobby.TrySetCpuDifficulty(1, CpuDifficulty.God), "CPU changes lock during round");
                 Require(root.Q<Label>("player4Name").text.StartsWith("CPU 4"), "HUD identifies CPU");
 

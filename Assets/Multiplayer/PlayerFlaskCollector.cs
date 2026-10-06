@@ -13,6 +13,9 @@ namespace UmdJam.Multiplayer
         [SerializeField, Min(0f)] private float directThrowPadding = 2.5f;
 
         private Collider collectorCollider;
+        private Material collectorMaterial;
+        private Color idleColor;
+        private int colorProperty;
 
         public Vector3 CollectionPoint => collectorCollider.bounds.center;
 
@@ -37,10 +40,24 @@ namespace UmdJam.Multiplayer
         private void Awake()
         {
             collectorCollider = GetComponent<Collider>();
+            if (TryGetComponent(out Renderer collectorRenderer) && collectorRenderer.sharedMaterial != null)
+            {
+                Material material = collectorRenderer.sharedMaterial;
+                if (material.HasProperty("_BaseColor") || material.HasProperty("_Color"))
+                {
+                    colorProperty = Shader.PropertyToID(material.HasProperty("_BaseColor") ? "_BaseColor" : "_Color");
+                    collectorMaterial = collectorRenderer.material;
+                    idleColor = collectorMaterial.GetColor(colorProperty);
+                }
+            }
         }
 
         private void OnEnable()
         {
+            CouchPlayerController.PlayerJoined += OnPlayerColorChanged;
+            CouchPlayerController.ColorChanged += OnPlayerColorChanged;
+            CouchPlayerController.PlayerLeft += OnPlayerLeft;
+            foreach (CouchPlayerController player in CouchPlayerController.ActivePlayers) OnPlayerColorChanged(player);
             if (!ActiveCollectors.Contains(this))
             {
                 ActiveCollectors.Add(this);
@@ -49,7 +66,27 @@ namespace UmdJam.Multiplayer
 
         private void OnDisable()
         {
+            CouchPlayerController.PlayerJoined -= OnPlayerColorChanged;
+            CouchPlayerController.ColorChanged -= OnPlayerColorChanged;
+            CouchPlayerController.PlayerLeft -= OnPlayerLeft;
             ActiveCollectors.Remove(this);
+        }
+
+        private void OnDestroy()
+        {
+            if (collectorMaterial != null) Destroy(collectorMaterial);
+        }
+
+        private void OnPlayerColorChanged(CouchPlayerController player)
+        {
+            if (player.PlayerNumber == playerNumber && collectorMaterial != null)
+                collectorMaterial.SetColor(colorProperty, player.PlayerColor);
+        }
+
+        private void OnPlayerLeft(CouchPlayerController player)
+        {
+            if (player.PlayerNumber == playerNumber && collectorMaterial != null)
+                collectorMaterial.SetColor(colorProperty, idleColor);
         }
 
         private void OnTriggerEnter(Collider other)

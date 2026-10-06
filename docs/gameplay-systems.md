@@ -43,6 +43,14 @@ The navigation contract is a static arena with the player prefab's capsule dimen
 
 Do not read devices globally inside a player controller. Always use the actions cloned and paired by that player's `PlayerInput`.
 
+## Player Colors
+
+Every human and CPU has a unique color. Use the arrows beside the color name on an occupied ready-up card to cycle through available colors. Paired humans can also use Q/E on keyboard or the controller shoulder buttons. Colors taken by other participants are skipped. Disconnected players and players pending removal retain their colors until teardown; leaving releases the color. Selection locks when the round starts.
+
+The palette contains the 18 selectable Among Us colors: Red, Blue, Green, Pink, Orange, Yellow, Black, White, Purple, Brown, Cyan, Lime, Maroon, Rose, Banana, Gray, Tan, and Coral. Names and RGB values live only in `PlayerColorPalette`; Fortegreen is a fallback rather than a selectable color and is excluded. Palette reference: [Among Us colors](https://among-us.fandom.com/wiki/Colors).
+
+Preferred slot defaults are Cyan, Red, Yellow, and Lime. Joining chooses the next unused color if a preferred color is occupied. The selected color updates the model, direction marker, lobby border/swatch, HUD border, and the matching collector's material when its shader supports a color property. Color changes reuse existing owned materials; collector material instances are destroyed on teardown. Color choice never changes scoring ownership or player-zone assignments.
+
 ## Player Slots
 
 Players spawn clockwise around the arena:
@@ -52,7 +60,7 @@ Players spawn clockwise around the arena:
 | 1 | `(-6, 1, 6)` | top-left | cyan |
 | 2 | `(6, 1, 6)` | top-right | red |
 | 3 | `(6, 1, -6)` | bottom-right | yellow |
-| 4 | `(-6, 1, -6)` | bottom-left | green |
+| 4 | `(-6, 1, -6)` | bottom-left | lime |
 
 `CouchPlayerController.Awake` caches components. The manager's join callback invokes `InitializePlayer` after Input System pairing and action cloning; `Start` is the fallback for standalone players. Initialization runs once, applying identity, placement, colors, paired actions, and the roster event. Missing required actions or an invalid player index disables the controller with one diagnostic. A missing hold point disables only pickup with one diagnostic. Each player owns and destroys its two instantiated color materials.
 
