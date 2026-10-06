@@ -49,7 +49,15 @@ Every human and CPU has a unique color. Use the arrows beside the color name on 
 
 The palette contains the 18 selectable Among Us colors: Red, Blue, Green, Pink, Orange, Yellow, Black, White, Purple, Brown, Cyan, Lime, Maroon, Rose, Banana, Gray, Tan, and Coral. Names and RGB values live only in `PlayerColorPalette`; Fortegreen is a fallback rather than a selectable color and is excluded. Palette reference: [Among Us colors](https://among-us.fandom.com/wiki/Colors).
 
-Preferred slot defaults are Cyan, Red, Yellow, and Lime. Joining chooses the next unused color if a preferred color is occupied. The selected color updates the model, direction marker, lobby border/swatch, HUD border, and the matching collector's material when its shader supports a color property. Color changes reuse existing owned materials; collector material instances are destroyed on teardown. Color choice never changes scoring ownership or player-zone assignments.
+Preferred slot defaults are Cyan, Red, Yellow, and Lime. Joining chooses the next unused color if a preferred color is occupied. The selected color updates the direction marker, lobby border/swatch, HUD border, and the matching collector's material when its shader supports a color property. The hidden placeholder renderer retains its per-player material as a compatibility contract. Color changes reuse existing owned materials; collector material instances are destroyed on teardown. Color choice never changes scoring ownership or player-zone assignments.
+
+## Character Skins and Animation
+
+Each occupied ready-up card exposes a character selector. Paired humans can also cycle with Z/X on keyboard or D-pad down/up; selection locks when the round starts. `CharacterSkinCatalog.asset` is the authoritative list. Criminal is the default entry and replaces the hidden capsule renderer, while the capsule mesh remains on the prefab as a non-rendering material/color contract for existing systems and validation.
+
+All catalog entries use `Assets/Meshes/Characters/Animations/AllCharacters.controller`. It drives idle, running, running while carrying, and throw states from the controller's `Speed`, `Carrying`, and `Throw` parameters. The clips import as Humanoid, copy the valid avatar from `characterMedium.fbx`, and bake root rotation and translation into their poses. Running clips loop in place; root motion stays disabled because `CharacterController` owns movement. New skins must provide a valid Humanoid avatar in their catalog entry.
+
+The Player prefab owns `CharacterRoot/HoldPoint/ThrowPoint`. When a skin is instantiated, `HoldPoint` is reparented to its Humanoid right-hand bone while preserving the prefab-authored local offset, so designers can tune flask placement without code changes. Pickup preserves the flask's world scale instead of inheriting the imported skeleton's bone scale. The Throw state plays at 1.5x speed. Throw input starts the animation while the flask remains attached; the release event remains about 43% through the clip (0.60 seconds of clip time, about 0.40 seconds of playback), with the controller's serialized normalized release point acting as a fallback if an imported event is skipped.
 
 ## Player Slots
 

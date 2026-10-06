@@ -66,6 +66,8 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(1) != null, "Simultaneous controller joins");
+                Require(root.Q<Label>("playerCharacter1").text == "Criminal" &&
+                    !root.Q("characterSelector1").ClassListContains("is-hidden"), "Default character selector");
                 Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
                     $"Two connected players ready (roster={lobby.CanStart}, button={root.Q<Button>("startGame").enabledSelf})");
                 Require(!lobby.TryJoin(first), "Duplicate join rejected");
@@ -177,9 +179,12 @@ namespace UmdJam.Editor
                 Rect difficultyBounds = root.Q("cpuDifficulty4").worldBound;
                 Rect removeBounds = root.Q("leavePlayer4").worldBound;
                 Rect colorBounds = root.Q("colorSelector4").worldBound;
+                Rect characterBounds = root.Q("characterSelector4").worldBound;
                 Require(cpuCard.Contains(difficultyBounds.min) && cpuCard.Contains(difficultyBounds.max) &&
                     cpuCard.Contains(removeBounds.min) && cpuCard.Contains(removeBounds.max), "CPU controls fit card at 4:3");
                 Require(cpuCard.Contains(colorBounds.min) && cpuCard.Contains(colorBounds.max), "Color selector fits 4:3 card");
+                Require(cpuCard.Contains(characterBounds.min) && cpuCard.Contains(characterBounds.max),
+                    "Character selector fits 4:3 card");
                 SaveCapture(capture, ".utmp/connection-menu-cpu.png");
                 Require(lobby.TryLeave(3), "Remove CPU before human rejoin");
                 yield return null;

@@ -21,6 +21,7 @@ namespace UmdJam.Multiplayer
         public static event Action<CouchPlayerController> PlayerLeft;
         public static event Action<CouchPlayerController> ScoreChanged;
         public static event Action<CouchPlayerController> ColorChanged;
+        public static event Action<CouchPlayerController> CharacterChanged;
 
         public static IReadOnlyList<CouchPlayerController> ActivePlayers => activePlayers;
 
@@ -32,8 +33,11 @@ namespace UmdJam.Multiplayer
         [SerializeField] private float throwApexHeight = 3f;
         [SerializeField] private float throwLandingHeight = 0.35f;
         [SerializeField, Min(0f)] private float directThrowDuration = 0.2f;
+        [SerializeField, Range(0f, 1f)] private float throwReleaseNormalizedTime = 0.43f;
         [SerializeField] private Transform holdPoint;
         [SerializeField] private Transform throwPoint;
+        [SerializeField] private Transform characterRoot;
+        [SerializeField] private CharacterSkinCatalog characterSkins;
 
         private CharacterController characterController;
         private PlayerInput playerInput;
@@ -45,6 +49,16 @@ namespace UmdJam.Multiplayer
         private bool initializationAttempted;
         private bool pickupConfigured;
         private CpuPlayerController cpu;
+        private GameObject activeCharacter;
+        private Animator characterAnimator;
+        private bool throwPending;
+        private bool throwAnimationStarted;
+        private bool characterSetupPending;
+
+        private static readonly int SpeedAnimation = Animator.StringToHash("Speed");
+        private static readonly int CarryingAnimation = Animator.StringToHash("Carrying");
+        private static readonly int ThrowAnimation = Animator.StringToHash("Throw");
+        private static readonly int ThrowState = Animator.StringToHash("Base Layer.Throw");
 
         public int PlayerNumber { get; private set; }
         public bool IsCpu => cpu != null;
@@ -56,6 +70,9 @@ namespace UmdJam.Multiplayer
         public int Score { get; private set; }
         public int ColorIndex { get; private set; } = -1;
         public Color PlayerColor => PlayerColorPalette.Get(ColorIndex).Color;
+        public int CharacterIndex { get; private set; }
+        public int CharacterCount => characterSkins != null ? characterSkins.Count : 0;
+        public string CharacterName => characterSkins?.Get(CharacterIndex)?.DisplayName ?? "Character";
 
         public static Vector3 GetSpawnPosition(int slot) => SpawnPositions[slot];
 
@@ -82,6 +99,20 @@ namespace UmdJam.Multiplayer
             ApplyColor();
             ColorChanged?.Invoke(this);
             return true;
+        }
+
+        internal bool TrySetCharacter(int index)
+        {
+            if (PlayerNumber == 0 || !isActiveAndEnabled || index < 0 || index >= CharacterCount ||
+                (GameManager.Instance != null && GameManager.Instance.HasStarted))
+            {
+                return false;
+            }
+            if (CharacterIndex == index && activeCharacter != null) return true;
+            CharacterIndex = index;
+            ApplyCharacter();
+            CharacterChanged?.Invoke(this);
+            return activeCharacter != null;
         }
 
         public void InitializeCpu(int slot, CpuPlayerController driver)
@@ -166,12 +197,6 @@ namespace UmdJam.Multiplayer
 
         private void InitializeIdentity(int slot)
         {
-            pickupConfigured = holdPoint != null;
-            if (!pickupConfigured)
-            {
-                Debug.LogError("Player prefab is missing its flask hold point. Pickup is disabled.", this);
-            }
-
             PlayerNumber = slot + 1;
             int preferred = PlayerColorPalette.DefaultForSlot(slot);
             for (int offset = 0; offset < PlayerColorPalette.Count; offset++)
@@ -202,6 +227,7 @@ namespace UmdJam.Multiplayer
                 directionMaterial = gizmoRenderer.material;
             }
             ApplyColor();
+            ApplyCharacter();
 
             if (!activePlayers.Contains(this))
             {
@@ -230,8 +256,64 @@ namespace UmdJam.Multiplayer
             if (directionMaterial != null) directionMaterial.color = PlayerColor;
         }
 
+        private void ApplyCharacter()
+        {
+            if (activeCharacter != null)
+            {
+                if (holdPoint != null && holdPoint.IsChildOf(activeCharacter.transform))
+                {
+                    holdPoint.SetParent(characterRoot, false);
+                }
+                activeCharacter.SetActive(false);
+                Destroy(activeCharacter);
+            }
+
+            characterAnimator = null;
+            CharacterSkinCatalog.Entry skin = characterSkins?.Get(CharacterIndex);
+            if (skin?.Prefab == null || characterRoot == null)
+            {
+                pickupConfigured = false;
+                Debug.LogError("Player prefab requires a character root and a valid default character skin.", this);
+                return;
+            }
+
+            activeCharacter = Instantiate(skin.Prefab, characterRoot);
+            activeCharacter.name = skin.DisplayName;
+            Transform visual = activeCharacter.transform;
+            visual.SetLocalPositionAndRotation(skin.LocalPosition, Quaternion.Euler(skin.LocalEulerAngles));
+            visual.localScale = skin.LocalScale;
+
+            foreach (Collider visualCollider in activeCharacter.GetComponentsInChildren<Collider>(true))
+            {
+                visualCollider.enabled = false;
+            }
+
+            if (skin.MaterialOverride != null)
+            {
+                foreach (Renderer visualRenderer in activeCharacter.GetComponentsInChildren<Renderer>(true))
+                {
+                    Material[] materials = visualRenderer.sharedMaterials;
+                    for (int index = 0; index < materials.Length; index++) materials[index] = skin.MaterialOverride;
+                    visualRenderer.sharedMaterials = materials;
+                }
+            }
+
+            characterAnimator = activeCharacter.GetComponent<Animator>();
+            if (characterAnimator == null) characterAnimator = activeCharacter.AddComponent<Animator>();
+            characterAnimator.runtimeAnimatorController = characterSkins.AnimationController;
+            characterAnimator.avatar = skin.Avatar;
+            characterAnimator.applyRootMotion = false;
+            CharacterAnimationEvents animationEvents =
+                characterAnimator.GetComponent<CharacterAnimationEvents>() ??
+                characterAnimator.gameObject.AddComponent<CharacterAnimationEvents>();
+            animationEvents.Configure(this);
+            characterSetupPending = true;
+            ConfigureCharacterRuntime();
+        }
+
         private void Update()
         {
+            if (characterSetupPending) ConfigureCharacterRuntime();
             if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
             {
                 return;
@@ -255,6 +337,11 @@ namespace UmdJam.Multiplayer
 
             Vector3 movement = new(input.x, 0f, input.y);
             characterController.SimpleMove(movement * moveSpeed);
+            if (characterAnimator != null)
+            {
+                characterAnimator.SetFloat(SpeedAnimation, Mathf.Clamp01(input.magnitude));
+                characterAnimator.SetBool(CarryingAnimation, heldFlask != null);
+            }
 
             if (movement.sqrMagnitude > 0.001f)
             {
@@ -267,8 +354,29 @@ namespace UmdJam.Multiplayer
 
             if (attack)
             {
-                ThrowHeldFlask();
+                BeginThrow();
             }
+
+            TryReleasePendingThrow();
+        }
+
+        private void ConfigureCharacterRuntime()
+        {
+            if (characterAnimator == null || !characterAnimator.isActiveAndEnabled) return;
+
+            characterAnimator.Rebind();
+            characterAnimator.SetBool(CarryingAnimation, heldFlask != null);
+            Transform rightHand = characterAnimator.GetBoneTransform(HumanBodyBones.RightHand);
+            pickupConfigured = holdPoint != null && rightHand != null;
+            if (pickupConfigured)
+            {
+                holdPoint.SetParent(rightHand, false);
+            }
+            else
+            {
+                Debug.LogError("Player prefab is missing its flask hold point. Pickup is disabled.", this);
+            }
+            characterSetupPending = false;
         }
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -302,6 +410,7 @@ namespace UmdJam.Multiplayer
             if (flask != null && flask.TryPickUp(holdPoint))
             {
                 heldFlask = flask;
+                if (characterAnimator != null) characterAnimator.SetBool(CarryingAnimation, true);
             }
         }
 
@@ -342,6 +451,54 @@ namespace UmdJam.Multiplayer
                 }
 
                 heldFlask = null;
+            }
+        }
+
+        private void BeginThrow()
+        {
+            if (heldFlask == null || throwPending) return;
+            if (characterAnimator == null || characterAnimator.runtimeAnimatorController == null)
+            {
+                ThrowHeldFlask();
+                return;
+            }
+
+            throwPending = true;
+            throwAnimationStarted = false;
+            characterAnimator.SetBool(CarryingAnimation, false);
+            characterAnimator.ResetTrigger(ThrowAnimation);
+            characterAnimator.SetTrigger(ThrowAnimation);
+        }
+
+        internal void ReleaseFlaskFromAnimation()
+        {
+            if (!throwPending) return;
+            throwPending = false;
+            throwAnimationStarted = false;
+            ThrowHeldFlask();
+        }
+
+        private void TryReleasePendingThrow()
+        {
+            if (!throwPending || characterAnimator == null) return;
+
+            AnimatorStateInfo state = characterAnimator.GetCurrentAnimatorStateInfo(0);
+            if (state.fullPathHash != ThrowState && characterAnimator.IsInTransition(0))
+            {
+                state = characterAnimator.GetNextAnimatorStateInfo(0);
+            }
+
+            if (state.fullPathHash != ThrowState)
+            {
+                // Do not strand a held flask if an interrupted transition skips the event.
+                if (throwAnimationStarted) ReleaseFlaskFromAnimation();
+                return;
+            }
+
+            throwAnimationStarted = true;
+            if (state.normalizedTime >= throwReleaseNormalizedTime)
+            {
+                ReleaseFlaskFromAnimation();
             }
         }
 

@@ -192,8 +192,10 @@ namespace UmdJam.Gameplay
                 flaskCollider.enabled = false;
             }
 
-            transform.SetParent(holdPoint, false);
-            transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+            // Humanoid imports commonly carry a large scale on their bone hierarchy.
+            // Preserve the flask's authored world scale while attaching it to the hand.
+            transform.SetParent(holdPoint, true);
+            transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
             return true;
         }
 

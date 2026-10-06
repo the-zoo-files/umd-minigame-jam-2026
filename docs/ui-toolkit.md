@@ -15,6 +15,8 @@ The document contains `connectionMenu` and `gameplayHud`; the shared `is-hidden`
 
 Connection bindings are `playerCount`, `connectionStatus`, `previousPlayerCount`, `nextPlayerCount`, and `startGame`. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states are `is-selected`, `is-connected`, and `is-disconnected`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list.
 
+Each occupied card also exposes `characterSelectorN`, `playerCharacterN`, `previousCharacterN`, and `nextCharacterN`. The selector reads from the participant's shared `CharacterSkinCatalog`; arrows are disabled when only one skin is installed and selection locks after the round starts.
+
 CPU controls are `addCpuN` and `cpuDifficultyN`. Empty selected slots show **Add CPU**; CPU slots show **Ready**, a cycling difficulty button, and **Remove**. The `is-cpu` class replaces the controller glyph with **CPU**. Readiness counts humans with connected devices and initialized CPUs. The status uses **{ready} / {selected} ready**, and the gameplay HUD names bots **CPU N**. No device bindings are displayed on buttons.
 
 Menu wording: **Players**, **Start Game**, **Leave**, **Waiting for player**, **Connected**, **Reconnect device**, **Not selected**, **Open slot**, **Ready to start**, and **{ready} / {selected} ready**. Waiting selected slots show **Not connected**; the menu omits keybind instructions.

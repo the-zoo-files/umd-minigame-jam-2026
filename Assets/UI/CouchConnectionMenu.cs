@@ -33,6 +33,12 @@ namespace UmdJam.UI
         private readonly Button[] nextColorButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] previousColorCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] nextColorCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly VisualElement[] characterSelectors = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] characterLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] previousCharacterButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] nextCharacterButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] previousCharacterCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] nextCharacterCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
 
         private void OnEnable()
         {
@@ -65,10 +71,16 @@ namespace UmdJam.UI
                 colorLabels[slot] = root.Q<Label>($"playerColor{number}");
                 previousColorButtons[slot] = root.Q<Button>($"previousColor{number}");
                 nextColorButtons[slot] = root.Q<Button>($"nextColor{number}");
+                characterSelectors[slot] = root.Q($"characterSelector{number}");
+                characterLabels[slot] = root.Q<Label>($"playerCharacter{number}");
+                previousCharacterButtons[slot] = root.Q<Button>($"previousCharacter{number}");
+                nextCharacterButtons[slot] = root.Q<Button>($"nextCharacter{number}");
                 if (cards[slot] == null || deviceLabels[slot] == null ||
                     stateLabels[slot] == null || leaveButtons[slot] == null ||
                     cpuButtons[slot] == null || difficultyButtons[slot] == null || colorSelectors[slot] == null ||
-                    colorLabels[slot] == null || previousColorButtons[slot] == null || nextColorButtons[slot] == null)
+                    colorLabels[slot] == null || previousColorButtons[slot] == null || nextColorButtons[slot] == null ||
+                    characterSelectors[slot] == null || characterLabels[slot] == null ||
+                    previousCharacterButtons[slot] == null || nextCharacterButtons[slot] == null)
                 {
                     Debug.LogError($"Connection menu is missing elements for Player {number}.", this);
                     enabled = false;
@@ -86,6 +98,10 @@ namespace UmdJam.UI
                 nextColorCallbacks[slot] = () => multiplayer.TryCyclePlayerColor(playerSlot, 1);
                 previousColorButtons[slot].clicked += previousColorCallbacks[slot];
                 nextColorButtons[slot].clicked += nextColorCallbacks[slot];
+                previousCharacterCallbacks[slot] = () => multiplayer.TryCyclePlayerCharacter(playerSlot, -1);
+                nextCharacterCallbacks[slot] = () => multiplayer.TryCyclePlayerCharacter(playerSlot, 1);
+                previousCharacterButtons[slot].clicked += previousCharacterCallbacks[slot];
+                nextCharacterButtons[slot].clicked += nextCharacterCallbacks[slot];
             }
 
             previousButton.clicked += PreviousCount;
@@ -129,6 +145,10 @@ namespace UmdJam.UI
                     previousColorButtons[slot].clicked -= previousColorCallbacks[slot];
                 if (nextColorButtons[slot] != null && nextColorCallbacks[slot] != null)
                     nextColorButtons[slot].clicked -= nextColorCallbacks[slot];
+                if (previousCharacterButtons[slot] != null && previousCharacterCallbacks[slot] != null)
+                    previousCharacterButtons[slot].clicked -= previousCharacterCallbacks[slot];
+                if (nextCharacterButtons[slot] != null && nextCharacterCallbacks[slot] != null)
+                    nextCharacterButtons[slot].clicked -= nextCharacterCallbacks[slot];
             }
         }
 
@@ -198,6 +218,7 @@ namespace UmdJam.UI
                 difficultyButtons[slot].EnableInClassList("is-hidden", !isCpu);
                 if (isCpu) difficultyButtons[slot].text = participant.Cpu.Difficulty.ToString();
                 colorSelectors[slot].EnableInClassList("is-hidden", participant == null);
+                characterSelectors[slot].EnableInClassList("is-hidden", participant == null);
                 StyleColor border = participant != null ? new StyleColor(participant.PlayerColor) : new StyleColor(StyleKeyword.Null);
                 cards[slot].style.borderTopColor = border;
                 cards[slot].style.borderRightColor = border;
@@ -211,6 +232,10 @@ namespace UmdJam.UI
                     colorLabels[slot].style.color = color.TextColor;
                     previousColorButtons[slot].style.color = color.TextColor;
                     nextColorButtons[slot].style.color = color.TextColor;
+                    characterLabels[slot].text = participant.CharacterName;
+                    bool hasMultipleCharacters = participant.CharacterCount > 1;
+                    previousCharacterButtons[slot].SetEnabled(hasMultipleCharacters);
+                    nextCharacterButtons[slot].SetEnabled(hasMultipleCharacters);
                 }
             }
 

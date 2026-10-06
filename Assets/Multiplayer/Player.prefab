@@ -115,10 +115,43 @@ Transform:
   m_GameObject: {fileID: 3427911777432320566}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 5179201768300483648}
+  m_Father: {fileID: 7548433347814159272}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5734989457453125453
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7548433347814159272}
+  m_Layer: 0
+  m_Name: CharacterRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7548433347814159272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5734989457453125453}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5741056128739604938}
   m_Father: {fileID: 5067787046839767987}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5830941581398093228
@@ -156,9 +189,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5741056128739604938}
   - {fileID: 8808038445576262376}
-  - {fileID: 5179201768300483648}
+  - {fileID: 7548433347814159272}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &648528440687391087
@@ -176,7 +208,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5830941581398093228}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -290,8 +322,12 @@ MonoBehaviour:
   throwDistance: 8
   throwApexHeight: 3
   throwLandingHeight: 0.35
+  directThrowDuration: 0.2
+  throwReleaseNormalizedTime: 0.43
   holdPoint: {fileID: 5741056128739604938}
   throwPoint: {fileID: 5179201768300483648}
+  characterRoot: {fileID: 7548433347814159272}
+  characterSkins: {fileID: 11400000, guid: f4e1c002b8f08fe4796e2c26ea5b8230, type: 2}
 --- !u!136 &2249140422538533623
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -340,9 +376,9 @@ Transform:
   m_GameObject: {fileID: 7216042087169067837}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5067787046839767987}
+  m_Father: {fileID: 5741056128739604938}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

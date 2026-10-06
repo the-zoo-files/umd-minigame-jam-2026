@@ -132,6 +132,21 @@ namespace UmdJam.Multiplayer
             return false;
         }
 
+        public bool TryCyclePlayerCharacter(int slot, int direction)
+        {
+            CouchPlayerController player = GetParticipant(slot);
+            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || leavingPlayers.Contains(player) ||
+                (direction != -1 && direction != 1) || player.CharacterCount == 0)
+            {
+                return false;
+            }
+
+            int index = (player.CharacterIndex + direction + player.CharacterCount) % player.CharacterCount;
+            if (!player.TrySetCharacter(index)) return false;
+            RefreshLobby();
+            return true;
+        }
+
         public static bool IsConnected(PlayerInput player)
         {
             return player != null && player.isActiveAndEnabled &&
@@ -269,6 +284,8 @@ namespace UmdJam.Multiplayer
             AddButton("Next", "<Keyboard>/rightArrow", "<Gamepad>/dpad/right", _ => TrySetPlayerCount(selectedPlayerCount + 1));
             AddButton("PreviousColor", "<Keyboard>/q", "<Gamepad>/leftShoulder", context => ChangeDeviceColor(context.control.device, -1));
             AddButton("NextColor", "<Keyboard>/e", "<Gamepad>/rightShoulder", context => ChangeDeviceColor(context.control.device, 1));
+            AddButton("PreviousCharacter", "<Keyboard>/z", "<Gamepad>/dpad/down", context => ChangeDeviceCharacter(context.control.device, -1));
+            AddButton("NextCharacter", "<Keyboard>/x", "<Gamepad>/dpad/up", context => ChangeDeviceCharacter(context.control.device, 1));
             AddButton("Start", "<Keyboard>/space", "<Gamepad>/start", context =>
             {
                 if (PlayerInput.FindFirstPairedToDevice(context.control.device) != null)
@@ -365,6 +382,12 @@ namespace UmdJam.Multiplayer
         {
             PlayerInput player = PlayerInput.FindFirstPairedToDevice(device);
             if (player != null) TryCyclePlayerColor(player.playerIndex, direction);
+        }
+
+        private void ChangeDeviceCharacter(InputDevice device, int direction)
+        {
+            PlayerInput player = PlayerInput.FindFirstPairedToDevice(device);
+            if (player != null) TryCyclePlayerCharacter(player.playerIndex, direction);
         }
 
         private void OnPlayerLeft(PlayerInput player)

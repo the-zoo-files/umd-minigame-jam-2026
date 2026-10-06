@@ -90,7 +90,7 @@
 
 .connection-card {
     width: 23.5%;
-    height: 405px;
+    height: 455px;
     padding: 20px 12px;
     align-items: center;
     background-color: rgba(255, 255, 255, 0.025);
@@ -233,3 +233,9 @@
 .color-name { font-size: 16px; -unity-font-style: bold; }
 .color-arrow { width: 34px; height: 34px; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; font-size: 26px; }
 .color-arrow:hover { background-color: rgba(127, 127, 127, 0.35); }
+
+.character-selector { flex-direction: row; align-items: center; justify-content: space-between; width: 190px; height: 34px; margin-top: 8px; border-width: 1px; border-color: rgb(139, 127, 179); border-radius: 12px; flex-shrink: 0; }
+.character-name { font-size: 15px; -unity-font-style: bold; }
+.character-arrow { width: 34px; height: 34px; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; color: rgb(222, 216, 242); font-size: 26px; }
+.character-arrow:hover { background-color: rgba(127, 127, 127, 0.35); }
+.character-arrow:disabled { opacity: 0.25; }

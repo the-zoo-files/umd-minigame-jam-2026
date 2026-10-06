@@ -25,6 +25,7 @@ Assets/
 ├── Multiplayer/
 │   ├── CouchMultiplayerManager.cs
 │   ├── CouchPlayerController.cs
+│   ├── CharacterSkinCatalog.cs
 │   ├── CpuPlayerController.cs
 │   ├── CpuNavigation.cs
 │   ├── CpuNavigationBake.cs
@@ -67,7 +68,7 @@ Owns local player joining and per-player behavior.
 
 - `CouchMultiplayerManager` configures `PlayerInputManager` and places joined players.
 - It also owns the selected lobby count, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
-- `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
+- `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, instantiates the selected catalog skin, drives the shared animator, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
 - Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
 - `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Difficulty profiles live in its serialized `CpuSettings` fields. `CpuNavigation` registers compatible prebaked navigation before CPU rounds, with runtime baking as a fallback. `CpuNavigationBaker` regenerates and validates the static arena bake before builds using the same capsule configuration and geometry exclusions. Registrations and owned fallback data are released on teardown; shared baked assets are preserved. Bots still move with `CharacterController`, not a second movement system.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
@@ -110,8 +111,9 @@ Gameplay does not depend on UI or multiplayer types. Keep that boundary when add
 - `PlayerInput`
 - a body-sized trigger collider for touch pickup
 - renderer(s) for player color
-- `HoldPoint`: attachment socket above the head
-- `ThrowPoint`: release socket at the body's front-center
+- an empty `CharacterRoot` transform and a `CharacterSkinCatalog` reference
+- `HoldPoint`: authorable hand-local attachment offset; runtime character setup reparents it to the active Humanoid right hand
+- `ThrowPoint`: release socket parented beneath `HoldPoint`
 - `DirectionGizmo`: forward-facing ground marker
 
 The three child names are runtime contracts because the controller finds the direction marker by name and serialized references point to the two sockets.
@@ -137,7 +139,7 @@ CPU slots instantiate the existing player prefab under an inactive staging paren
 1. `CouchMultiplayerManager.Awake` configures manual `PlayerInputManager` joining. Lobby join actions explicitly assign a device to an empty selected slot; joining is disabled when the selected slots are full or play starts.
 2. The Input System instantiates `Player.prefab` for a keyboard/mouse or gamepad device.
 3. `CouchPlayerController.Awake` caches required components. `PlayerInput.OnEnable` completes identity assignment, device pairing, and action cloning.
-4. `CouchMultiplayerManager.OnPlayerJoined` calls the controller's idempotent `InitializePlayer`, which caches the paired actions, assigns spawn/name/color, and publishes `PlayerJoined`. `Start` provides the same initialization for standalone players. Player numbering is cached for safe teardown notifications.
+4. `CouchMultiplayerManager.OnPlayerJoined` calls the controller's idempotent `InitializePlayer`, which caches the paired actions, assigns spawn/name/color, instantiates the default selected character, and publishes `PlayerJoined`. `Start` provides the same initialization for standalone players. Player numbering is cached for safe teardown notifications.
 5. `CouchPlayerHud` receives the event and applies `is-connected` to the player's label.
 
 Player slots proceed clockwise:
@@ -185,6 +187,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 ## Current Architectural Limits
 
 - Spawn positions remain a static array in `CouchPlayerController`. `PlayerColorPalette` owns the 18 selectable color names/RGB values and preferred slot defaults. Each controller owns its selected `ColorIndex`; uniqueness is derived from the shared participant roster, with no separate reservation table.
+- `CharacterSkinCatalog.asset` owns selectable character prefab/material/placement entries and the shared `AllCharacters.controller`. The Player prefab keeps only an empty `CharacterRoot`; character geometry is instantiated from the catalog so adding a skin does not change the prefab contract.
 - Ballistic launches support finite, downward-only gravity; unsupported trajectories fail before changing flask state.
 - The HUD supports exactly four player labels.
 - The active flask cap counts live spawned instances; resting flasks remain active. Collected machine flasks are deactivated and reused by definition, with at most the active cap retained per definition. Inactive instances are children of their machine and are cleaned up with it. Standalone flasks are still destroyed on collection.

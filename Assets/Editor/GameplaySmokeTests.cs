@@ -176,6 +176,16 @@ namespace UmdJam.Editor
                     Require(player.PlayerNumber == i + 1, "Identity is final in joined callback");
                     Require(Vector3.Distance(player.transform.position, spawns[i]) < 0.001f, "Quadrant spawn");
                     Require(player.GetComponent<Renderer>().sharedMaterial.color == colors[i], "Player color");
+                    Require(!player.GetComponent<Renderer>().enabled, "Placeholder capsule renderer hidden");
+                    Transform character = player.transform.Find("CharacterRoot/Criminal");
+                    Require(character != null, "Default Criminal character instantiated");
+                    Animator animator = character.GetComponent<Animator>();
+                    Require(animator != null && animator.runtimeAnimatorController != null && animator.avatar != null &&
+                        animator.avatar.isHuman && !animator.applyRootMotion,
+                        "Shared in-place character animator");
+                    Transform holdPoint = Get<Transform>(player, "holdPoint");
+                    Require(holdPoint.parent == animator.GetBoneTransform(HumanBodyBones.RightHand),
+                        "Authorable hold point attached to humanoid right hand");
                     Require(Get<InputAction>(player, "moveAction") == input.actions.FindAction("Player/Move"), "Paired move action");
                     Require(Get<InputAction>(player, "attackAction") == input.actions.FindAction("Player/Attack"), "Paired attack action");
                     Require(input.devices.Count == 1 && input.devices[0] == device, "Device isolation");
@@ -205,6 +215,7 @@ namespace UmdJam.Editor
                 Require(!PlayerFlaskCollector.TryGetNearby(1, players[0].transform.position, out _), "Outside direct collection range");
                 Transform socket = Get<Transform>(players[0], "holdPoint");
                 PickupFlask flask = Object.Instantiate(flaskPrefab, players[0].transform.position, Quaternion.identity);
+                Vector3 freeWorldScale = flask.transform.lossyScale;
                 Rigidbody body = flask.GetComponent<Rigidbody>();
                 RigidbodyInterpolation interpolation = body.interpolation;
                 Require(!flask.TryThrow(Vector3.forward), "Cannot throw a free flask");
@@ -221,13 +232,19 @@ namespace UmdJam.Editor
                 Require(!flask.TryThrow(new Vector3(float.NaN, 0, 0)) && flask.IsHeld, "Invalid velocity preserves carry");
                 Require(body.isKinematic && !body.useGravity && !body.detectCollisions, "Held physics");
                 Require(Vector3.Distance(flask.transform.position, socket.position) < 0.001f, "Socket attachment");
+                Require(Vector3.Distance(flask.transform.lossyScale, freeWorldScale) < 0.001f,
+                    "Hand attachment preserves flask world scale");
 
                 Physics.gravity = Vector3.zero;
                 ExpectError("Cannot throw flask: check trajectory settings and downward-only gravity.",
                     () => Invoke(players[0], "ThrowHeldFlask"));
                 Require(flask.IsHeld && Get<PickupFlask>(players[0], "heldFlask") == flask, "Invalid trajectory retains ownership");
                 Physics.gravity = originalGravity;
-                Invoke(players[0], "ThrowHeldFlask");
+                Invoke(players[0], "BeginThrow");
+                Require(flask.IsHeld && Get<PickupFlask>(players[0], "heldFlask") == flask,
+                    "Throw wind-up retains ownership");
+                Get<Animator>(players[0], "characterAnimator").Update(0f);
+                Get<Animator>(players[0], "characterAnimator").Update(0.7f);
                 Require(!flask.IsHeld && Get<PickupFlask>(players[0], "heldFlask") == null, "Throw releases ownership");
                 Require(!body.isKinematic && body.useGravity && body.detectCollisions, "Free physics restored");
                 Require(body.interpolation == interpolation, "Interpolation restored");
