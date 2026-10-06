@@ -2,7 +2,7 @@
 
 ## Controls and Joining
 
-The game starts at a local connection menu. All players share one screen; online play and split-screen are not implemented. Select **Players** (1–4, default 2), connect the selected devices, then choose **Start Game**. The round timer, player movement/pickup, and physics wait until the round starts.
+The game starts at a local connection menu. All players share one screen; online play and split-screen are not implemented. Select **Players** (1–4, default 2), fill the selected slots with connected humans or CPUs, then choose **Start Game**. The round timer, player movement/pickup, and physics wait until the round starts.
 
 - Left/Right arrows or gamepad D-pad: change the selected player count.
 - Enter or gamepad south button (A/Cross): join the lowest available selected slot.
@@ -14,6 +14,25 @@ The game starts at a local connection menu. All players share one screen; online
 Lobby actions are owned by `CouchMultiplayerManager` and use the new Input System. They are separate from paired gameplay actions, allowing unpaired devices to join without driving an existing player. `SelectedPlayerCount` is authoritative in that manager; cards and readiness are derived from the paired `PlayerInput` roster.
 
 The project uses `Assets/InputSystem_Actions.inputactions` and `PlayerInputManager`.
+
+## CPU Players
+
+Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Pro**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
+
+All difficulty levels use the same movement speed, turning, touch pickup, carrying limit, throw action, collectors, and score/penalty rules as humans. Difficulty changes decision quality, not physical stats:
+
+| Difficulty | Planning interval | Reaction delay | Prediction horizon | Decision noise | Strategy weight |
+|---|---:|---:|---:|---:|---:|
+| Noob | 0.65 s | 0.55 s | 0 s | 0.65 | 0 |
+| Pro | 0.30 s | 0.18 s | 0.4 s | 0.20 | 0.3 |
+| Hacker | 0.15 s | 0.06 s | 1.2 s | 0.04 | 0.7 |
+| God | 0.08 s | 0 s | 2 s | 0 | 1 |
+
+`CpuSettings` is the single definition of these tunable parameters. Profiles are serialized on `CpuPlayerController`; the manager uses that component from the player prefab when present, otherwise adds it with the defaults above. The planning interval bounds path-query work; God has no added reaction delay or intentional decision noise.
+
+Bots navigate on a shared NavMesh built from colliders before the round starts, excluding player/flask bodies and triggers. They evaluate available flasks using reachable route length, point value, predicted motion, return route, rival arrival estimates, and round-end penalties. Carrying bots travel to their own collector's direct-throw region and use the normal throw action. Hacker/God stage toward the middle when idle and attempt to leave their own penalty zone if there is insufficient time to deliver. Bots replan when targets become unavailable and steer around players without teleporting.
+
+The navigation contract is a static arena with the player prefab's capsule dimensions. Moving arena geometry requires rebuilding the map. Motion prediction estimates the first floor impact; it does not perfectly simulate future collisions. God is the strongest configured heuristic, not a proven optimal or unbeatable policy. Measure difficulty balance with human playtests; deterministic scoring tests establish correctness, not competitive strength.
 
 - Up to four local players may join.
 - Keyboard/mouse and gamepad devices are supported.

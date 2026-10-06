@@ -22,6 +22,27 @@ namespace UmdJam.Multiplayer
         public bool HasStarted { get; private set; }
         public bool IsPlaying => HasStarted && !IsRoundOver;
 
+        public Bounds ArenaBounds
+        {
+            get
+            {
+                Bounds bounds = playerZones[0].bounds;
+                for (int i = 1; i < playerZones.Length; i++) bounds.Encapsulate(playerZones[i].bounds);
+                return bounds;
+            }
+        }
+
+        public int GetZonePlayer(Vector3 position)
+        {
+            for (int i = 0; i < playerZones.Length; i++)
+            {
+                if (playerZones[i].bounds.Contains(position)) return i + 1;
+            }
+            return 0;
+        }
+
+        public Bounds GetPlayerZone(int playerNumber) => playerZones[playerNumber - 1].bounds;
+
         public bool TryStartRound()
         {
             if (!isActiveAndEnabled || HasStarted || IsRoundOver)
@@ -115,13 +136,10 @@ namespace UmdJam.Multiplayer
                     continue;
                 }
 
-                for (int zoneIndex = 0; zoneIndex < playerZones.Length; zoneIndex++)
+                int zonePlayer = GetZonePlayer(flask.transform.position);
+                if (zonePlayer > 0)
                 {
-                    if (playerZones[zoneIndex].bounds.Contains(flask.transform.position))
-                    {
-                        penalties[zoneIndex] += flask.PointValue;
-                        break;
-                    }
+                    penalties[zonePlayer - 1] += flask.PointValue;
                 }
             }
 

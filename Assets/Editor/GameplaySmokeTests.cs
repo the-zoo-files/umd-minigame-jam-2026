@@ -33,6 +33,7 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run Gameplay Smoke Tests")]
         public static void Run()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.Cpu", false);
             SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", false);
             // Batch executeMethod runs before delayed Editor startup work (such as search indexing).
             // Start the measured Play Mode session after those callbacks have completed.
@@ -42,7 +43,15 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run Connection Menu Smoke Tests")]
         public static void RunConnectionMenu()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.Cpu", false);
             SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
+        [MenuItem("Tools/UmdJam/Run CPU Smoke Tests")]
+        public static void RunCpu()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.Cpu", true);
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
@@ -72,7 +81,8 @@ namespace UmdJam.Editor
 
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                exercise = SessionState.GetBool("UmdJam.SmokeTests.ConnectionMenu", false)
+                exercise = SessionState.GetBool("UmdJam.SmokeTests.Cpu", false) ? CpuSmokeTests.Exercise() :
+                    SessionState.GetBool("UmdJam.SmokeTests.ConnectionMenu", false)
                     ? ConnectionMenuSmokeTests.Exercise() : Exercise();
             }
             else if (state == PlayModeStateChange.EnteredEditMode)

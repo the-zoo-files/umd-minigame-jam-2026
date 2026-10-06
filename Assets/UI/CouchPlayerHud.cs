@@ -101,7 +101,7 @@ namespace UmdJam.UI
                 return;
             }
 
-            label.text = $"Player {player.PlayerNumber}\nScore: {player.Score}";
+            label.text = $"{player.DisplayName}\nScore: {player.Score}";
             label.EnableInClassList("is-connected", isConnected);
         }
 

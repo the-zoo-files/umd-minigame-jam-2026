@@ -16,6 +16,24 @@ namespace UmdJam.Multiplayer
 
         public Vector3 CollectionPoint => collectorCollider.bounds.center;
 
+        public static PlayerFlaskCollector GetForPlayer(int number)
+        {
+            foreach (PlayerFlaskCollector candidate in ActiveCollectors)
+            {
+                if (candidate != null && candidate.playerNumber == number) return candidate;
+            }
+            return null;
+        }
+
+        public Vector3 ApproachPoint(Vector3 from)
+        {
+            Bounds bounds = collectorCollider.bounds;
+            bounds.Expand(Mathf.Max(0f, directThrowPadding - 0.2f) * 2f);
+            Vector3 point = bounds.ClosestPoint(from);
+            point.y = from.y;
+            return point;
+        }
+
         private void Awake()
         {
             collectorCollider = GetComponent<Collider>();

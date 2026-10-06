@@ -51,10 +51,31 @@ namespace UmdJam.Multiplayer
         private Material directionMaterial;
         private bool initializationAttempted;
         private bool pickupConfigured;
+        private CpuPlayerController cpu;
 
         public int PlayerNumber { get; private set; }
-        public string DisplayName => $"Player {PlayerNumber}";
+        public bool IsCpu => cpu != null;
+        public CpuPlayerController Cpu => cpu;
+        public PlayerInput HumanInput => IsCpu ? null : playerInput;
+        public float MoveSpeed => moveSpeed;
+        public bool IsCarrying => heldFlask != null;
+        public string DisplayName => IsCpu ? $"CPU {PlayerNumber}" : $"Player {PlayerNumber}";
         public int Score { get; private set; }
+
+        public void InitializeCpu(int slot, CpuPlayerController driver)
+        {
+            if (initializationAttempted || slot < 0 || slot >= SpawnPositions.Length || driver == null)
+            {
+                return;
+            }
+
+            initializationAttempted = true;
+            cpu = driver;
+            characterController = GetComponent<CharacterController>();
+            playerInput = GetComponent<PlayerInput>();
+            playerInput.enabled = false;
+            InitializeIdentity(slot);
+        }
 
         public static void AddScore(int playerNumber, int points)
         {
@@ -118,13 +139,17 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
+            InitializeIdentity(playerInput.playerIndex);
+        }
+
+        private void InitializeIdentity(int slot)
+        {
             pickupConfigured = holdPoint != null;
             if (!pickupConfigured)
             {
                 Debug.LogError("Player prefab is missing its flask hold point. Pickup is disabled.", this);
             }
 
-            int slot = playerInput.playerIndex;
             PlayerNumber = slot + 1;
             PlaceAtSpawn(slot);
             gameObject.name = DisplayName;
@@ -171,12 +196,22 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
-            if (moveAction == null || attackAction == null)
+            Vector2 input;
+            bool attack;
+            if (cpu != null)
+            {
+                cpu.ReadCommand(out input, out attack);
+            }
+            else if (moveAction != null && attackAction != null)
+            {
+                input = moveAction.ReadValue<Vector2>();
+                attack = attackAction.WasPressedThisFrame();
+            }
+            else
             {
                 return;
             }
 
-            Vector2 input = moveAction.ReadValue<Vector2>();
             Vector3 movement = new(input.x, 0f, input.y);
             characterController.SimpleMove(movement * moveSpeed);
 
@@ -189,7 +224,7 @@ namespace UmdJam.Multiplayer
                     turnSpeed * Time.deltaTime);
             }
 
-            if (attackAction.WasPressedThisFrame())
+            if (attack)
             {
                 ThrowHeldFlask();
             }

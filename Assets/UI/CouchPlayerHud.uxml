@@ -24,34 +24,42 @@
                 <ui:VisualElement class="connection-cards">
                     <ui:VisualElement name="connectionPlayer1" class="connection-card slot-one is-selected">
                         <ui:Label text="PLAYER 1" class="slot-title"/>
-                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
                         <ui:Label name="connectionDevice1" text="Waiting for player" class="slot-device"/>
                         <ui:Label name="connectionState1" text="Not connected" class="slot-state"/>
+                        <ui:Button name="addCpu1" text="Add CPU" class="slot-leave"/>
+                        <ui:Button name="cpuDifficulty1" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:Button name="leavePlayer1" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer2" class="connection-card slot-two is-selected">
                         <ui:Label text="PLAYER 2" class="slot-title"/>
-                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
                         <ui:Label name="connectionDevice2" text="Waiting for player" class="slot-device"/>
                         <ui:Label name="connectionState2" text="Not connected" class="slot-state"/>
+                        <ui:Button name="addCpu2" text="Add CPU" class="slot-leave"/>
+                        <ui:Button name="cpuDifficulty2" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:Button name="leavePlayer2" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three">
                         <ui:Label text="PLAYER 3" class="slot-title"/>
-                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
                         <ui:Label name="connectionDevice3" text="Not selected" class="slot-device"/>
                         <ui:Label name="connectionState3" text="Open slot" class="slot-state"/>
+                        <ui:Button name="addCpu3" text="Add CPU" class="slot-leave"/>
+                        <ui:Button name="cpuDifficulty3" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:Button name="leavePlayer3" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                     <ui:VisualElement name="connectionPlayer4" class="connection-card slot-four">
                         <ui:Label text="PLAYER 4" class="slot-title"/>
-                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/></ui:VisualElement>
+                        <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
                         <ui:Label name="connectionDevice4" text="Not selected" class="slot-device"/>
                         <ui:Label name="connectionState4" text="Open slot" class="slot-state"/>
+                        <ui:Button name="addCpu4" text="Add CPU" class="slot-leave"/>
+                        <ui:Button name="cpuDifficulty4" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:Button name="leavePlayer4" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="connectionStatus" text="0 / 2 connected" class="connection-status"/>
+                <ui:Label name="connectionStatus" text="0 / 2 ready" class="connection-status"/>
                 <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
             </ui:VisualElement>
         </ui:VisualElement>

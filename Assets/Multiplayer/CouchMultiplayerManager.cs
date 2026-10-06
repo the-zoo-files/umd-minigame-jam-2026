@@ -18,7 +18,8 @@ namespace UmdJam.Multiplayer
         private PlayerInputManager manager;
         private InputActionMap lobbyActions;
         private bool refreshPending;
-        private readonly HashSet<PlayerInput> leavingPlayers = new();
+        private readonly HashSet<CouchPlayerController> leavingPlayers = new();
+        private CpuNavigation navigation;
 
         public int SelectedPlayerCount => selectedPlayerCount;
         public bool IsLobbyOpen => gameManager != null && !gameManager.HasStarted;
@@ -33,7 +34,7 @@ namespace UmdJam.Multiplayer
 
                 for (int slot = 0; slot < selectedPlayerCount; slot++)
                 {
-                    if (!IsConnected(GetPlayer(slot)))
+                    if (!IsReady(GetParticipant(slot)))
                     {
                         return false;
                     }
@@ -45,7 +46,66 @@ namespace UmdJam.Multiplayer
 
         public PlayerInput GetPlayer(int slot)
         {
-            return PlayerInput.GetPlayerByIndex(slot);
+            return GetParticipant(slot)?.HumanInput;
+        }
+
+        public CouchPlayerController GetParticipant(int slot)
+        {
+            if (slot < 0 || slot >= MaximumPlayers) return null;
+            for (int i = 0; i < CouchPlayerController.ActivePlayers.Count; i++)
+            {
+                CouchPlayerController player = CouchPlayerController.ActivePlayers[i];
+                if (player != null && player.PlayerNumber == slot + 1) return player;
+            }
+            return null;
+        }
+
+        public static bool IsReady(CouchPlayerController player)
+        {
+            return player != null && player.isActiveAndEnabled &&
+                (player.IsCpu ? player.Cpu.isActiveAndEnabled : IsConnected(player.HumanInput));
+        }
+
+        public bool TryAddCpu(int slot, CpuDifficulty difficulty = CpuDifficulty.Pro)
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen || slot < 0 || slot >= selectedPlayerCount ||
+                difficulty < CpuDifficulty.Noob || difficulty > CpuDifficulty.God || GetParticipant(slot) != null ||
+                leavingPlayers.Count > 0 || manager.playerPrefab == null)
+            {
+                return false;
+            }
+
+            // Instantiate under an inactive parent so PlayerInput never enables or pairs devices.
+            GameObject staging = new("CPU staging");
+            staging.SetActive(false);
+            GameObject avatar = Instantiate(manager.playerPrefab, staging.transform);
+            PlayerInput input = avatar.GetComponent<PlayerInput>();
+            CouchPlayerController controller = avatar.GetComponent<CouchPlayerController>();
+            if (input == null || controller == null)
+            {
+                Destroy(staging);
+                return false;
+            }
+            input.enabled = false;
+            if (navigation == null) navigation = gameObject.AddComponent<CpuNavigation>();
+            if (!avatar.TryGetComponent(out CpuPlayerController cpu)) cpu = avatar.AddComponent<CpuPlayerController>();
+            cpu.enabled = true;
+            controller.InitializeCpu(slot, cpu);
+            cpu.Configure(controller, navigation, gameManager, difficulty);
+            avatar.transform.SetParent(null, true);
+            avatar.SetActive(true);
+            Destroy(staging);
+            RefreshLobby();
+            return true;
+        }
+
+        public bool TrySetCpuDifficulty(int slot, CpuDifficulty difficulty)
+        {
+            CouchPlayerController player = GetParticipant(slot);
+            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || !player.IsCpu ||
+                leavingPlayers.Contains(player) || !player.Cpu.SetDifficulty(difficulty)) return false;
+            RefreshLobby();
+            return true;
         }
 
         public static bool IsConnected(PlayerInput player)
@@ -63,7 +123,7 @@ namespace UmdJam.Multiplayer
 
             for (int slot = count; slot < MaximumPlayers; slot++)
             {
-                if (GetPlayer(slot) != null)
+                if (GetParticipant(slot) != null)
                 {
                     return false;
                 }
@@ -105,7 +165,7 @@ namespace UmdJam.Multiplayer
 
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {
-                if (GetPlayer(slot) == null)
+                if (GetParticipant(slot) == null)
                 {
                     return manager.JoinPlayer(slot, pairWithDevice: device) != null;
                 }
@@ -116,7 +176,7 @@ namespace UmdJam.Multiplayer
 
         public bool TryLeave(int slot)
         {
-            PlayerInput player = GetPlayer(slot);
+            CouchPlayerController player = GetParticipant(slot);
             if (!isActiveAndEnabled || !IsLobbyOpen || player == null || !leavingPlayers.Add(player))
             {
                 return false;
@@ -129,10 +189,22 @@ namespace UmdJam.Multiplayer
 
         public bool TryStartGame()
         {
-            if (!CanStart || !gameManager.TryStartRound())
+            if (!CanStart)
             {
                 return false;
             }
+
+            for (int slot = 0; slot < selectedPlayerCount; slot++)
+            {
+                CouchPlayerController player = GetParticipant(slot);
+                if (player.IsCpu && (!navigation.Build(gameManager.ArenaBounds, player.GetComponent<CharacterController>()) ||
+                    !player.Cpu.CanNavigate()))
+                {
+                    Debug.LogError("CPU players need a walkable path from their spawn to their collector.", this);
+                    return false;
+                }
+            }
+            if (!gameManager.TryStartRound()) return false;
 
             manager.DisableJoining();
             lobbyActions.Disable();
@@ -184,6 +256,7 @@ namespace UmdJam.Multiplayer
 
             manager.onPlayerJoined += OnPlayerJoined;
             manager.onPlayerLeft += OnPlayerLeft;
+            CouchPlayerController.PlayerLeft += OnParticipantLeft;
             leavingPlayers.RemoveWhere(player => player == null || !player.isActiveAndEnabled);
             foreach (PlayerInput player in PlayerInput.all)
             {
@@ -209,6 +282,7 @@ namespace UmdJam.Multiplayer
             manager.DisableJoining();
             manager.onPlayerJoined -= OnPlayerJoined;
             manager.onPlayerLeft -= OnPlayerLeft;
+            CouchPlayerController.PlayerLeft -= OnParticipantLeft;
             foreach (PlayerInput player in PlayerInput.all)
             {
                 UnsubscribeDeviceEvents(player);
@@ -237,6 +311,12 @@ namespace UmdJam.Multiplayer
 
         private void OnPlayerJoined(PlayerInput player)
         {
+            CouchPlayerController occupant = GetParticipant(player.playerIndex);
+            if (occupant != null && occupant.gameObject != player.gameObject)
+            {
+                Destroy(player.gameObject);
+                return;
+            }
             if (!player.TryGetComponent(out CouchPlayerController controller))
             {
                 Debug.LogError("Joined player is missing a CouchPlayerController.", player);
@@ -246,13 +326,20 @@ namespace UmdJam.Multiplayer
             controller.InitializePlayer();
             SubscribeDeviceEvents(player);
             RefreshLobby();
+            // PlayerInput may announce its join before the controller finishes enabling.
+            refreshPending = true;
         }
 
         private void OnPlayerLeft(PlayerInput player)
         {
-            leavingPlayers.Remove(player);
             UnsubscribeDeviceEvents(player);
-            RefreshLobby();
+            refreshPending = true;
+        }
+
+        private void OnParticipantLeft(CouchPlayerController player)
+        {
+            leavingPlayers.Remove(player);
+            refreshPending = true;
         }
 
         private void SubscribeDeviceEvents(PlayerInput player)
@@ -284,7 +371,12 @@ namespace UmdJam.Multiplayer
 
         private void RefreshLobby()
         {
-            if (IsLobbyOpen && PlayerInput.all.Count < selectedPlayerCount)
+            bool hasEmptySlot = false;
+            for (int slot = 0; slot < selectedPlayerCount; slot++)
+            {
+                if (GetParticipant(slot) == null) hasEmptySlot = true;
+            }
+            if (IsLobbyOpen && hasEmptySlot)
             {
                 manager.EnableJoining();
             }

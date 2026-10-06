@@ -60,7 +60,8 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(1) != null, "Simultaneous controller joins");
-                Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf, "Two connected players ready");
+                Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
+                    $"Two connected players ready (roster={lobby.CanStart}, button={root.Q<Button>("startGame").enabledSelf})");
                 Require(!lobby.TryJoin(first), "Duplicate join rejected");
                 Require(!lobby.TryJoin(third), "Unselected slot cannot join");
                 Require(!lobby.TrySetPlayerCount(1), "Count cannot remove a joined slot");
@@ -117,6 +118,38 @@ namespace UmdJam.Editor
                     Rect cardBounds = root.Q($"connectionPlayer{slot}").worldBound;
                     Require(menuBounds.Contains(cardBounds.min) && menuBounds.Contains(cardBounds.max), "Card fits 4:3");
                 }
+
+                Require(lobby.TryLeave(3), "Replace human with CPU for menu check");
+                yield return null;
+                yield return null;
+                using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+                {
+                    submit.target = root.Q<Button>("addCpu4");
+                    root.Q<Button>("addCpu4").SendEvent(submit);
+                }
+                yield return null;
+                yield return null;
+                Require(lobby.GetParticipant(3) != null && lobby.GetParticipant(3).IsCpu, "Add CPU button");
+                using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
+                {
+                    submit.target = root.Q<Button>("cpuDifficulty4");
+                    root.Q<Button>("cpuDifficulty4").SendEvent(submit);
+                }
+                yield return null;
+                yield return null;
+                Require(lobby.GetParticipant(3).Cpu.Difficulty == CpuDifficulty.Hacker, "Difficulty button cycles from Pro");
+                yield return null;
+                yield return null;
+                Rect cpuCard = root.Q("connectionPlayer4").worldBound;
+                Rect difficultyBounds = root.Q("cpuDifficulty4").worldBound;
+                Rect removeBounds = root.Q("leavePlayer4").worldBound;
+                Require(cpuCard.Contains(difficultyBounds.min) && cpuCard.Contains(difficultyBounds.max) &&
+                    cpuCard.Contains(removeBounds.min) && cpuCard.Contains(removeBounds.max), "CPU controls fit card at 4:3");
+                SaveCapture(capture, ".utmp/connection-menu-cpu.png");
+                Require(lobby.TryLeave(3), "Remove CPU before human rejoin");
+                yield return null;
+                yield return null;
+                Require(lobby.TryJoin(third) && lobby.CanStart, "Human can rejoin former CPU slot");
 
                 InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.Start));
                 yield return null;

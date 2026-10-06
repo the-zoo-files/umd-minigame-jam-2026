@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Action = System.Action;
 
@@ -7,6 +8,8 @@ namespace UmdJam.Gameplay
     [RequireComponent(typeof(Rigidbody), typeof(Collider))]
     public sealed class PickupFlask : MonoBehaviour
     {
+        private static readonly List<PickupFlask> activeFlasks = new();
+        public static IReadOnlyList<PickupFlask> ActiveFlasks => activeFlasks;
         [SerializeField] private Flask flask;
 
         private Rigidbody body;
@@ -32,6 +35,20 @@ namespace UmdJam.Gameplay
         public bool IsCollected => isCollected;
         public int LastThrowerPlayerNumber => lastThrowerPlayerNumber;
         public int PointValue => flask != null ? flask.Points : 1;
+        public bool IsAvailable => isActiveAndEnabled && !IsHeld && !isCollected && body != null &&
+            !body.isKinematic && body.detectCollisions;
+        public Vector3 Velocity => body != null ? body.linearVelocity : Vector3.zero;
+        public bool UsesGravity => body != null && body.useGravity;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRegistry() => activeFlasks.Clear();
+
+        private void OnEnable()
+        {
+            if (!activeFlasks.Contains(this)) activeFlasks.Add(this);
+        }
+
+        private void OnDisable() => activeFlasks.Remove(this);
 
         private void Awake()
         {

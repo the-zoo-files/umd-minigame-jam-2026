@@ -90,7 +90,7 @@
 
 .connection-card {
     width: 23.5%;
-    height: 310px;
+    height: 360px;
     padding: 20px 12px;
     align-items: center;
     background-color: rgba(255, 255, 255, 0.025);
@@ -228,3 +228,7 @@
     padding: 0;
     -unity-text-align: middle-center;
 }
+
+.cpu-icon { display: none; font-size: 26px; -unity-font-style: bold; }
+.is-cpu .cpu-icon { display: flex; }
+.is-cpu .controller-dpad, .is-cpu .controller-buttons { display: none; }

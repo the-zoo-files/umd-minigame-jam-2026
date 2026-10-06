@@ -25,6 +25,10 @@ Assets/
 ├── Multiplayer/
 │   ├── CouchMultiplayerManager.cs
 │   ├── CouchPlayerController.cs
+│   ├── CpuPlayerController.cs
+│   ├── CpuNavigation.cs
+│   ├── CpuDifficulty.cs
+│   ├── CpuSettings.cs
 │   ├── GameManager.cs
 │   ├── PlayerFlaskCollector.cs
 │   └── Player.prefab
@@ -60,6 +64,8 @@ Owns local player joining and per-player behavior.
 - `CouchMultiplayerManager` configures `PlayerInputManager` and places joined players.
 - It also owns the selected lobby count, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
 - `CouchPlayerController` reads player-scoped actions, moves and rotates the avatar, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
+- Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
+- `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Difficulty profiles live in its serialized `CpuSettings` fields. `CpuNavigation` builds one scene-owned NavMesh from physical arena geometry before CPU rounds and releases it on teardown; bots still move with `CharacterController`, not a second movement system.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
 - `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
 
@@ -122,6 +128,8 @@ The three child names are runtime contracts because the controller finds the dir
 
 ### Player joining
 
+CPU slots instantiate the existing player prefab under an inactive staging parent. The manager disables `PlayerInput`, initializes identity and the CPU driver, and only then activates the avatar. This avoids device pairing or temporary human roster entries. CPU difficulty and removal are lobby-only operations; pending destruction blocks starting. `GetParticipant` covers both participant types; `GetPlayer` returns a human's `PlayerInput` or null for a CPU/empty slot.
+
 1. `CouchMultiplayerManager.Awake` configures manual `PlayerInputManager` joining. Lobby join actions explicitly assign a device to an empty selected slot; joining is disabled when the selected slots are full or play starts.
 2. The Input System instantiates `Player.prefab` for a keyboard/mouse or gamepad device.
 3. `CouchPlayerController.Awake` caches required components. `PlayerInput.OnEnable` completes identity assignment, device pairing, and action cloning.
@@ -163,6 +171,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 
 - Use direct serialized references for required same-prefab or same-scene dependencies.
 - Use static events for the small, global player roster (`PlayerJoined` and `PlayerLeft`).
+- `PickupFlask.ActiveFlasks` tracks enabled flasks across pooling cycles. CPU targeting checks `IsAvailable`, excluding held, collected, inactive, and direct-transfer flasks. Gameplay owns this registry and has no dependency on CPU code.
 - Subscribe in `OnEnable` and unsubscribe in `OnDisable` for listeners.
 - Avoid global lookups in normal gameplay loops. Editor smoke tests may use object lookup for inspection.
 - Keep authoritative state with its owner: `PickupFlask.IsHeld` and last-thrower identity belong to the flask, while the held reference and score belong to the player controller.

@@ -23,6 +23,10 @@ namespace UmdJam.UI
         private readonly Label[] stateLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly Button[] leaveButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] leaveCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] cpuButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] difficultyButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] cpuCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] difficultyCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
 
         private void OnEnable()
         {
@@ -49,8 +53,11 @@ namespace UmdJam.UI
                 deviceLabels[slot] = root.Q<Label>($"connectionDevice{number}");
                 stateLabels[slot] = root.Q<Label>($"connectionState{number}");
                 leaveButtons[slot] = root.Q<Button>($"leavePlayer{number}");
+                cpuButtons[slot] = root.Q<Button>($"addCpu{number}");
+                difficultyButtons[slot] = root.Q<Button>($"cpuDifficulty{number}");
                 if (cards[slot] == null || deviceLabels[slot] == null ||
-                    stateLabels[slot] == null || leaveButtons[slot] == null)
+                    stateLabels[slot] == null || leaveButtons[slot] == null ||
+                    cpuButtons[slot] == null || difficultyButtons[slot] == null)
                 {
                     Debug.LogError($"Connection menu is missing elements for Player {number}.", this);
                     enabled = false;
@@ -60,6 +67,10 @@ namespace UmdJam.UI
                 int playerSlot = slot;
                 leaveCallbacks[slot] = () => multiplayer.TryLeave(playerSlot);
                 leaveButtons[slot].clicked += leaveCallbacks[slot];
+                cpuCallbacks[slot] = () => multiplayer.TryAddCpu(playerSlot);
+                difficultyCallbacks[slot] = () => CycleDifficulty(playerSlot);
+                cpuButtons[slot].clicked += cpuCallbacks[slot];
+                difficultyButtons[slot].clicked += difficultyCallbacks[slot];
             }
 
             previousButton.clicked += PreviousCount;
@@ -96,12 +107,25 @@ namespace UmdJam.UI
                 {
                     leaveButtons[slot].clicked -= leaveCallbacks[slot];
                 }
+                if (cpuButtons[slot] != null && cpuCallbacks[slot] != null) cpuButtons[slot].clicked -= cpuCallbacks[slot];
+                if (difficultyButtons[slot] != null && difficultyCallbacks[slot] != null)
+                    difficultyButtons[slot].clicked -= difficultyCallbacks[slot];
             }
         }
 
         private void PreviousCount()
         {
             multiplayer.TrySetPlayerCount(multiplayer.SelectedPlayerCount - 1);
+        }
+
+        private void CycleDifficulty(int slot)
+        {
+            CouchPlayerController player = multiplayer.GetParticipant(slot);
+            if (player != null && player.IsCpu)
+            {
+                CpuDifficulty next = player.Cpu.Difficulty == CpuDifficulty.God ? CpuDifficulty.Noob : player.Cpu.Difficulty + 1;
+                multiplayer.TrySetCpuDifficulty(slot, next);
+            }
         }
 
         private void NextCount()
@@ -132,24 +156,31 @@ namespace UmdJam.UI
             startButton.SetEnabled(multiplayer.CanStart);
             for (int slot = 0; slot < cards.Length; slot++)
             {
-                PlayerInput player = multiplayer.GetPlayer(slot);
-                bool isConnected = CouchMultiplayerManager.IsConnected(player);
+                CouchPlayerController participant = multiplayer.GetParticipant(slot);
+                PlayerInput player = participant != null ? participant.HumanInput : null;
+                bool isCpu = participant != null && participant.IsCpu;
+                bool isConnected = CouchMultiplayerManager.IsReady(participant);
                 bool isSelected = slot < selected;
                 if (isConnected) connected++;
                 cards[slot].EnableInClassList("is-selected", isSelected);
                 cards[slot].EnableInClassList("is-connected", isConnected);
-                cards[slot].EnableInClassList("is-disconnected", player != null && !isConnected);
+                cards[slot].EnableInClassList("is-disconnected", participant != null && !isConnected);
+                cards[slot].EnableInClassList("is-cpu", isCpu);
                 cards[slot].EnableInClassList("is-keyboard", player != null && player.currentControlScheme == "Keyboard&Mouse");
-                deviceLabels[slot].text = player == null
+                deviceLabels[slot].text = isCpu ? "CPU" : player == null
                     ? (isSelected ? "Waiting for player" : "Not selected")
                     : (player.currentControlScheme == "Keyboard&Mouse" ? "Keyboard / Mouse" : "Controller");
-                stateLabels[slot].text = isConnected ? "Connected"
+                stateLabels[slot].text = isCpu ? "Ready" : isConnected ? "Connected"
                     : player != null ? "Reconnect device"
                     : isSelected ? "Not connected" : "Open slot";
-                leaveButtons[slot].EnableInClassList("is-hidden", player == null);
+                leaveButtons[slot].EnableInClassList("is-hidden", participant == null);
+                leaveButtons[slot].text = isCpu ? "Remove" : "Leave";
+                cpuButtons[slot].EnableInClassList("is-hidden", participant != null || !isSelected);
+                difficultyButtons[slot].EnableInClassList("is-hidden", !isCpu);
+                if (isCpu) difficultyButtons[slot].text = participant.Cpu.Difficulty.ToString();
             }
 
-            statusLabel.text = multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} connected";
+            statusLabel.text = multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready";
         }
     }
 }
