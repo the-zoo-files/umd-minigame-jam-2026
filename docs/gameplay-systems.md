@@ -23,9 +23,9 @@ All difficulty levels use the same movement speed, turning, touch pickup, carryi
 
 | Difficulty | Planning interval | Reaction delay | Prediction horizon | Decision noise | Strategy weight |
 |---|---:|---:|---:|---:|---:|
-| Noob | 0.65 s | 0.55 s | 0 s | 0.65 | 0 |
-| Pro | 0.30 s | 0.18 s | 0.4 s | 0.20 | 0.3 |
-| Hacker | 0.15 s | 0.06 s | 1.2 s | 0.04 | 0.7 |
+| Noob | 0.90 s | 0.80 s | 0 s | 0.80 | 0 |
+| Pro | 0.45 s | 0.35 s | 0.25 s | 0.40 | 0.2 |
+| Hacker | 0.22 s | 0.12 s | 0.8 s | 0.12 | 0.7 |
 | God | 0.08 s | 0 s | 2 s | 0 | 1 |
 
 `CpuSettings` is the single definition of these tunable parameters. Profiles are serialized on `CpuPlayerController`; the manager uses that component from the player prefab when present, otherwise adds it with the defaults above. The planning interval bounds path-query work; God has no added reaction delay or intentional decision noise.

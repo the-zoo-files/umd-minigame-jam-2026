@@ -7,9 +7,9 @@ namespace UmdJam.Multiplayer
     [DisallowMultipleComponent]
     public sealed class CpuPlayerController : MonoBehaviour
     {
-        [SerializeField] private CpuSettings noob = new(0.65f, 0.55f, 0f, 0.65f, 0f);
-        [SerializeField] private CpuSettings pro = new(0.3f, 0.18f, 0.4f, 0.2f, 0.3f);
-        [SerializeField] private CpuSettings hacker = new(0.15f, 0.06f, 1.2f, 0.04f, 0.7f);
+        [SerializeField] private CpuSettings noob = new(0.9f, 0.8f, 0f, 0.8f, 0f);
+        [SerializeField] private CpuSettings pro = new(0.45f, 0.35f, 0.25f, 0.4f, 0.2f);
+        [SerializeField] private CpuSettings hacker = new(0.22f, 0.12f, 0.8f, 0.12f, 0.7f);
         [SerializeField] private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f);
         [SerializeField, Range(0f, 1f)] private float stagingFraction = 0.35f;
 
