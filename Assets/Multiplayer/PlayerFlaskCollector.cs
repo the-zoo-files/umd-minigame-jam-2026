@@ -119,6 +119,7 @@ namespace UmdJam.Multiplayer
 
         public void Collect(PickupFlask flask)
         {
+            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return;
             if (!isActiveAndEnabled || flask == null || !flask.TryCollect(playerNumber, out int points))
             {
                 return;
@@ -129,6 +130,7 @@ namespace UmdJam.Multiplayer
 
         public bool TryTransfer(PickupFlask flask, float duration)
         {
+            if (GameManager.Instance != null && !GameManager.Instance.IsPlaying) return false;
             return isActiveAndEnabled && flask != null && flask.TryThrowDirectly(
                 CollectionPoint, playerNumber, duration, this, transferCompleted);
         }

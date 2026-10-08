@@ -33,6 +33,7 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run Gameplay Smoke Tests")]
         public static void Run()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.Results", false);
             SessionState.SetBool("UmdJam.SmokeTests.Cpu", false);
             SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", false);
             // Batch executeMethod runs before delayed Editor startup work (such as search indexing).
@@ -43,6 +44,7 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run Connection Menu Smoke Tests")]
         public static void RunConnectionMenu()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.Results", false);
             SessionState.SetBool("UmdJam.SmokeTests.Cpu", false);
             SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", true);
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
@@ -51,11 +53,28 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Run CPU Smoke Tests")]
         public static void RunCpu()
         {
+            SessionState.SetBool("UmdJam.SmokeTests.Results", false);
             SessionState.SetBool("UmdJam.SmokeTests.Cpu", true);
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
-        private static void BeginRun()
+        [MenuItem("Tools/UmdJam/Run Round Results Smoke Tests")]
+        public static void RunRoundResults()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.Results", true);
+            SessionState.SetBool("UmdJam.SmokeTests.Cpu", false);
+            SessionState.SetBool("UmdJam.SmokeTests.ConnectionMenu", false);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
+        [MenuItem("Tools/UmdJam/Run Round Results Visual Checks")]
+        public static void RunRoundResultsVisuals()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.ResultsVisuals", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
+        public static void BeginRun()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode ||
                 !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -81,7 +100,11 @@ namespace UmdJam.Editor
 
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
-                exercise = SessionState.GetBool("UmdJam.SmokeTests.Cpu", false) ? CpuSmokeTests.Exercise() :
+                bool visuals = SessionState.GetBool("UmdJam.SmokeTests.ResultsVisuals", false);
+                SessionState.SetBool("UmdJam.SmokeTests.ResultsVisuals", false);
+                exercise = visuals ? RoundResultsVisualChecks.Exercise() :
+                    SessionState.GetBool("UmdJam.SmokeTests.Results", false) ? RoundResultsSmokeTests.Exercise() :
+                    SessionState.GetBool("UmdJam.SmokeTests.Cpu", false) ? CpuSmokeTests.Exercise() :
                     SessionState.GetBool("UmdJam.SmokeTests.ConnectionMenu", false)
                     ? ConnectionMenuSmokeTests.Exercise() : Exercise();
             }
@@ -210,7 +233,7 @@ namespace UmdJam.Editor
                 // not the newer direct-to-collector transfer that intentionally skips gravity.
                 CharacterController mover = players[0].GetComponent<CharacterController>();
                 mover.enabled = false;
-                players[0].transform.position = new Vector3(-3f, 1f, 3f);
+                players[0].transform.position = new Vector3(1f, 1f, 3f);
                 mover.enabled = true;
                 Require(!PlayerFlaskCollector.TryGetNearby(1, players[0].transform.position, out _), "Outside direct collection range");
                 Transform socket = Get<Transform>(players[0], "holdPoint");
@@ -244,11 +267,16 @@ namespace UmdJam.Editor
                 Require(flask.IsHeld && Get<PickupFlask>(players[0], "heldFlask") == flask,
                     "Throw wind-up retains ownership");
                 Get<Animator>(players[0], "characterAnimator").Update(0f);
-                Get<Animator>(players[0], "characterAnimator").Update(0.7f);
+                // The hand continues moving after release; compare against the event-time socket pose.
+                Vector3 releaseOrigin = Get<Transform>(players[0], "throwPoint").position;
+                Get<Animator>(players[0], "characterAnimator").GetComponent<CharacterAnimationEvents>().ReleaseFlask();
                 Require(!flask.IsHeld && Get<PickupFlask>(players[0], "heldFlask") == null, "Throw releases ownership");
                 Require(!body.isKinematic && body.useGravity && body.detectCollisions, "Free physics restored");
                 Require(body.interpolation == interpolation, "Interpolation restored");
-                Require(Vector3.Distance(flask.transform.position, Get<Transform>(players[0], "throwPoint").position) < 0.001f, "Release socket");
+                Require(Vector3.Distance(flask.transform.position, releaseOrigin) < 0.001f, "Release socket");
+                Get<Animator>(players[0], "characterAnimator").Update(0.7f);
+                Require(Vector3.Distance(flask.transform.position, releaseOrigin) < 0.001f,
+                    "Later animation events cannot release the same flask again");
                 Require(body.linearVelocity.y > 0 && Ballistics.IsFinite(body.linearVelocity), "Finite launch velocity");
                 foreach (Collider collider in flask.GetComponentsInChildren<Collider>())
                 {

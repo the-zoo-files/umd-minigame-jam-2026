@@ -3886,6 +3886,7 @@ GameObject:
   - component: {fileID: 729775444}
   - component: {fileID: 729775443}
   - component: {fileID: 729775446}
+  - component: {fileID: 729775447}
   m_Layer: 0
   m_Name: Couch Player HUD
   m_TagString: Untagged
@@ -3956,6 +3957,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.UI.CouchConnectionMenu
   multiplayer: {fileID: 788590084}
+--- !u!114 &729775447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 729775442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54390048b0b5e4b42900911b4c39de0e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UmdJam.UI.RoundResultsView
+  arenaCamera: {fileID: 330585545}
+  maskOpacity: 0.65
 --- !u!1 &788590083
 GameObject:
   m_ObjectHideFlags: 0
@@ -6004,6 +6019,37 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &1314891592
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1314891593}
+  m_Layer: 0
+  m_Name: ResultsCameraTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1314891593
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314891592}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 18, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1703365805}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!21 &1415389916
 Material:
   serializedVersion: 8
@@ -7328,6 +7374,77 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 6, y: 5, z: 6}
   m_Center: {x: -3, y: -7.5, z: 3}
+--- !u!1 &1703365803
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1703365805}
+  - component: {fileID: 1703365804}
+  m_Layer: 0
+  m_Name: RoundResults
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1703365804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703365803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4fc5bb290efdef4995454146e468181, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UmdJam.UI.RoundResultsDirector
+  gameManager: {fileID: 247665704}
+  arenaCamera: {fileID: 330585545}
+  resultsCameraTarget: {fileID: 1314891593}
+  view: {fileID: 729775447}
+  hud: {fileID: 729775443}
+  overheadOccluders:
+  - {fileID: 790330300}
+  - {fileID: 1079933802}
+  - {fileID: 1134616274}
+  - {fileID: 342733645}
+  - {fileID: 347457222}
+  - {fileID: 918748402}
+  - {fileID: 179773699}
+  - {fileID: 1417336076}
+  - {fileID: 644792353}
+  cameraMoveDuration: 1
+  framingPadding: 1.15
+  zoneIntroduction: 0.25
+  flaskInterval: 0.2
+  minimumFlaskInterval: 0.06
+  zoneCountingBudget: 3
+  deductionDuration: 0.65
+  deductionHold: 0.55
+  winnerHold: 1
+  tickSource: {fileID: 0}
+  tickClip: {fileID: 0}
+--- !u!4 &1703365805
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703365803}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1314891593}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!21 &1829413925
 Material:
   serializedVersion: 8
@@ -10830,3 +10947,4 @@ SceneRoots:
   - {fileID: 1579112269}
   - {fileID: 1080134559}
   - {fileID: 200538592}
+  - {fileID: 1703365805}

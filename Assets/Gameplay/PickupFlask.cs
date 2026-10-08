@@ -111,7 +111,7 @@ namespace UmdJam.Gameplay
 
         private void LateUpdate()
         {
-            if (!IsHeld || currentHoldPoint == null)
+            if (Time.timeScale <= 0f || !IsHeld || currentHoldPoint == null)
             {
                 return;
             }
@@ -121,7 +121,7 @@ namespace UmdJam.Gameplay
 
         private void Update()
         {
-            if (!isTransferring) return;
+            if (Time.timeScale <= 0f || !isTransferring) return;
             if (requiresReceiver && (transferReceiver == null || !transferReceiver.isActiveAndEnabled))
             {
                 CancelTransfer();
@@ -167,6 +167,12 @@ namespace UmdJam.Gameplay
             velocity.y = FirstBounceSpeed * Mathf.Pow(0.55f, bounceCount);
             body.linearVelocity = velocity;
             bounceCount++;
+        }
+
+        public void FreezeAttachment()
+        {
+            // Round results retain held state, but a late bone animation must not move the frozen visual.
+            if (IsHeld) transform.SetParent(null, true);
         }
 
         public bool TryPickUp(Transform holdPoint)

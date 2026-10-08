@@ -1,0 +1,116 @@
+.results-active #gameplayHud { display: none; }
+
+.round-results, .results-fill, .winner-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.round-results {
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+    color: rgb(247, 246, 255);
+}
+
+.zone-mask { position: absolute; }
+
+.zone-score {
+    position: absolute;
+    width: 260px;
+    padding: 12px 18px;
+    align-items: center;
+    background-color: rgba(15, 12, 43, 0.94);
+    border-width: 4px;
+    border-radius: 16px;
+}
+
+.zone-player-name { font-size: 23px; -unity-font-style: bold; }
+.zone-score.is-counting { width: 320px; padding: 8px 18px; }
+.is-counting .zone-deduction, .is-counting .zone-final-score { display: none; }
+.zone-count { font-size: 16px; color: rgb(189, 181, 218); }
+.zone-deduction { font-size: 36px; color: rgb(252, 114, 164); -unity-font-style: bold; }
+.zone-final-score { font-size: 23px; -unity-font-style: bold; }
+
+.flask-marker {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-width: 4px;
+    border-radius: 30px;
+    border-color: rgb(255, 233, 119);
+    background-color: rgba(255, 233, 119, 0.12);
+    overflow: visible;
+}
+
+.flask-penalty {
+    position: absolute;
+    bottom: 44px;
+    left: -12px;
+    min-width: 60px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background-color: rgb(15, 12, 43);
+    color: rgb(255, 233, 119);
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.results-skip {
+    position: absolute;
+    right: 28px;
+    bottom: 28px;
+    padding: 12px 24px;
+    border-width: 2px;
+    border-color: rgb(139, 127, 179);
+    border-radius: 24px;
+    background-color: rgb(40, 33, 70);
+    color: rgb(247, 246, 255);
+    font-size: 18px;
+}
+
+.results-skip:hover, .results-skip:focus {
+    border-color: rgb(255, 233, 119);
+    color: rgb(255, 233, 119);
+}
+
+.winner-panel {
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(15, 12, 43, 0.97);
+}
+
+.results-content { width: 88%; max-width: 1400px; align-items: center; }
+.winner-banner {
+    width: 84%;
+    min-height: 110px;
+    padding: 16px 30px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(224, 13, 91);
+    border-color: rgb(252, 114, 164);
+    border-width: 4px;
+    border-radius: 64px;
+}
+.winner-title { font-size: 46px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; }
+.results-standings { width: 100%; flex-direction: row; justify-content: center; margin-bottom: 32px; }
+.result-card {
+    width: 23%;
+    max-width: 310px;
+    margin-left: 1%;
+    margin-right: 1%;
+    padding: 24px 10px;
+    align-items: center;
+    background-color: rgb(246, 243, 255);
+    color: rgb(37, 25, 64);
+    border-width: 4px;
+    border-radius: 16px;
+}
+.result-card-status { font-size: 14px; -unity-font-style: bold; color: rgb(112, 94, 143); }
+.result-card-name { font-size: 22px; -unity-font-style: bold; margin-top: 10px; }
+.result-card-score { font-size: 64px; -unity-font-style: bold; margin-top: 14px; margin-bottom: 14px; }
+.result-card-breakdown { font-size: 20px; color: rgb(112, 94, 143); }
+.results-replay { max-width: 85%; }
+.results-replay:focus { border-color: rgb(255, 233, 119); border-width: 4px; }
+.results-replay-hint { margin-top: 12px; font-size: 16px; color: rgb(189, 181, 218); }

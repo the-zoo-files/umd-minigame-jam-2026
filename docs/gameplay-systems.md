@@ -181,7 +181,13 @@ Bounce is only applied for sufficiently strong contacts with an upward-facing no
 
 The four `GameManager/PlayerZones` box colliders cover the arena quadrants in the same clockwise order as player slots. At round end, each active `PickupFlask` is assigned to at most one zone based on its world position. Its configured `Flask.Points` value is subtracted from that player's score. Scores are not clamped, so zone penalties can make a score negative.
 
-After penalties and score events are applied, the manager sets `Time.timeScale` to zero. Player input is ignored once the round is over. Destroying the manager restores the time scale for scene changes and Play Mode shutdown.
+At timeout the manager closes the round and sets `Time.timeScale` to zero, captures `Results`, applies penalties exactly once, and publishes score/time/end events. Player input is ignored once the round is over, and collectors reject late collection/transfer requests. Destroying the manager restores the time scale for scene changes and Play Mode shutdown.
+
+The snapshot includes held and direct-transfer flasks, but excludes collected or disabled instances. Assignment uses the existing three-dimensional zone bounds: flasks above the zone's maximum Y or outside all zones are excluded. Shared boundaries belong to the first matching zone. Only actual participants receive results; negative scores are valid. The highest final score wins, equal highest scores tie, and a one-player round displays **Round complete**.
+
+The results director eases the camera overhead using unscaled time, then counts each participant's flasks clockwise by slot. Within a zone, entries appear in descending world Z then ascending X order. Each marker shows its point value; the zone displays its combined deduction and starting-to-final score. Authoritative scores are already final; the reveal is presentation only. The arena's baked lighting remains unchanged; translucent UI masks darken areas outside the active zone. The director temporarily hides its serialized ceiling-fixture renderers to keep the overhead arena unobstructed and restores their previous render flags on release. Flask attachment/transfer updates stop immediately at time scale zero, including later callbacks in the timeout frame; late throw animation events also reject round-over releases.
+
+**Skip count** immediately shows final standings. UI Toolkit supports pointer and keyboard/gamepad submit; replay is enabled only after submit release and a short debounce, so holding submit cannot skip and replay together. **Play Again** reloads the scene and returns to fresh player setup, without retaining the roster or selections. Director timing and camera framing are private serialized fields on the scene's `RoundResults` object. The view's mask opacity lives beside the HUD document. Audio is optional and requires both the director's tick source and clip.
 
 ## Safe Extension Points
 

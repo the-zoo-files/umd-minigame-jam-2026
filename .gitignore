@@ -37,6 +37,10 @@
 # Visual Studio cache directory
 .vs/
 
+# Local editor configuration
+/.vscode/
+/ProjectSettings/ProjectAuditorSettings.asset
+
 # Gradle cache directory
 .gradle/
 

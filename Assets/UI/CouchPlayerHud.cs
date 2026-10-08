@@ -11,10 +11,18 @@ namespace UmdJam.UI
         private readonly Dictionary<int, Label> labels = new();
         private Label timerLabel;
         private int displayedSeconds = -1;
+        private bool resultsPresentationActive;
+
+        public void SetResultsPresentationActive(bool active)
+        {
+            resultsPresentationActive = active;
+            GetComponent<UIDocument>().rootVisualElement.EnableInClassList("results-active", active);
+        }
 
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            root.EnableInClassList("results-active", resultsPresentationActive);
             labels.Clear();
             displayedSeconds = -1;
             timerLabel = root.Q<Label>("roundTimer");
