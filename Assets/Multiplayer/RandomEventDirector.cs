@@ -226,7 +226,8 @@ namespace UmdJam.Multiplayer
 
         private void FixedUpdate()
         {
-            if (round == null || !round.IsPlaying || ActiveEvent == RandomEventKind.None) return;
+            if (round == null || !round.IsPlaying ||
+                (ActiveEvent != RandomEventKind.Earthquake && ActiveEvent != RandomEventKind.Tornadoes)) return;
             var flasks = PickupFlask.ActiveFlasks;
             for (int i = 0; i < flasks.Count; i++)
             {

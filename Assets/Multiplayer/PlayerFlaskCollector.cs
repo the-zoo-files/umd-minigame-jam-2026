@@ -96,6 +96,7 @@ namespace UmdJam.Multiplayer
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!isActiveAndEnabled || (GameManager.Instance != null && !GameManager.Instance.IsPlaying)) return;
             PickupFlask flask = other.GetComponentInParent<PickupFlask>();
             Collect(flask);
         }

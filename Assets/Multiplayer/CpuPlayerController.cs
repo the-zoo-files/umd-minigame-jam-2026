@@ -178,9 +178,10 @@ namespace UmdJam.Multiplayer
                 }
             }
 
-            float speedFraction = Mathf.Min(1f, offset.magnitude / Mathf.Max(0.001f, player.MoveSpeed * Time.deltaTime));
+            float remainingDistance = offset.magnitude;
+            float speedFraction = Mathf.Min(1f, remainingDistance / Mathf.Max(0.001f, player.MoveSpeed * Time.deltaTime));
             if (UsesNaturalBehavior && routeIndex == routeCount - 1)
-                speedFraction = Mathf.Min(speedFraction, Mathf.Clamp(offset.magnitude / settings.BrakingDistance, 0.2f, 1f));
+                speedFraction = Mathf.Min(speedFraction, Mathf.Clamp(remainingDistance / settings.BrakingDistance, 0.2f, 1f));
             movement = new Vector2(direction.x, direction.z) * speedFraction;
             if (CpuNavigation.PlanarDistance(transform.position, lastProgressPosition) > 0.3f)
             {
@@ -232,8 +233,9 @@ namespace UmdJam.Multiplayer
                 intercept.y = position.y;
                 if (!TryRoute(intercept, out float distance)) continue;
                 float pickupTime = distance / player.MoveSpeed;
-                float returnDistance = CpuNavigation.PlanarDistance(intercept, collector.ApproachPoint(intercept));
-                if (settings.StrategyWeight > 0f && !navigation.TryDistance(intercept, collector.ApproachPoint(intercept),
+                Vector3 approach = collector.ApproachPoint(intercept);
+                float returnDistance = CpuNavigation.PlanarDistance(intercept, approach);
+                if (settings.StrategyWeight > 0f && !navigation.TryDistance(intercept, approach,
                     returnPath, returnCorners, out returnDistance)) continue;
                 float returnTime = returnDistance / player.MoveSpeed;
                 float cost = 0.3f + pickupTime + returnTime * settings.StrategyWeight;
@@ -244,7 +246,7 @@ namespace UmdJam.Multiplayer
                 }
                 if (pickupTime + returnTime + 0.25f > round.RemainingTime) value *= 0.2f;
 
-                float rivalTime = NearestRivalTime(intercept);
+                float rivalTime = NearestRivalTime(intercept, settings.AwarenessRadius);
                 if (rivalTime + 0.15f < pickupTime) cost += settings.StrategyWeight * (pickupTime - rivalTime + 0.5f);
                 float score = value / cost;
                 score *= 1f - settings.DecisionNoise * observation.Bias;
@@ -265,18 +267,21 @@ namespace UmdJam.Multiplayer
 
         private void Observe(CpuSettings settings)
         {
+            Vector3 position = transform.position;
             forgotten.Clear();
             foreach (KeyValuePair<PickupFlask, Observation> entry in observations)
             {
                 if (entry.Key == null || !entry.Key.IsAvailable || entry.Value.Revision != entry.Key.AvailabilityRevision ||
-                    CpuNavigation.PlanarDistance(transform.position, entry.Key.transform.position) > settings.AwarenessRadius)
+                    CpuNavigation.PlanarDistance(position, entry.Key.transform.position) > settings.AwarenessRadius)
                     forgotten.Add(entry.Key);
             }
             foreach (PickupFlask flask in forgotten) observations.Remove(flask);
-            foreach (PickupFlask flask in PickupFlask.ActiveFlasks)
+            var flasks = PickupFlask.ActiveFlasks;
+            for (int i = 0; i < flasks.Count; i++)
             {
+                PickupFlask flask = flasks[i];
                 if (flask == null || !flask.IsAvailable || observations.ContainsKey(flask) ||
-                    CpuNavigation.PlanarDistance(transform.position, flask.transform.position) > settings.AwarenessRadius) continue;
+                    CpuNavigation.PlanarDistance(position, flask.transform.position) > settings.AwarenessRadius) continue;
                 observations.Add(flask, new Observation(Time.time + settings.ReactionDelay,
                     (float)random.NextDouble(), flask.AvailabilityRevision));
             }
@@ -312,14 +317,15 @@ namespace UmdJam.Multiplayer
             return position + velocity * time;
         }
 
-        private float NearestRivalTime(Vector3 position)
+        private float NearestRivalTime(Vector3 position, float awarenessRadius)
         {
             float best = float.PositiveInfinity;
+            Vector3 playerPosition = transform.position;
             for (int i = 0; i < CouchPlayerController.ActivePlayers.Count; i++)
             {
                 CouchPlayerController other = CouchPlayerController.ActivePlayers[i];
                 if (other == null || other == player || !other.isActiveAndEnabled || other.IsCarrying || other.MoveSpeed <= 0f) continue;
-                if (CpuNavigation.PlanarDistance(transform.position, other.transform.position) > Settings.AwarenessRadius) continue;
+                if (CpuNavigation.PlanarDistance(playerPosition, other.transform.position) > awarenessRadius) continue;
                 best = Mathf.Min(best, CpuNavigation.PlanarDistance(other.transform.position, position) / other.MoveSpeed);
             }
             return best;

@@ -113,12 +113,18 @@ namespace UmdJam.Editor
                 capture = Capture("lightning");
                 while (capture.MoveNext()) yield return capture.Current;
                 Require(!human.TryStun(float.NaN) && !human.TryStun(-1f), "Invalid stun requests rejected");
+                Set(director, "nextTransition", Time.time);
+                yield return null;
+                yield return null;
+                RandomEventVisuals visuals = Object.FindAnyObjectByType<RandomEventVisuals>();
+                LineRenderer humanStun = visuals.transform.Find("Random event visuals/Stun stars").GetComponent<LineRenderer>();
+                Require(director.ActiveEvent == RandomEventKind.None && human.IsStunned && humanStun.enabled,
+                    "A quiet interval preserves an unexpired lightning stun and its visual");
                 director.enabled = false;
                 Require(!human.IsStunned && !god.IsStunned, "Disabling event owner clears all status effects");
                 director.enabled = true;
                 Require(director.TryBeginEvent(RandomEventKind.Earthquake), "Effects restart after enable");
                 flask.gameObject.SetActive(false);
-                RandomEventVisuals visuals = Object.FindAnyObjectByType<RandomEventVisuals>();
                 Action updateVisuals = (Action)Delegate.CreateDelegate(typeof(Action), visuals,
                     typeof(RandomEventVisuals).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic));
                 Action updateForces = (Action)Delegate.CreateDelegate(typeof(Action), director,
@@ -134,6 +140,12 @@ namespace UmdJam.Editor
                 Require(GC.GetAllocatedBytesForCurrentThread() == beforeAllocation,
                     "Warmed event visuals and roster iteration allocate no managed memory");
                 director.StopEffects();
+                updateVisuals();
+                Vector3 quietCamera = Camera.main.transform.position;
+                beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < 200; i++) updateVisuals();
+                Require(GC.GetAllocatedBytesForCurrentThread() == beforeAllocation && !humanStun.enabled &&
+                    Camera.main.transform.position == quietCamera, "Quiet visuals allocate nothing and leave camera/status restored");
                 Require(director.TryBeginEvent(RandomEventKind.Earthquake), "Earthquake restarts for camera recovery check");
                 Camera camera = Camera.main;
                 Vector3 cameraBefore = camera != null ? camera.transform.position : Vector3.zero;

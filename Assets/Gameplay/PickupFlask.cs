@@ -150,13 +150,15 @@ namespace UmdJam.Gameplay
 
         private void FixedUpdate()
         {
-            if (IsHeld || body.isKinematic || body.linearVelocity.y >= -MaximumFallSpeed)
+            if (IsHeld || body.isKinematic)
             {
                 return;
             }
 
             Vector3 velocity = body.linearVelocity;
-            velocity.y = -MaximumFallSpeed;
+            float maximumFallSpeed = MaximumFallSpeed;
+            if (velocity.y >= -maximumFallSpeed) return;
+            velocity.y = -maximumFallSpeed;
             body.linearVelocity = velocity;
         }
 

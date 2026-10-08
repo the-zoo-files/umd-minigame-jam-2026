@@ -122,6 +122,17 @@ namespace UmdJam.Editor
                     transfer.transform.position == transferPosition, "Gameplay and transfer remain frozen during reveal");
                 Require(root.Q<Label>("winnerTitle").text == "It's a tie!" &&
                     root.Q("resultsStandings").childCount == 3, "Tie view contains only participants");
+                RoundResultsView resultsView = Object.FindAnyObjectByType<RoundResultsView>();
+                PlayerRoundResult deduction = round.Results.Players[0];
+                Label deductionScore = root.Q<Label>("zoneFinalScore");
+                resultsView.ShowDeduction(deduction, 0f);
+                Require(deductionScore.text == "40 → 40", "Deduction cache refreshes when switching zones");
+                resultsView.ShowDeduction(deduction, 1f);
+                Require(deductionScore.text == "40 → 18", "Deduction reaches the exact final score");
+                long beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
+                for (int i = 0; i < 200; i++) resultsView.ShowDeduction(deduction, 1f);
+                Require(GC.GetAllocatedBytesForCurrentThread() == beforeAllocation,
+                    "Unchanged deduction frames allocate no managed memory");
                 yield return null;
                 Directory.CreateDirectory(".utmp");
                 ScreenCapture.CaptureScreenshot(".utmp/round-results-tie.png");
