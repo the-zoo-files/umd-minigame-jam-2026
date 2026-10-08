@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/CouchPlayerHud.uss?fileID=7433441132597879392&amp;guid=5d22cfdc1301d204d8ef64cc453064db&amp;type=3#CouchPlayerHud"/>
     <Style src="CouchConnectionMenu.uss"/>
+    <Style src="RoundResults.uss"/>
     <ui:VisualElement name="hudRoot" picking-mode="Ignore" class="hud-root">
         <ui:VisualElement name="gameplayHud" picking-mode="Ignore" class="hud-root is-hidden">
             <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
@@ -85,6 +86,36 @@
                 </ui:VisualElement>
                 <ui:Label name="connectionStatus" text="0 / 2 ready" class="connection-status"/>
                 <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="roundResults" class="round-results is-hidden">
+            <ui:VisualElement name="zoneMasks" picking-mode="Ignore" class="results-fill">
+                <ui:VisualElement name="maskTop" class="zone-mask"/>
+                <ui:VisualElement name="maskBottom" class="zone-mask"/>
+                <ui:VisualElement name="maskLeft" class="zone-mask"/>
+                <ui:VisualElement name="maskRight" class="zone-mask"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="zoneScore" picking-mode="Ignore" class="zone-score is-hidden">
+                <ui:Label name="zonePlayerName" class="zone-player-name"/>
+                <ui:Label name="zoneCount" class="zone-count"/>
+                <ui:Label name="zoneDeduction" class="zone-deduction"/>
+                <ui:Label name="zoneFinalScore" class="zone-final-score"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="flaskMarker" picking-mode="Ignore" class="flask-marker is-hidden">
+                <ui:Label name="flaskPenalty" class="flask-penalty"/>
+            </ui:VisualElement>
+            <ui:Button name="skipCount" text="Skip count" class="results-skip"/>
+            <ui:VisualElement name="winnerPanel" class="winner-panel is-hidden">
+                <ui:VisualElement class="results-content">
+                    <ui:Label text="ROUND RESULTS" class="connection-eyebrow"/>
+                    <ui:VisualElement class="winner-banner">
+                        <ui:Label name="winnerTitle" text="Round complete" class="winner-title"/>
+                    </ui:VisualElement>
+                    <ui:Label text="Every flask counts." class="connection-subtitle"/>
+                    <ui:VisualElement name="resultsStandings" class="results-standings"/>
+                    <ui:Button name="playAgain" text="Play Again" class="start-game results-replay"/>
+                    <ui:Label text="Returns to player setup" class="results-replay-hint"/>
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

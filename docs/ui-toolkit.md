@@ -105,6 +105,16 @@ Use additional semantic classes for future states (`is-ready`, `is-stunned`, or 
 
 ## Adding HUD Features
 
+### Round results
+
+`RoundResults.uss` and the `roundResults` sibling in `CouchPlayerHud.uxml` define the end screen. Match the player-selection screen: CascadiaMono, deep purple background, pink winner banner, light rounded cards with participant-colored borders, and the existing light `start-game` button style for replay. Compare both screens at the same resolution after visual changes.
+
+`RoundResultsView` queries `zoneMasks`, `maskTop/Bottom/Left/Right`, `flaskMarker`, `flaskPenalty`, `zoneScore`, `zonePlayerName`, `zoneCount`, `zoneDeduction`, `zoneFinalScore`, `winnerPanel`, `winnerTitle`, `resultsStandings`, `skipCount`, and `playAgain`. The four masks leave the overhead zone's projected floor rectangle clear. Positions use `RuntimePanelUtils.CameraTransformWorldToPanel` and root-local coordinates; layout and camera changes are reflected each presentation frame. Final standings contain only snapshot participants.
+
+`CouchPlayerHud.SetResultsPresentationActive` toggles `results-active` on the document root. The results stylesheet hides `gameplayHud` under that class, so a late connection-menu refresh cannot expose final scores during counting. Existing HUD score subscriptions remain active underneath. Invalid/disabled results presentation releases this ownership and leaves authoritative scores accessible through the existing HUD.
+
+Results buttons use UI Toolkit navigation/submit. A release-observation Input Action in the director only gates replay availability; it does not dispatch submit, avoiding duplicate button activation. Count animations and waits use unscaled time. UI structure remains previewable in UI Builder by changing `is-hidden` classes temporarily, restoring defaults before saving.
+
 When adding a per-player HUD element:
 
 1. add it to each player corner container or label structure in UXML;

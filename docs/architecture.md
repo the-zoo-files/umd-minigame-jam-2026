@@ -7,7 +7,7 @@
 - Input System `1.20.0`
 - UI Toolkit runtime UI
 - Three-dimensional PhysX gameplay
-- One stationary perspective camera showing the whole arena
+- One perspective camera showing the whole arena; stationary during play, animated overhead for results
 
 The prototype is local couch multiplayer for up to four players. There is no networking layer and no split-screen camera.
 
@@ -72,6 +72,7 @@ Owns local player joining and per-player behavior.
 - Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
 - `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Difficulty profiles live in its serialized `CpuSettings` fields. `CpuNavigation` registers compatible prebaked navigation before CPU rounds, with runtime baking as a fallback. `CpuNavigationBaker` regenerates and validates the static arena bake before builds using the same capsule configuration and geometry exclusions. Registrations and owned fallback data are released on teardown; shared baked assets are preserved. Bots still move with `CharacterController`, not a second movement system.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
+- `RoundResults`, `PlayerRoundResult`, and `FlaskPenaltyEntry` hold immutable timeout snapshots: participant identity/color, starting/final scores, and spatially ordered flask point values/positions. UI never applies penalties.
 - `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
 
 ### `UmdJam.UI`
@@ -80,6 +81,7 @@ Owns runtime UI Toolkit presentation.
 
 - `CouchPlayerHud` maps player events to named UXML labels and USS state classes.
 - `CouchConnectionMenu` presents lobby state in the same `UIDocument`, references `CouchMultiplayerManager`, and never keeps a separate roster or readiness state. Its appearance lives in `CouchConnectionMenu.uss`.
+- `RoundResultsDirector` owns the unscaled camera/count/deduction/winner sequence and scene replay. `RoundResultsView` projects snapshot positions into UI Toolkit, draws zone masks and markers, and presents standings. Both use the existing HUD document. `RoundResults/ResultsCameraTarget` is authored by `RoundResultsSetup` through Editor APIs.
 
 Dependencies currently flow in one direction:
 

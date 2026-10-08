@@ -45,6 +45,7 @@ namespace UmdJam.Gameplay
 
         private void Update()
         {
+            if (Time.timeScale <= 0f) return;
             launchTimer -= Time.deltaTime;
             if (launchTimer > 0f)
             {

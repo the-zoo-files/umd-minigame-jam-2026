@@ -122,6 +122,12 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Round manager changes
 
+- Run **Tools > UmdJam > Run Round Results Smoke Tests** (`GameplaySmokeTests.RunRoundResults`) for timeout capture, mixed-value penalties, held/direct-transfer eligibility, boundary/outside exclusions, ties, negative scores, paused camera/counting, repeated end/skip, held-submit gating, and replay cleanup.
+- **Tools > UmdJam > Configure Round Results** (`RoundResultsSetup.Apply`) idempotently wires the results components in the open Game scene and saves it through Editor APIs. It preserves existing target placement/tuning.
+- MCP can select the suite's SessionState flags and call `GameplaySmokeTests.BeginRun` directly when delayed menu callbacks do not advance. The ordinary menu/batch entry points remain available.
+- Compare player-selection and results screenshots at 16:9 and 4:3; verify masks, marker projection, deduction center, tie cards, button focus, and resizing. Capture the full Game view including UI; camera-only images may omit the UI document. Screenshots belong in `.utmp/`.
+- **Tools > UmdJam > Run Round Results Visual Checks** (`GameplaySmokeTests.RunRoundResultsVisuals`) captures the actual player-selection, count, deduction, and winner UI at 1920x1080 and 1440x1080. It asserts projected marker/mask alignment and replay-button bounds, restores the selected Game view size, and exits Play Mode.
+
 - Confirm a new round starts at the serialized duration and the top-center HUD timer counts down in `mm:ss` format.
 - Place known flask configurations in each player zone and confirm the configured point values are deducted from the matching scores exactly once.
 - Confirm a flask on a shared zone boundary is assigned to only one player.

@@ -21,6 +21,7 @@ namespace UmdJam.Multiplayer
         public bool IsRoundOver { get; private set; }
         public bool HasStarted { get; private set; }
         public bool IsPlaying => HasStarted && !IsRoundOver;
+        public RoundResults Results { get; private set; }
 
         public Bounds ArenaBounds
         {
@@ -118,35 +119,18 @@ namespace UmdJam.Multiplayer
 
             IsRoundOver = true;
             remainingTime = 0f;
-            ApplyZonePenalties();
+            Time.timeScale = 0f;
+            foreach (PickupFlask flask in PickupFlask.ActiveFlasks)
+            {
+                if (flask != null) flask.FreezeAttachment();
+            }
+            Results = RoundResults.Capture(this, CouchPlayerController.ActivePlayers, PickupFlask.ActiveFlasks);
+            foreach (PlayerRoundResult player in Results.Players)
+            {
+                CouchPlayerController.ChangeScore(player.PlayerNumber, -player.Penalty);
+            }
             RoundTimeChanged?.Invoke(remainingTime);
             RoundEnded?.Invoke();
-            Time.timeScale = 0f;
-        }
-
-        private void ApplyZonePenalties()
-        {
-            PickupFlask[] flasks = FindObjectsByType<PickupFlask>();
-            int[] penalties = new int[playerZones.Length];
-
-            foreach (PickupFlask flask in flasks)
-            {
-                if (flask == null || flask.IsCollected)
-                {
-                    continue;
-                }
-
-                int zonePlayer = GetZonePlayer(flask.transform.position);
-                if (zonePlayer > 0)
-                {
-                    penalties[zonePlayer - 1] += flask.PointValue;
-                }
-            }
-
-            for (int zoneIndex = 0; zoneIndex < penalties.Length; zoneIndex++)
-            {
-                CouchPlayerController.ChangeScore(zoneIndex + 1, -penalties[zoneIndex]);
-            }
         }
 
         private bool HasValidZones()
