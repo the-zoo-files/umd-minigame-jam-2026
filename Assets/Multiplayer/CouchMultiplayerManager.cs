@@ -69,7 +69,7 @@ namespace UmdJam.Multiplayer
                 (player.IsCpu ? player.Cpu.isActiveAndEnabled : IsConnected(player.HumanInput));
         }
 
-        public bool TryAddCpu(int slot, CpuDifficulty difficulty = CpuDifficulty.Pro)
+        public bool TryAddCpu(int slot, CpuDifficulty difficulty = CpuDifficulty.Noob)
         {
             if (!isActiveAndEnabled || !IsLobbyOpen || slot < 0 || slot >= selectedPlayerCount ||
                 difficulty < CpuDifficulty.Noob || difficulty > CpuDifficulty.God || GetParticipant(slot) != null ||

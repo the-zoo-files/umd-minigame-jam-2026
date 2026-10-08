@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UmdJam.Gameplay;
 using UnityEngine;
 using UnityEngine.AI;
@@ -7,10 +8,14 @@ namespace UmdJam.Multiplayer
     [DisallowMultipleComponent]
     public sealed class CpuPlayerController : MonoBehaviour
     {
-        [SerializeField] private CpuSettings noob = new(0.9f, 0.8f, 0f, 0.8f, 0f);
-        [SerializeField] private CpuSettings pro = new(0.45f, 0.35f, 0.25f, 0.4f, 0.2f);
-        [SerializeField] private CpuSettings hacker = new(0.22f, 0.12f, 0.8f, 0.12f, 0.7f);
-        [SerializeField] private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f);
+        [SerializeField] private CpuSettings noob = new(0.9f, 0.8f, 0f, 0.8f, 0f,
+            awareness: 7f, commitment: 1.4f, advantage: 0.4f, acceleration: 4f, preparation: 0.35f);
+        [SerializeField] private CpuSettings pro = new(0.45f, 0.35f, 0.25f, 0.4f, 0.2f,
+            awareness: 9f, commitment: 1f, advantage: 0.3f, acceleration: 5f, preparation: 0.25f);
+        [SerializeField] private CpuSettings hacker = new(0.22f, 0.12f, 0.8f, 0.12f, 0.7f,
+            awareness: 12f, commitment: 0.7f, advantage: 0.2f, acceleration: 6f, preparation: 0.15f);
+        [SerializeField] private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f,
+            awareness: 18f, commitment: 0.45f, advantage: 0.1f, acceleration: 7f, preparation: 0.08f);
         [SerializeField, Range(0f, 1f)] private float stagingFraction = 0.35f;
 
         private NavMeshPath queryPath;
@@ -27,7 +32,11 @@ namespace UmdJam.Multiplayer
         private int routeCount;
         private int routeIndex;
         private float nextPlan;
-        private float readyAt;
+        private float committedUntil;
+        private float throwReadyAt = -1f;
+        private Vector2 steering;
+        private readonly Dictionary<PickupFlask, Observation> observations = new();
+        private readonly List<PickupFlask> forgotten = new();
         private bool wasCarrying;
         private Vector3 lastProgressPosition;
         private float lastProgressTime;
@@ -53,7 +62,7 @@ namespace UmdJam.Multiplayer
             navigation = map;
             round = game;
             Difficulty = difficulty;
-            random = new System.Random(7919 * owner.PlayerNumber);
+            random = new System.Random(UnityEngine.Random.Range(1, int.MaxValue));
             lastProgressPosition = transform.position;
         }
 
@@ -76,6 +85,22 @@ namespace UmdJam.Multiplayer
 
         public void ReadCommand(out Vector2 movement, out bool attack)
         {
+            BuildCommand(out Vector2 desired, out attack);
+            if (round == null || !round.IsPlaying || !isActiveAndEnabled ||
+                player == null || player.MoveSpeed <= 0f || navigation == null || !navigation.IsReady ||
+                collector == null || throwReadyAt >= 0f)
+            {
+                steering = Vector2.zero;
+            }
+            else
+            {
+                steering = Vector2.MoveTowards(steering, desired, Settings.SteeringAcceleration * Time.deltaTime);
+            }
+            movement = steering;
+        }
+
+        private void BuildCommand(out Vector2 movement, out bool attack)
+        {
             movement = Vector2.zero;
             attack = false;
             if (!isActiveAndEnabled || player == null || round == null || !round.IsPlaying ||
@@ -93,18 +118,21 @@ namespace UmdJam.Multiplayer
                 target = null;
                 routeCount = 0;
                 nextPlan = 0f;
-                readyAt = Time.time + settings.ReactionDelay;
+                throwReadyAt = -1f;
                 recoveryUntil = 0f;
+                lastProgressTime = Time.time;
             }
-            if (Time.time < readyAt) return;
 
             if (carrying && PlayerFlaskCollector.TryGetNearby(player.PlayerNumber, transform.position, out _))
             {
-                attack = true;
+                if (throwReadyAt < 0f) throwReadyAt = Time.time + settings.ThrowPreparation;
+                attack = Time.time >= throwReadyAt;
                 return;
             }
+            throwReadyAt = -1f;
 
-            if (target != null && !target.IsAvailable)
+            if (target != null && (!target.IsAvailable || !observations.TryGetValue(target, out Observation known) ||
+                known.Revision != target.AvailabilityRevision))
             {
                 target = null;
                 routeCount = 0;
@@ -116,7 +144,6 @@ namespace UmdJam.Multiplayer
                 nextPlan = Time.time + settings.PlanningInterval;
                 Plan(carrying, settings);
             }
-            if (Time.time < readyAt) return;
 
             if (Time.time < recoveryUntil)
             {
@@ -147,6 +174,8 @@ namespace UmdJam.Multiplayer
             }
 
             float speedFraction = Mathf.Min(1f, offset.magnitude / Mathf.Max(0.001f, player.MoveSpeed * Time.deltaTime));
+            if (routeIndex == routeCount - 1)
+                speedFraction = Mathf.Min(speedFraction, Mathf.Clamp(offset.magnitude / settings.BrakingDistance, 0.2f, 1f));
             movement = new Vector2(direction.x, direction.z) * speedFraction;
             if (CpuNavigation.PlanarDistance(transform.position, lastProgressPosition) > 0.3f)
             {
@@ -184,12 +213,16 @@ namespace UmdJam.Multiplayer
             }
 
             PickupFlask previousTarget = target;
+            Observe(settings);
             PickupFlask chosen = null;
             float best = float.NegativeInfinity;
             for (int i = 0; i < PickupFlask.ActiveFlasks.Count; i++)
             {
                 PickupFlask flask = PickupFlask.ActiveFlasks[i];
                 if (flask == null || !flask.IsAvailable) continue;
+                if (!observations.TryGetValue(flask, out Observation observation) || Time.time < observation.ReadyAt) continue;
+                if (previousTarget != null && previousTarget.IsAvailable && observations.ContainsKey(previousTarget) &&
+                    Time.time < committedUntil && flask != previousTarget) continue;
                 Vector3 intercept = PredictIntercept(flask, settings.PredictionHorizon);
                 intercept.y = position.y;
                 if (!TryRoute(intercept, out float distance)) continue;
@@ -209,20 +242,52 @@ namespace UmdJam.Multiplayer
                 float rivalTime = NearestRivalTime(intercept);
                 if (rivalTime + 0.15f < pickupTime) cost += settings.StrategyWeight * (pickupTime - rivalTime + 0.5f);
                 float score = value / cost;
-                score *= 1f - settings.DecisionNoise * (float)random.NextDouble();
-                // Small hysteresis avoids repeatedly abandoning almost-equivalent routes.
-                if (flask == previousTarget) score *= 1.05f;
+                score *= 1f - settings.DecisionNoise * observation.Bias;
+                if (flask == previousTarget) score *= 1f + settings.SwitchAdvantage;
                 if (score <= best) continue;
                 best = score;
                 chosen = flask;
                 SaveRoute();
             }
             target = chosen;
-            if (chosen != null && chosen != previousTarget) readyAt = Time.time + settings.ReactionDelay;
-            if (chosen == null && settings.StrategyWeight >= 0.7f)
+            if (chosen != null && chosen != previousTarget) committedUntil = Time.time + settings.TargetCommitment;
+            if (chosen == null)
             {
                 Vector3 staging = Vector3.Lerp(round.ArenaBounds.center, collector.CollectionPoint, stagingFraction);
                 if (TryRoute(staging, out _)) SaveRoute();
+            }
+        }
+
+        private void Observe(CpuSettings settings)
+        {
+            forgotten.Clear();
+            foreach (KeyValuePair<PickupFlask, Observation> entry in observations)
+            {
+                if (entry.Key == null || !entry.Key.IsAvailable || entry.Value.Revision != entry.Key.AvailabilityRevision ||
+                    CpuNavigation.PlanarDistance(transform.position, entry.Key.transform.position) > settings.AwarenessRadius)
+                    forgotten.Add(entry.Key);
+            }
+            foreach (PickupFlask flask in forgotten) observations.Remove(flask);
+            foreach (PickupFlask flask in PickupFlask.ActiveFlasks)
+            {
+                if (flask == null || !flask.IsAvailable || observations.ContainsKey(flask) ||
+                    CpuNavigation.PlanarDistance(transform.position, flask.transform.position) > settings.AwarenessRadius) continue;
+                observations.Add(flask, new Observation(Time.time + settings.ReactionDelay,
+                    (float)random.NextDouble(), flask.AvailabilityRevision));
+            }
+        }
+
+        private readonly struct Observation
+        {
+            public readonly float ReadyAt;
+            public readonly float Bias;
+            public readonly uint Revision;
+
+            public Observation(float readyAt, float bias, uint revision)
+            {
+                ReadyAt = readyAt;
+                Bias = bias;
+                Revision = revision;
             }
         }
 
@@ -249,6 +314,7 @@ namespace UmdJam.Multiplayer
             {
                 CouchPlayerController other = CouchPlayerController.ActivePlayers[i];
                 if (other == null || other == player || !other.isActiveAndEnabled || other.IsCarrying || other.MoveSpeed <= 0f) continue;
+                if (CpuNavigation.PlanarDistance(transform.position, other.transform.position) > Settings.AwarenessRadius) continue;
                 best = Mathf.Min(best, CpuNavigation.PlanarDistance(other.transform.position, position) / other.MoveSpeed);
             }
             return best;

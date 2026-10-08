@@ -154,6 +154,8 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(lobby.GetParticipant(3) != null && lobby.GetParticipant(3).IsCpu, "Add CPU button");
+                Require(lobby.GetParticipant(3).Cpu.Difficulty == CpuDifficulty.Noob &&
+                    root.Q<Button>("cpuDifficulty4").text == "Noob", "Add CPU starts on the easiest difficulty");
                 using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
                 {
                     submit.target = root.Q<Button>("cpuDifficulty4");
@@ -161,7 +163,8 @@ namespace UmdJam.Editor
                 }
                 yield return null;
                 yield return null;
-                Require(lobby.GetParticipant(3).Cpu.Difficulty == CpuDifficulty.Hacker, "Difficulty button cycles from Pro");
+                Require(lobby.GetParticipant(3).Cpu.Difficulty == CpuDifficulty.Pro &&
+                    root.Q<Button>("cpuDifficulty4").text == "Pro", "Difficulty button cycles from Noob to Pro");
                 int originalColor = lobby.GetParticipant(3).ColorIndex;
                 using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
                 {

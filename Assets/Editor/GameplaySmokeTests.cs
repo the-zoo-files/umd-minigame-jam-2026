@@ -67,6 +67,20 @@ namespace UmdJam.Editor
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
+        [MenuItem("Tools/UmdJam/Run CPU Behavior Checks")]
+        public static void RunCpuBehavior()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.CpuBehavior", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
+        [MenuItem("Tools/UmdJam/Run CPU Balance Benchmark")]
+        public static void RunCpuBenchmark()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.CpuBenchmark", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
         [MenuItem("Tools/UmdJam/Run Round Results Visual Checks")]
         public static void RunRoundResultsVisuals()
         {
@@ -102,7 +116,16 @@ namespace UmdJam.Editor
             {
                 bool visuals = SessionState.GetBool("UmdJam.SmokeTests.ResultsVisuals", false);
                 SessionState.SetBool("UmdJam.SmokeTests.ResultsVisuals", false);
-                exercise = visuals ? RoundResultsVisualChecks.Exercise() :
+                bool cpuBehavior = SessionState.GetBool("UmdJam.SmokeTests.CpuBehavior", false);
+                SessionState.SetBool("UmdJam.SmokeTests.CpuBehavior", false);
+                bool benchmark = SessionState.GetBool("UmdJam.SmokeTests.CpuBenchmark", false);
+                SessionState.SetBool("UmdJam.SmokeTests.CpuBenchmark", false);
+                bool shortBenchmark = SessionState.GetBool("UmdJam.SmokeTests.CpuBenchmarkShort", false);
+                SessionState.SetBool("UmdJam.SmokeTests.CpuBenchmarkShort", false);
+                exercise = shortBenchmark ? CpuBalanceBenchmark.Exercise(0.25f) :
+                    benchmark ? CpuBalanceBenchmark.Exercise() :
+                    cpuBehavior ? CpuBehaviorChecks.Exercise() :
+                    visuals ? RoundResultsVisualChecks.Exercise() :
                     SessionState.GetBool("UmdJam.SmokeTests.Results", false) ? RoundResultsSmokeTests.Exercise() :
                     SessionState.GetBool("UmdJam.SmokeTests.Cpu", false) ? CpuSmokeTests.Exercise() :
                     SessionState.GetBool("UmdJam.SmokeTests.ConnectionMenu", false)

@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 3497676360196940778}
   - component: {fileID: 4056228640577891475}
   - component: {fileID: 2249140422538533623}
+  - component: {fileID: 5339465524002871661}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -351,6 +352,67 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &5339465524002871661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5830941581398093228}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f9fccbc269e48bbb5a354e50f9bbd2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.CpuPlayerController
+  noob:
+    planningInterval: 0.9
+    reactionDelay: 0.8
+    predictionHorizon: 0
+    decisionNoise: 0.8
+    strategyWeight: 0
+    awarenessRadius: 7
+    targetCommitment: 1.4
+    switchAdvantage: 0.4
+    steeringAcceleration: 4
+    brakingDistance: 0.8
+    throwPreparation: 0.35
+  pro:
+    planningInterval: 0.45
+    reactionDelay: 0.35
+    predictionHorizon: 0.25
+    decisionNoise: 0.4
+    strategyWeight: 0.2
+    awarenessRadius: 9
+    targetCommitment: 1
+    switchAdvantage: 0.3
+    steeringAcceleration: 5
+    brakingDistance: 0.8
+    throwPreparation: 0.25
+  hacker:
+    planningInterval: 0.22
+    reactionDelay: 0.12
+    predictionHorizon: 0.8
+    decisionNoise: 0.12
+    strategyWeight: 0.7
+    awarenessRadius: 12
+    targetCommitment: 0.7
+    switchAdvantage: 0.2
+    steeringAcceleration: 6
+    brakingDistance: 0.8
+    throwPreparation: 0.15
+  god:
+    planningInterval: 0.08
+    reactionDelay: 0
+    predictionHorizon: 2
+    decisionNoise: 0
+    strategyWeight: 1
+    awarenessRadius: 18
+    targetCommitment: 0.45
+    switchAdvantage: 0.1
+    steeringAcceleration: 7
+    brakingDistance: 0.8
+    throwPreparation: 0.08
+  stagingFraction: 0.35
 --- !u!1 &7216042087169067837
 GameObject:
   m_ObjectHideFlags: 0

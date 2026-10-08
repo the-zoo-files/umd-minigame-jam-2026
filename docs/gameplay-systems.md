@@ -17,9 +17,9 @@ The project uses `Assets/InputSystem_Actions.inputactions` and `PlayerInputManag
 
 ## CPU Players
 
-Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Pro**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
+Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Noob**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
 
-All difficulty levels use the same movement speed, turning, touch pickup, carrying limit, throw action, collectors, and score/penalty rules as humans. Difficulty changes decision quality, not physical stats:
+All difficulty levels share humans' maximum movement speed, character turning, touch pickup, carrying limit, throw action, collectors, and score/penalty rules. CPU input ramps and brakes like an analog stick; difficulty changes awareness, decisions, and input timing:
 
 | Difficulty | Planning interval | Reaction delay | Prediction horizon | Decision noise | Strategy weight |
 |---|---:|---:|---:|---:|---:|
@@ -28,9 +28,18 @@ All difficulty levels use the same movement speed, turning, touch pickup, carryi
 | Hacker | 0.22 s | 0.12 s | 0.8 s | 0.12 | 0.7 |
 | God | 0.08 s | 0 s | 2 s | 0 | 1 |
 
-`CpuSettings` is the single definition of these tunable parameters. Profiles are serialized on `CpuPlayerController`; the manager uses that component from the player prefab when present, otherwise adds it with the defaults above. The planning interval bounds path-query work; God has no added reaction delay or intentional decision noise.
+Tune the four profiles on the disabled `CpuPlayerController` component in `Assets/Multiplayer/Player.prefab`. The lobby enables it only for CPU participants; human controllers remain human. `CpuSettings` defines the fields, and a missing component falls back to the code defaults. The planning interval bounds path-query work. Reaction delay is the minimum time to notice a newly observed flask, followed by the next planning tick; it does not stop movement toward an existing target.
 
-Bots navigate on a shared NavMesh prebaked from colliders, excluding player/flask bodies and triggers. `CpuNavigationBaker` refreshes the bake before builds and validates all spawn-to-collector routes. Missing/incompatible data falls back to the same runtime bake configuration; unsaved authored geometry should be saved before rebaking. They evaluate available flasks using reachable route length, point value, predicted motion, return route, rival arrival estimates, and round-end penalties. Identical static return-distance queries share a bounded 64-entry cache; changed endpoints miss the cache, and navigation replacement clears it. Planning intervals, reaction delays, and movement rules remain unchanged. Carrying bots travel to their own collector's direct-throw region and use the normal throw action. Hacker/God stage toward the middle when idle and attempt to leave their own penalty zone if there is insufficient time to deliver. Bots replan when targets become unavailable and steer around players without teleporting.
+| Difficulty | Awareness radius | Commitment | Required switch advantage | Input acceleration / s | Throw preparation |
+|---|---:|---:|---:|---:|---:|
+| Noob | 7 m | 1.4 s | 40% | 4 | 0.35 s |
+| Pro | 9 m | 1.0 s | 30% | 5 | 0.25 s |
+| Hacker | 12 m | 0.7 s | 20% | 6 | 0.15 s |
+| God | 18 m | 0.45 s | 10% | 7 | 0.08 s |
+
+All profiles brake over the final 0.8 m. Decision noise is sampled once per observed flask, so replanning does not reroll its appeal. Commitment protects a valid target; after it expires, another flask must beat the configured score advantage. Unavailable or out-of-range flasks are forgotten. `PickupFlask.AvailabilityRevision` invalidates observations across pooling and pickup/rethrow even when both happen between planning ticks. Awareness uses planar distance rather than facing/line of sight, matching the shared overhead arena. Bots use independent random streams seeded from the match's Unity random state, allowing varied play and seeded checks.
+
+Bots navigate on a shared NavMesh prebaked from colliders, excluding player/flask bodies and triggers. `CpuNavigationBaker` refreshes the bake before builds and validates all spawn-to-collector routes. Missing/incompatible data falls back to the same runtime bake configuration; unsaved authored geometry should be saved before rebaking. They evaluate noticed flasks using reachable route length, point value, predicted motion, return route, nearby rival arrival estimates, and round-end penalties. Identical static return-distance queries share a bounded 64-entry cache; changed endpoints miss the cache, and navigation replacement clears it. Carrying bots travel to their collector's direct-throw region, prepare briefly, and use the normal throw action. All levels stage toward the middle when idle; Hacker/God attempt to leave their penalty zone if there is insufficient time to deliver. Bots replan when targets become unavailable, steer around players without teleporting, and stop immediately at round end.
 
 The navigation contract is a static arena with the player prefab's capsule dimensions. Moving arena geometry requires rebuilding the map. Motion prediction estimates the first floor impact; it does not perfectly simulate future collisions. God is the strongest configured heuristic, not a proven optimal or unbeatable policy. Measure difficulty balance with human playtests; deterministic scoring tests establish correctness, not competitive strength.
 
