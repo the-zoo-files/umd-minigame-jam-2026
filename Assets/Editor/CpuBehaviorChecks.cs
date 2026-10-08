@@ -25,14 +25,14 @@ namespace UmdJam.Editor
             yield return null;
             player.enabled = false; // Exercise commands without physically collecting the fixture.
             player.GetComponent<CharacterController>().enabled = false;
-            player.transform.position = new Vector3(-6f, 1f, 0f);
+            player.transform.position = new Vector3(-3f, 1f, 3f);
             CpuPlayerController cpu = player.Cpu;
             SerializedObject profile = new(cpu);
             profile.FindProperty("noob").FindPropertyRelative("decisionNoise").floatValue = 0f;
             profile.ApplyModifiedPropertiesWithoutUndo();
             PickupFlask prefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Gameplay/FlaskPlaceholder.prefab");
-            PickupFlask first = Spawn(prefab, new Vector3(-6f, 0.5f, 4f));
-            PickupFlask better = Spawn(prefab, new Vector3(-6f, 0.5f, 6.5f));
+            PickupFlask first = Spawn(prefab, new Vector3(-2f, 0.5f, 4f));
+            PickupFlask better = Spawn(prefab, new Vector3(-1f, 0.5f, 5.5f));
             cpu.ReadCommand(out Vector2 initialCommand, out _);
             Require(Target(cpu) == null, "A newly visible flask is not known instantly");
             Require(initialCommand.magnitude > 0f && initialCommand.magnitude < 1f,
@@ -49,7 +49,7 @@ namespace UmdJam.Editor
 
             // Both candidates were observed together. Changing relative value now isolates commitment
             // from the separate discovery delay; without commitment the next planning tick switches.
-            better.transform.position = new Vector3(-6f, 0.5f, 1.5f);
+            better.transform.position = new Vector3(-3f, 0.5f, 3.5f);
             Physics.SyncTransforms();
             float acquired = Time.time;
             while (Time.time - acquired < 1f)

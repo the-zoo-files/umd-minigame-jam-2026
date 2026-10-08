@@ -172,6 +172,8 @@ The target follows `transform.forward`, so the direction marker previews the hor
 
 Each throw records the throwing player's number on the flask. A flask can only score in the matching `Collector_P1` through `Collector_P4` trigger under `Collectors`. A successful collection awards the definition's configured points, raises `CouchPlayerController.ScoreChanged`, and returns machine-spawned flasks to their pool (or destroys standalone flasks). The collection guard prevents duplicate scoring. A flask entering another player's collector remains in play.
 
+Each collector uses three tall, narrow `BoxCollider` walls that follow its triangular footprint. The original convex trigger remains responsible for scoring, while the open-topped solid walls prevent characters from walking through or climbing onto the visible collector without blocking flask entry from above.
+
 Before calculating a ballistic throw, the controller checks whether the player's position is inside their collector's world-space collider bounds expanded by `directThrowPadding`. When in range, the flask skips dynamic physics and follows a short kinematic transfer to the collector center, then scores normally. `directThrowDuration` controls this transfer time. Throws outside the expanded bounds continue to use the standard ballistic path.
 
 ## Stylized Flask Physics
@@ -191,6 +193,10 @@ Bounce is only applied for sufficiently strong contacts with an upward-facing no
 `GameManager` initializes the serialized `roundDuration` (default 60 seconds) and waits at time scale zero. The connection menu starts the round only when the selected roster is connected. `HasStarted` and `IsRoundOver` define `IsPlaying`; it publishes remaining time for the HUD and ends the round when the timer reaches zero.
 
 The four `GameManager/PlayerZones` box colliders cover the arena quadrants in the same clockwise order as player slots. At round end, each active `PickupFlask` is assigned to at most one zone based on its world position. Its configured `Flask.Points` value is subtracted from that player's score. Scores are not clamped, so zone penalties can make a score negative.
+
+Players are placed at the center of their assigned quadrant when they join and again when the round starts. During the round, shared movement clamps both human and CPU characters to that zone, including clearance for the `CharacterController` radius. CPU perception and route selection ignore flasks outside the CPU's quadrant.
+
+The flask machine launches every `0.8` seconds with an active cap of `20`. During the final 10 seconds, its interval ramps smoothly down to `0.25` seconds while the active cap rises to `36`, ensuring a full arena cannot suppress the visible spawn surge.
 
 At timeout the manager closes the round and sets `Time.timeScale` to zero, captures `Results`, applies penalties exactly once, and publishes score/time/end events. Player input is ignored once the round is over, and collectors reject late collection/transfer requests. Destroying the manager restores the time scale for scene changes and Play Mode shutdown.
 

@@ -74,7 +74,18 @@ namespace UmdJam.Multiplayer
         public int CharacterCount => characterSkins != null ? characterSkins.Count : 0;
         public string CharacterName => characterSkins?.Get(CharacterIndex)?.DisplayName ?? "Character";
 
-        public static Vector3 GetSpawnPosition(int slot) => SpawnPositions[slot];
+        public static Vector3 GetSpawnPosition(int slot)
+        {
+            int safeSlot = Mathf.Clamp(slot, 0, SpawnPositions.Length - 1);
+            Vector3 position = SpawnPositions[safeSlot];
+            GameManager round = GameManager.Instance;
+            if (round == null) return position;
+
+            Bounds zone = round.GetPlayerZone(safeSlot + 1);
+            position.x = zone.center.x;
+            position.z = zone.center.z;
+            return position;
+        }
 
         public static bool IsColorAvailable(int index, CouchPlayerController owner = null)
         {
@@ -246,7 +257,7 @@ namespace UmdJam.Multiplayer
             int slot = Mathf.Clamp(playerIndex, 0, SpawnPositions.Length - 1);
             bool wasEnabled = characterController.enabled;
             characterController.enabled = false;
-            transform.position = SpawnPositions[slot];
+            transform.position = GetSpawnPosition(slot);
             characterController.enabled = wasEnabled;
         }
 
@@ -336,7 +347,18 @@ namespace UmdJam.Multiplayer
             }
 
             Vector3 movement = new(input.x, 0f, input.y);
-            characterController.SimpleMove(movement * moveSpeed);
+            Vector3 velocity = movement * moveSpeed;
+            GameManager round = GameManager.Instance;
+            if (round != null)
+            {
+                float clearance = characterController.radius *
+                    Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+                Vector3 destination = round.ConstrainToPlayerZone(
+                    PlayerNumber, transform.position + velocity * Time.deltaTime, clearance);
+                velocity.x = (destination.x - transform.position.x) / Mathf.Max(Time.deltaTime, 0.0001f);
+                velocity.z = (destination.z - transform.position.z) / Mathf.Max(Time.deltaTime, 0.0001f);
+            }
+            characterController.SimpleMove(velocity);
             if (characterAnimator != null)
             {
                 characterAnimator.SetFloat(SpeedAnimation, Mathf.Clamp01(input.magnitude));

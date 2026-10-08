@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UmdJam.Multiplayer;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -9,11 +10,14 @@ namespace UmdJam.Gameplay
         [SerializeField] private Flask[] flasks;
         [SerializeField, FormerlySerializedAs("launchPoint")] private Transform spawnPoint;
         [SerializeField] private float launchInterval = 2.5f;
+        [SerializeField, Min(0.05f)] private float finalSecondsLaunchInterval = 0.25f;
+        [SerializeField, Min(0f)] private float finalSecondsRampDuration = 10f;
         [SerializeField] private float launchApexHeight = 4.5f;
         [SerializeField] private Vector2 quadrantLandingRange = new(4.5f, 8f);
         [SerializeField] private float landingHeight = 0.35f;
         [SerializeField] private float spinSpeed = 12f;
         [SerializeField] private int maximumActiveFlasks = 12;
+        [SerializeField, Min(1)] private int finalSecondsMaximumActiveFlasks = 36;
 
         private static readonly Vector2[] QuadrantSigns =
         {
@@ -52,14 +56,43 @@ namespace UmdJam.Gameplay
                 return;
             }
 
-            launchTimer = launchInterval;
+            launchTimer = CurrentLaunchInterval();
             RemoveDestroyedFlasks();
-            if (spawnedFlasks.Count >= maximumActiveFlasks)
+            if (spawnedFlasks.Count >= CurrentMaximumActiveFlasks())
             {
                 return;
             }
 
             LaunchFlask();
+        }
+
+        private float CurrentLaunchInterval()
+        {
+            float normalInterval = Mathf.Max(0.05f, launchInterval);
+            GameManager round = GameManager.Instance;
+            if (round == null || !round.IsPlaying || finalSecondsRampDuration <= 0f ||
+                round.RemainingTime >= finalSecondsRampDuration)
+            {
+                return normalInterval;
+            }
+
+            float ramp = Mathf.InverseLerp(finalSecondsRampDuration, 0f, round.RemainingTime);
+            return Mathf.Lerp(normalInterval, Mathf.Max(0.05f, finalSecondsLaunchInterval), ramp);
+        }
+
+        private int CurrentMaximumActiveFlasks()
+        {
+            int normalMaximum = Mathf.Max(1, maximumActiveFlasks);
+            GameManager round = GameManager.Instance;
+            if (round == null || !round.IsPlaying || finalSecondsRampDuration <= 0f ||
+                round.RemainingTime >= finalSecondsRampDuration)
+            {
+                return normalMaximum;
+            }
+
+            float ramp = Mathf.InverseLerp(finalSecondsRampDuration, 0f, round.RemainingTime);
+            return Mathf.CeilToInt(Mathf.Lerp(
+                normalMaximum, Mathf.Max(normalMaximum, finalSecondsMaximumActiveFlasks), ramp));
         }
 
         private void LaunchFlask()
@@ -111,7 +144,7 @@ namespace UmdJam.Gameplay
                 pooledFlasks.Add(definition, available);
             }
 
-            if (available.Count < maximumActiveFlasks)
+            if (available.Count < Mathf.Max(maximumActiveFlasks, finalSecondsMaximumActiveFlasks))
             {
                 available.Push(flask);
             }

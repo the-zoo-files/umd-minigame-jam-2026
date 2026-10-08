@@ -136,7 +136,9 @@ namespace UmdJam.Multiplayer
             }
             throwReadyAt = -1f;
 
-            if (target != null && (!target.IsAvailable || !observations.TryGetValue(target, out Observation known) ||
+            if (target != null && (!target.IsAvailable ||
+                !round.IsInPlayerZone(player.PlayerNumber, target.transform.position) ||
+                !observations.TryGetValue(target, out Observation known) ||
                 known.Revision != target.AvailabilityRevision))
             {
                 target = null;
@@ -208,12 +210,7 @@ namespace UmdJam.Multiplayer
             if (carrying)
             {
                 Vector3 home = collector.ApproachPoint(position);
-                if (TryRoute(home, out float distance)) SaveRoute();
-                if (settings.StrategyWeight >= 0.7f && distance / player.MoveSpeed + 0.25f > round.RemainingTime)
-                {
-                    if (round.GetZonePlayer(position) == player.PlayerNumber) PlanPenaltyEscape(position);
-                    else routeCount = 0;
-                }
+                if (TryRoute(home, out _)) SaveRoute();
                 return;
             }
 
@@ -224,12 +221,14 @@ namespace UmdJam.Multiplayer
             for (int i = 0; i < PickupFlask.ActiveFlasks.Count; i++)
             {
                 PickupFlask flask = PickupFlask.ActiveFlasks[i];
-                if (flask == null || !flask.IsAvailable) continue;
+                if (flask == null || !flask.IsAvailable ||
+                    !round.IsInPlayerZone(player.PlayerNumber, flask.transform.position)) continue;
                 if (!observations.TryGetValue(flask, out Observation observation) || Time.time < observation.ReadyAt) continue;
                 if (previousTarget != null && previousTarget.IsAvailable && observations.ContainsKey(previousTarget) &&
                     Time.time < committedUntil && flask != previousTarget) continue;
                 Vector3 intercept = PredictIntercept(flask, settings.PredictionHorizon);
                 intercept.y = position.y;
+                intercept = round.ConstrainToPlayerZone(player.PlayerNumber, intercept, 0f);
                 if (!TryRoute(intercept, out float distance)) continue;
                 float pickupTime = distance / player.MoveSpeed;
                 float returnDistance = CpuNavigation.PlanarDistance(intercept, collector.ApproachPoint(intercept));
@@ -238,10 +237,7 @@ namespace UmdJam.Multiplayer
                 float returnTime = returnDistance / player.MoveSpeed;
                 float cost = 0.3f + pickupTime + returnTime * settings.StrategyWeight;
                 float value = Mathf.Max(0.1f, flask.PointValue);
-                if (round.GetZonePlayer(flask.transform.position) == player.PlayerNumber)
-                {
-                    value *= 1f + settings.StrategyWeight * Mathf.Clamp01(5f / Mathf.Max(1f, round.RemainingTime));
-                }
+                value *= 1f + settings.StrategyWeight * Mathf.Clamp01(5f / Mathf.Max(1f, round.RemainingTime));
                 if (pickupTime + returnTime + 0.25f > round.RemainingTime) value *= 0.2f;
 
                 float rivalTime = NearestRivalTime(intercept);
@@ -258,7 +254,9 @@ namespace UmdJam.Multiplayer
             if (chosen != null && chosen != previousTarget) committedUntil = Time.time + settings.TargetCommitment;
             if (chosen == null)
             {
-                Vector3 staging = Vector3.Lerp(round.ArenaBounds.center, collector.CollectionPoint, stagingFraction);
+                Vector3 staging = Vector3.Lerp(
+                    round.GetPlayerZone(player.PlayerNumber).center, collector.CollectionPoint, stagingFraction);
+                staging.y = position.y;
                 if (TryRoute(staging, out _)) SaveRoute();
             }
         }
@@ -268,15 +266,16 @@ namespace UmdJam.Multiplayer
             forgotten.Clear();
             foreach (KeyValuePair<PickupFlask, Observation> entry in observations)
             {
-                if (entry.Key == null || !entry.Key.IsAvailable || entry.Value.Revision != entry.Key.AvailabilityRevision ||
-                    CpuNavigation.PlanarDistance(transform.position, entry.Key.transform.position) > settings.AwarenessRadius)
+                if (entry.Key == null || !entry.Key.IsAvailable ||
+                    !round.IsInPlayerZone(player.PlayerNumber, entry.Key.transform.position) ||
+                    entry.Value.Revision != entry.Key.AvailabilityRevision)
                     forgotten.Add(entry.Key);
             }
             foreach (PickupFlask flask in forgotten) observations.Remove(flask);
             foreach (PickupFlask flask in PickupFlask.ActiveFlasks)
             {
                 if (flask == null || !flask.IsAvailable || observations.ContainsKey(flask) ||
-                    CpuNavigation.PlanarDistance(transform.position, flask.transform.position) > settings.AwarenessRadius) continue;
+                    !round.IsInPlayerZone(player.PlayerNumber, flask.transform.position)) continue;
                 observations.Add(flask, new Observation(Time.time + settings.ReactionDelay,
                     (float)random.NextDouble(), flask.AvailabilityRevision));
             }
@@ -319,25 +318,11 @@ namespace UmdJam.Multiplayer
             {
                 CouchPlayerController other = CouchPlayerController.ActivePlayers[i];
                 if (other == null || other == player || !other.isActiveAndEnabled || other.IsCarrying || other.MoveSpeed <= 0f) continue;
+                if (!round.IsInPlayerZone(other.PlayerNumber, position)) continue;
                 if (CpuNavigation.PlanarDistance(transform.position, other.transform.position) > Settings.AwarenessRadius) continue;
                 best = Mathf.Min(best, CpuNavigation.PlanarDistance(other.transform.position, position) / other.MoveSpeed);
             }
             return best;
-        }
-
-        private void PlanPenaltyEscape(Vector3 position)
-        {
-            Bounds zone = round.GetPlayerZone(player.PlayerNumber);
-            float best = float.PositiveInfinity;
-            for (int edge = 0; edge < 4; edge++)
-            {
-                Vector3 point = position;
-                if (edge < 2) point.x = edge == 0 ? zone.min.x - 0.8f : zone.max.x + 0.8f;
-                else point.z = edge == 2 ? zone.min.z - 0.8f : zone.max.z + 0.8f;
-                if (!round.ArenaBounds.Contains(point) || !TryRoute(point, out float distance) || distance >= best) continue;
-                best = distance;
-                SaveRoute();
-            }
         }
 
         private bool TryRoute(Vector3 destination, out float distance)
@@ -349,7 +334,15 @@ namespace UmdJam.Multiplayer
         {
             routeCount = queryCount;
             routeIndex = 0;
-            System.Array.Copy(queryCorners, route, queryCount);
+            CharacterController controller = player.GetComponent<CharacterController>();
+            float clearance = controller != null
+                ? controller.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z)
+                : 0.5f;
+            for (int i = 0; i < queryCount; i++)
+            {
+                route[i] = round.ConstrainToPlayerZone(
+                    player.PlayerNumber, queryCorners[i], clearance);
+            }
         }
     }
 }
