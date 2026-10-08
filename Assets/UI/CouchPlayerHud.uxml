@@ -2,16 +2,26 @@
     <Style src="project://database/Assets/UI/CouchPlayerHud.uss?fileID=7433441132597879392&amp;guid=5d22cfdc1301d204d8ef64cc453064db&amp;type=3#CouchPlayerHud"/>
     <Style src="CouchConnectionMenu.uss"/>
     <Style src="RoundResults.uss"/>
+    <Style src="GameplayFeedback.uss"/>
     <ui:VisualElement name="hudRoot" picking-mode="Ignore" class="hud-root">
         <ui:VisualElement name="gameplayHud" picking-mode="Ignore" class="hud-root is-hidden">
             <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
                 <ui:Label name="roundTimer" text="01:00" class="round-timer"/>
+                <ui:Label name="countdownWarning" text="Clear your zone" picking-mode="Ignore" class="countdown-warning is-hidden"/>
                 <ui:Label name="randomEventStatus" class="random-event-status is-hidden"/>
             </ui:VisualElement>
             <ui:Label name="player1Name" text="Player 1&#10;Score: 0" class="player-name player-one is-connected"/>
             <ui:Label name="player2Name" text="Player 2&#10;Score: 0" class="player-name player-two is-connected"/>
             <ui:Label name="player3Name" text="Player 3&#10;Score: 0" class="player-name player-three is-connected"/>
             <ui:Label name="player4Name" text="Player 4&#10;Score: 0" class="player-name player-four is-connected"/>
+            <ui:VisualElement name="feedbackOverlay" picking-mode="Ignore" class="hud-root">
+                <ui:VisualElement name="penaltyMarkers" picking-mode="Ignore" class="hud-root"/>
+                <ui:VisualElement name="collectionFeedback" picking-mode="Ignore" class="hud-root"/>
+                <ui:Label name="zoneRisk1" picking-mode="Ignore" class="zone-risk risk-one is-hidden"/>
+                <ui:Label name="zoneRisk2" picking-mode="Ignore" class="zone-risk risk-two is-hidden"/>
+                <ui:Label name="zoneRisk3" picking-mode="Ignore" class="zone-risk risk-three is-hidden"/>
+                <ui:Label name="zoneRisk4" picking-mode="Ignore" class="zone-risk risk-four is-hidden"/>
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="connectionMenu" class="connection-menu">
             <ui:VisualElement class="connection-content">

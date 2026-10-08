@@ -44,6 +44,12 @@ namespace UmdJam.Multiplayer
 
         public Bounds GetPlayerZone(int playerNumber) => playerZones[playerNumber - 1].bounds;
 
+        public int GetFlaskPenaltyPlayer(PickupFlask flask)
+        {
+            return flask != null && flask.isActiveAndEnabled && !flask.IsCollected
+                ? GetZonePlayer(flask.transform.position) : 0;
+        }
+
         public bool TryStartRound()
         {
             if (!isActiveAndEnabled || HasStarted || IsRoundOver)

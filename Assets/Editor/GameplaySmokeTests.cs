@@ -81,6 +81,13 @@ namespace UmdJam.Editor
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
+        [MenuItem("Tools/UmdJam/Run Gameplay Feedback Smoke Tests")]
+        public static void RunGameplayFeedback()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.Feedback", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
         [MenuItem("Tools/UmdJam/Run CPU Balance Benchmark")]
         public static void RunCpuBenchmark()
         {
@@ -131,7 +138,10 @@ namespace UmdJam.Editor
                 SessionState.SetBool("UmdJam.SmokeTests.CpuBenchmark", false);
                 bool shortBenchmark = SessionState.GetBool("UmdJam.SmokeTests.CpuBenchmarkShort", false);
                 SessionState.SetBool("UmdJam.SmokeTests.CpuBenchmarkShort", false);
-                exercise = randomEvents ? RandomEventSmokeTests.Exercise() :
+                bool feedback = SessionState.GetBool("UmdJam.SmokeTests.Feedback", false);
+                SessionState.SetBool("UmdJam.SmokeTests.Feedback", false);
+                exercise = feedback ? GameplayFeedbackSmokeTests.Exercise() :
+                    randomEvents ? RandomEventSmokeTests.Exercise() :
                     shortBenchmark ? CpuBalanceBenchmark.Exercise(0.25f) :
                     benchmark ? CpuBalanceBenchmark.Exercise() :
                     cpuBehavior ? CpuBehaviorChecks.Exercise() :

@@ -101,7 +101,7 @@ namespace UmdJam.Editor
                 "Flask marker matches frozen flask at this resolution");
         }
 
-        private static void SetSize(EditorWindow window, Type gameViewType, int width, int height)
+        internal static void SetSize(EditorWindow window, Type gameViewType, int width, int height)
         {
             Assembly assembly = typeof(UnityEditor.Editor).Assembly;
             Type sizesType = assembly.GetType("UnityEditor.GameViewSizes");

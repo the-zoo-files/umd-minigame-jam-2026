@@ -132,7 +132,7 @@
 .connection-card.is-connected {
     background-color: rgb(246, 243, 255);
     color: rgb(37, 25, 64);
-    border-width: 4px;
+    border-width: 6px;
 }
 
 

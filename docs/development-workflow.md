@@ -172,3 +172,7 @@ After modifying serialized fields or required components, inspect:
 - Test expectations changed: update this guide.
 
 Keep `AGENTS.md` and `CLAUDE.md` as indexes and guardrails, not duplicate manuals.
+
+### Gameplay feedback
+
+Run **Tools > UmdJam > Run Gameplay Feedback Smoke Tests** (`GameplaySmokeTests.RunGameplayFeedback`) in a graphics-enabled Editor. It checks lobby/normal/10-second/3-second transitions, actual collection and direct-transfer rewards, duplicate/wrong-collector rejection, rapid reward aggregation, popup/pulse expiry, zero-point delivery, fresh totals after expiry, shared held/transfer/boundary risk eligibility, live zone crossings, absent-slot hiding, 4:3 layout, zero managed allocations across 200 warmed unchanged updates, time-extension reset, component re-enable, timeout cleanup, and replay. The actual Game view is captured at 1920x1080 and 1440x1080 into `.utmp/gameplay-feedback-*.png`; the previous Game view selection is restored. Run gameplay, CPU, results, event, and menu suites as shared-scoring/HUD regressions. Listen to the chime/ticks in a normal player or Editor with audio output before tuning volume.

@@ -212,6 +212,14 @@ The results director eases the camera overhead using unscaled time, then counts 
 
 **Skip count** immediately shows final standings. UI Toolkit supports pointer and keyboard/gamepad submit; replay is enabled only after submit release and a short debounce, so holding submit cannot skip and replay together. **Play Again** reloads the scene and returns to fresh player setup, without retaining the roster or selections. Director timing and camera framing are private serialized fields on the scene's `RoundResults` object. The view's mask opacity lives beside the HUD document. Audio is optional and requires both the director's tick source and clip.
 
+## Countdown and Scoring Feedback
+
+During the final 10 seconds, the timer pulses on each displayed second, becomes amber, and displays **Clear your zone**. The final three seconds use red emphasis. Short synthesized countdown ticks grow louder toward timeout; skipped seconds do not replay as a burst. The presentation follows scaled round time and clears before results.
+
+Each occupied corner shows **At risk: −N**, with color-coded **P1 −3**-style labels above eligible flasks. These are current potential deductions, not predictions of where a moving flask will finish. The shared `GameManager.GetFlaskPenaltyPlayer` query retains existing 3D zone/boundary rules, including held and transferring flasks; collected, disabled, above-zone, and outside flasks are excluded. Empty slots have no markers or totals. Zero-point flasks need no warning. The default 32-marker pool is configurable up to 128; totals include every eligible flask even beyond that visual budget.
+
+A successful collector reward displays a rising **+N** popup and expanding ring in the participant's color, with a short synthesized chime. Rewards arriving while that player's popup is active accumulate into one number. Wrong collectors, duplicate collection, zero-point rewards, and final penalty deductions create no scoring feedback. Popup lifetime defaults to 0.85 seconds. Private serialized fields on `GameplayFeedback` control countdown threshold, popup duration, marker budget, and sound volume; volume zero mutes both cues. Audio clips are generated once, and owned clips/source and transient UI are cleaned up on teardown. No external audio or artwork is required.
+
 ## Safe Extension Points
 
 - Replace `FlaskPlaceholder.prefab` visuals or point/physics tuning through a `Flask` definition without changing the pickup contract.

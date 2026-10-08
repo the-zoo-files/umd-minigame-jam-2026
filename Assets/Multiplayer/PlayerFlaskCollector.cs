@@ -7,6 +7,7 @@ namespace UmdJam.Multiplayer
     [RequireComponent(typeof(Collider))]
     public sealed class PlayerFlaskCollector : MonoBehaviour
     {
+        public static event System.Action<PlayerFlaskCollector, int> FlaskCollected;
         private static readonly List<PlayerFlaskCollector> ActiveCollectors = new();
 
         [SerializeField, Range(1, 4)] private int playerNumber = 1;
@@ -20,6 +21,9 @@ namespace UmdJam.Multiplayer
 
         public Vector3 CollectionPoint => collectorCollider.bounds.center;
         public int PlayerNumber => playerNumber;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEvents() => FlaskCollected = null;
 
         public static PlayerFlaskCollector GetForPlayer(int number)
         {
@@ -127,6 +131,7 @@ namespace UmdJam.Multiplayer
             }
 
             CouchPlayerController.AddScore(playerNumber, points);
+            if (points > 0) FlaskCollected?.Invoke(this, points);
         }
 
         public bool TryTransfer(PickupFlask flask, float duration)
