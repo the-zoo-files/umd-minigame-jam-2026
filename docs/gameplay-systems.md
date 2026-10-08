@@ -15,6 +15,18 @@ Lobby actions are owned by `CouchMultiplayerManager` and use the new Input Syste
 
 The project uses `Assets/InputSystem_Actions.inputactions` and `PlayerInputManager`.
 
+## Random Events
+
+The ready-up menu offers **Random Events: Off / On**, defaulting to Off. The lobby owns this setting, it locks after Start Game, and replay returns it to Off. With it enabled, a scene-owned `RandomEventDirector` runs a 7-second quiet interval followed by a 6-second event. A randomized bag cycles through Earthquake, Tornadoes, and Lightning without an immediate repeat at bag boundaries. Only one event runs at a time; round time controls scheduling, so a paused simulation does not advance hazards.
+
+- **Earthquake:** changing per-player planar drift disturbs movement without changing paired input actions. Free flasks receive bounded horizontal shaking and a small upward force. A ground ripple and additive camera shake animate the effect.
+- **Tornadoes:** two moving mini tornadoes apply inward/tangential wind and upward lift. Players retain reduced steering while inside; leaving launches them with circular momentum and gravity brings them back down. Free flasks follow the same circular wind through Rigidbody forces. Animated tapered spiral funnels mark the tornadoes.
+- **Lightning:** a ground ring warns at a participant's position for 0.9 seconds, allowing escape before the strike. The bolt and scene/point-light flash stun players inside its 1.8-unit planar radius for 0.9 seconds. Stun blocks movement input, pickup, and throwing; existing held flasks remain attached. A rotating halo marks stunned players.
+
+Humans and CPUs, including God, obey the same world hazards. Held, collected, pooled, and direct-transfer flasks are excluded from environmental forces. Player gravity/collision recovery and stun expiry belong to `CouchPlayerController`; `PickupFlask` validates forces against its own availability state and cached Rigidbody. Tunable event values are private serialized fields on the director, validated at configuration boundaries. Disabling the owner or ending a round clears player effects and restores the camera/light before results capture; ordinary event expiry preserves airborne release momentum and lets outstanding stuns expire normally. Replay/scene teardown removes procedural visuals and subscriptions. No scene/prefab YAML wiring is required: the lobby adds the director only when enabled.
+
+The effects use a shared `Resources/RandomEvents/Effects.mat` material and the project-owned URP vertex-color shader `RandomEvent.shader`. **Tools > UmdJam > Configure Random Event Assets** creates the material through Editor APIs. Visual geometry is bounded and reused (two funnels, one ripple, one warning ring/bolt, and four stun halos); updates do not create new objects or materials.
+
 ## CPU Players
 
 Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Noob**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.

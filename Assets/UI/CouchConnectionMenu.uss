@@ -2,6 +2,29 @@
     display: none;
 }
 
+.random-events {
+    width: 340px;
+    height: 42px;
+    margin-bottom: 10px;
+    background-color: rgb(49, 42, 80);
+    color: white;
+    border-radius: 16px;
+    font-size: 20px;
+}
+
+.random-events.is-on {
+    background-color: rgb(116, 63, 162);
+}
+
+.random-event-status {
+    font-size: 22px;
+    color: rgb(255, 217, 109);
+    -unity-text-align: middle-center;
+    background-color: rgba(15, 12, 43, 0.85);
+    border-radius: 12px;
+    padding: 4px 12px;
+}
+
 .connection-menu {
     position: absolute;
     top: 0;

@@ -44,6 +44,8 @@ namespace UmdJam.Editor
                 Require(root.Q("gameplayHud").ClassListContains("is-hidden"), "HUD hidden");
                 Require(root.Q<Label>("playerCount").text == "2", "Default player count");
                 Require(root.Q<Button>("startGame").text == "Start Game", "Start wording");
+                Require(root.Q<Button>("randomEvents").text == "Random Events: Off" && !lobby.RandomEventsEnabled,
+                    "Random event toggle defaults off");
                 Require(!lobby.TryStartGame(), "Cannot start empty lobby");
                 Require(!lobby.TrySetPlayerCount(0) && !lobby.TrySetPlayerCount(5), "Count bounds");
                 float initialTime = round.RemainingTime;

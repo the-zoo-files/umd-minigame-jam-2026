@@ -35,6 +35,10 @@ Do not edit Unity YAML by hand while the Editor is connected. Do not modify `Lib
 
 ## Minimum Smoke Tests
 
+### Random events
+
+Run **Tools > UmdJam > Run Random Event Smoke Tests** (`GameplaySmokeTests.RunRandomEvents`). It verifies the actual toggle event/default-off state, mixed human/God rounds, setting lock, event exclusion, earthquake movement/flask forces, circular tornado wind and lift/release, telegraphed lightning/stun/flash, invalid stun input, disable/end/replay cleanup, exact camera restoration, and six scheduled events covering the randomized bag without consecutive repeats. It checks zero managed allocations across 200 warmed visual updates and empty-flask force-registry iterations; this excludes UI transitions, scoring, and native/GPU memory. A graphics-enabled run also captures the actual running camera into `.utmp/random-event-earthquake.png`, `random-event-tornadoes.png`, and `random-event-lightning.png`. Run gameplay, CPU, connection-menu, and round-results suites as shared-controller/UI regressions. Inspect the procedural shader and lightning illumination in the graphics-enabled run. Actual browser profiling still requires matching Web Build Support.
+
 ### Repeatable gameplay checks
 
 Run **Tools > UmdJam > Run Gameplay Smoke Tests** outside Play Mode. The harness opens `Game.unity`, enters Play Mode, uses temporary virtual gamepads, and returns to Edit Mode. Save any authored scene changes first. It checks four-player initialization and paired actions, HUD state, contact pickup and release, rejected transitions/trajectories, machine launch validation, material cleanup, rejoining, and missing-reference diagnostics. Unexpected runtime warnings and errors fail the run; intentional invalid-configuration errors are explicitly matched.

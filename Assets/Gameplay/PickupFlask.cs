@@ -52,6 +52,13 @@ namespace UmdJam.Gameplay
         public Vector3 Velocity => body != null ? body.linearVelocity : Vector3.zero;
         public bool UsesGravity => body != null && body.useGravity;
 
+        public void ApplyEnvironmentalAcceleration(Vector3 acceleration, Vector3 angularAcceleration)
+        {
+            if (!IsAvailable || !Ballistics.IsFinite(acceleration) || !Ballistics.IsFinite(angularAcceleration)) return;
+            body.AddForce(acceleration, ForceMode.Acceleration);
+            body.AddTorque(angularAcceleration, ForceMode.Acceleration);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetRegistry() => activeFlasks.Clear();
 

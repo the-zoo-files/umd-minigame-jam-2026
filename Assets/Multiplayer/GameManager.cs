@@ -117,6 +117,8 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
+            if (RandomEventDirector.Instance != null) RandomEventDirector.Instance.StopEffects();
+
             IsRoundOver = true;
             remainingTime = 0f;
             Time.timeScale = 0f;

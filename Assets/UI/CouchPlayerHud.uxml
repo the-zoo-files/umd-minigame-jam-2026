@@ -6,6 +6,7 @@
         <ui:VisualElement name="gameplayHud" picking-mode="Ignore" class="hud-root is-hidden">
             <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
                 <ui:Label name="roundTimer" text="01:00" class="round-timer"/>
+                <ui:Label name="randomEventStatus" class="random-event-status is-hidden"/>
             </ui:VisualElement>
             <ui:Label name="player1Name" text="Player 1&#10;Score: 0" class="player-name player-one is-connected"/>
             <ui:Label name="player2Name" text="Player 2&#10;Score: 0" class="player-name player-two is-connected"/>
@@ -85,6 +86,7 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:Label name="connectionStatus" text="0 / 2 ready" class="connection-status"/>
+                <ui:Button name="randomEvents" text="Random Events: Off" tooltip="Enable earthquakes, tornadoes, and lightning" class="random-events"/>
                 <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
             </ui:VisualElement>
         </ui:VisualElement>

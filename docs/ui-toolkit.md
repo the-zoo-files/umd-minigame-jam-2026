@@ -11,6 +11,8 @@ Keep those responsibilities separate so UI Builder and design tooling can edit s
 
 ## HUD Layout Contract
 
+The `randomEvents` button toggles the manager's authoritative **Random Events: Off / On** setting before play. `is-on` styles the enabled option. The gameplay `randomEventStatus` label lives below the timer, listens to event transitions, and shows Earthquake, Tornadoes, or Lightning; it is hidden during quiet intervals and results. Both controls use the existing document and do not own hazard state.
+
 The document contains `connectionMenu` and `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the initial local multiplayer menu, headed **Players**, with a **Start Game** action. The button remains disabled until every selected slot has a ready CPU or a human with the required device(s). The menu uses four color-coded cards, a pink count selector, and a dark background; graphics are UI Toolkit elements and need no external art.
 
 Connection bindings are `playerCount`, `connectionStatus`, `previousPlayerCount`, `nextPlayerCount`, and `startGame`. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states are `is-selected`, `is-connected`, and `is-disconnected`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list.

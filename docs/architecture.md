@@ -33,6 +33,9 @@ Assets/
 │   ├── CpuSettings.cs
 │   ├── PlayerColorPalette.cs
 │   ├── GameManager.cs
+│   ├── RandomEventDirector.cs
+│   ├── RandomEventKind.cs
+│   ├── RandomEventVisuals.cs
 │   ├── PlayerFlaskCollector.cs
 │   └── Player.prefab
 ├── Scenes/
@@ -72,6 +75,7 @@ Owns local player joining and per-player behavior.
 - Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
 - `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Its four serialized `CpuSettings` profiles are authored on a disabled component in `Player.prefab`; the lobby enables it only for CPUs. The driver owns nearby flask observations, stable preference errors, target commitment, and smoothed analog commands. `CpuNavigation` registers compatible prebaked navigation before CPU rounds, with runtime baking as a fallback. `CpuNavigationBaker` regenerates and validates the static arena bake before builds using the same capsule configuration and geometry exclusions. Registrations and owned fallback data are released on teardown; shared baked assets are preserved. Bots still move with `CharacterController`, not a second movement system.
 - `GameManager` owns the round timer, player-zone definitions, end-of-round flask penalties, and final pause state.
+- `RandomEventDirector` owns the optional round hazard schedule and world forces. `CouchMultiplayerManager.RandomEventsEnabled` is the lobby setting; it creates the scene-owned director only for enabled rounds. `CouchPlayerController` owns stun/release motion, while `PickupFlask` validates environmental accelerations against free-flask state. `RandomEventVisuals` owns reusable procedural lines, camera shake, and lightning light changes. The round manager clears hazards before results snapshot/presentation.
 - `RoundResults`, `PlayerRoundResult`, and `FlaskPenaltyEntry` hold immutable timeout snapshots: participant identity/color, starting/final scores, and spatially ordered flask point values/positions. UI never applies penalties.
 - `PlayerFlaskCollector` validates thrown flasks against its player number and awards their configured points.
 

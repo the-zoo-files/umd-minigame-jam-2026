@@ -18,6 +18,7 @@ namespace UmdJam.UI
         private Button previousButton;
         private Button nextButton;
         private Button startButton;
+        private Button randomEventsButton;
         private readonly VisualElement[] cards = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
         private readonly Label[] deviceLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly Label[] stateLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
@@ -50,8 +51,9 @@ namespace UmdJam.UI
             previousButton = root.Q<Button>("previousPlayerCount");
             nextButton = root.Q<Button>("nextPlayerCount");
             startButton = root.Q<Button>("startGame");
+            randomEventsButton = root.Q<Button>("randomEvents");
             if (multiplayer == null || menu == null || gameplayHud == null || countLabel == null ||
-                statusLabel == null || previousButton == null || nextButton == null || startButton == null)
+                statusLabel == null || previousButton == null || nextButton == null || startButton == null || randomEventsButton == null)
             {
                 Debug.LogError("Connection menu requires its multiplayer manager and named UI elements.", this);
                 enabled = false;
@@ -107,12 +109,14 @@ namespace UmdJam.UI
             previousButton.clicked += PreviousCount;
             nextButton.clicked += NextCount;
             startButton.clicked += StartGame;
+            randomEventsButton.clicked += ToggleRandomEvents;
             multiplayer.LobbyChanged += Refresh;
             Refresh();
         }
 
         private void OnDisable()
         {
+            if (randomEventsButton != null) randomEventsButton.clicked -= ToggleRandomEvents;
             if (multiplayer != null)
             {
                 multiplayer.LobbyChanged -= Refresh;
@@ -179,6 +183,8 @@ namespace UmdJam.UI
 
         private void Refresh()
         {
+            randomEventsButton.text = multiplayer.RandomEventsEnabled ? "Random Events: On" : "Random Events: Off";
+            randomEventsButton.EnableInClassList("is-on", multiplayer.RandomEventsEnabled);
             bool isOpen = multiplayer.IsLobbyOpen;
             menu.EnableInClassList("is-hidden", !isOpen);
             gameplayHud.EnableInClassList("is-hidden", isOpen);
@@ -242,5 +248,7 @@ namespace UmdJam.UI
             statusLabel.text = multiplayer.StartFailure ??
                 (multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready");
         }
+
+        private void ToggleRandomEvents() => multiplayer.TrySetRandomEvents(!multiplayer.RandomEventsEnabled);
     }
 }

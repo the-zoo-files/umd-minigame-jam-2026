@@ -25,6 +25,15 @@ namespace UmdJam.Multiplayer
         public string StartFailure { get; private set; }
 
         public int SelectedPlayerCount => selectedPlayerCount;
+        public bool RandomEventsEnabled { get; private set; }
+
+        public bool TrySetRandomEvents(bool enabled)
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen) return false;
+            RandomEventsEnabled = enabled;
+            RefreshLobby();
+            return true;
+        }
         public bool IsLobbyOpen => gameManager != null && !gameManager.HasStarted;
         public bool CanStart
         {
@@ -244,6 +253,19 @@ namespace UmdJam.Multiplayer
                     StartFailure = "CPU cannot reach its collector. Check arena navigation and try again.";
                     retryStartAt = Time.unscaledTime + 1f;
                     Debug.LogError("CPU players need a walkable path from their spawn to their collector.", this);
+                    LobbyChanged?.Invoke();
+                    return false;
+                }
+            }
+            if (RandomEventsEnabled)
+            {
+                if (!gameManager.TryGetComponent(out RandomEventDirector events))
+                    events = gameManager.gameObject.AddComponent<RandomEventDirector>();
+                if (!events.Configure(gameManager))
+                {
+                    StartFailure = "Random events are unavailable. Disable them or check event assets.";
+                    retryStartAt = Time.unscaledTime + 1f;
+                    Destroy(events);
                     LobbyChanged?.Invoke();
                     return false;
                 }
