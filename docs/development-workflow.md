@@ -88,6 +88,8 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Movement or input changes
 
+Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.RunPlayerMovement`) for acceleration, curved direction changes/reversal, exact stopping/full speed, partial-stick speed, diagonal bounds, equivalent elapsed-time response at 30/60/120 FPS, invalid input/frame duration, zero-smoothing configuration, warmed zero allocations, actual paired gamepad/CharacterController movement, and spawn/stun/disable/timeout reset. Run gameplay, CPU behavior/gameplay, event, and results suites as shared-controller regressions.
+
 - Confirm each player reads only its paired device.
 - Check diagonal speed and turn response.
 - Confirm attack remains left mouse and the gamepad south face button.

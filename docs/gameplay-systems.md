@@ -66,6 +66,12 @@ After removing God's artificial handicaps, the 2026-10-08 seeded benchmark (eigh
 
 Do not read devices globally inside a player controller. Always use the actions cloned and paired by that player's `PlayerInput`.
 
+## Player Movement
+
+Human keyboard/stick commands use a short exponential response for acceleration and direction changes (`movementSmoothingTime`, default 0.05 seconds), with a quicker release (`stoppingSmoothingTime`, default 0.03 seconds). These are response time constants: roughly 95% of the change is reached after 0.15/0.09 seconds. Zero disables the corresponding smoothing. Values and state belong to `CouchPlayerController`. Diagonal input is bounded to unit magnitude, partial stick input keeps its speed, and residual motion snaps to exact rest. Human facing also uses an exponential response, so low frame rates no longer make turns snap more sharply.
+
+Top speed stays 9.5 units/second. CharacterController gravity and environmental movement continue to run at zero input. Spawn, disable, stun, and the non-playing round gate clear residual human input. The human filter allocates no managed memory per update. CPUs bypass it: their existing natural steering and God's immediate input/rotation behavior are preserved. Pickup, attack, and throw rules are unchanged.
+
 ## Player Colors
 
 Every human and CPU has a unique color. Use the arrows beside the color name on an occupied ready-up card to cycle through available colors. Paired humans can also use Q/E on keyboard or the controller shoulder buttons. Colors taken by other participants are skipped. Disconnected players and players pending removal retain their colors until teardown; leaving releases the color. Selection locks when the round starts.
