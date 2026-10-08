@@ -4,7 +4,9 @@ using System.Reflection;
 using UmdJam.Gameplay;
 using UmdJam.Multiplayer;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace UmdJam.Editor
@@ -104,6 +106,69 @@ namespace UmdJam.Editor
             GameManager.Instance.EndRound();
             cpu.ReadCommand(out command, out bool attack);
             Require(command == Vector2.zero && !attack, "Round end stops smoothed movement immediately");
+            IEnumerator godChecks = CheckGod(prefab);
+            while (godChecks.MoveNext()) yield return godChecks.Current;
+        }
+
+        private static IEnumerator CheckGod(PickupFlask prefab)
+        {
+            EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+            yield return null;
+            Object.FindAnyObjectByType<MachineFlaskShooter>().enabled = false;
+            CouchMultiplayerManager lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
+            Require(lobby.TrySetPlayerCount(1) && lobby.TryAddCpu(0, CpuDifficulty.God), "God fixture joins");
+            CouchPlayerController player = lobby.GetParticipant(0);
+            CpuPlayerController cpu = player.Cpu;
+            // Existing serialized prefab values must not silently reintroduce handicaps.
+            SerializedObject serialized = new(cpu);
+            SerializedProperty god = serialized.FindProperty("god");
+            god.FindPropertyRelative("reactionDelay").floatValue = 5f;
+            god.FindPropertyRelative("decisionNoise").floatValue = 1f;
+            god.FindPropertyRelative("awarenessRadius").floatValue = 1f;
+            god.FindPropertyRelative("targetCommitment").floatValue = 5f;
+            god.FindPropertyRelative("switchAdvantage").floatValue = 1f;
+            god.FindPropertyRelative("throwPreparation").floatValue = 5f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Require(lobby.TryStartGame(), "God fixture starts");
+            player.enabled = false;
+            player.GetComponent<CharacterController>().enabled = false;
+            player.transform.position = new Vector3(-6f, 1f, 6f);
+            PickupFlask distant = Spawn(prefab, new Vector3(6f, 0.5f, -6f));
+            cpu.ReadCommand(out Vector2 movement, out _);
+            Require(Target(cpu) == distant, "God notices an arena-wide flask on its first planning tick");
+            Require(movement.magnitude > 0.99f, "God accelerates immediately without input smoothing");
+            PickupFlask nearer = Spawn(prefab, new Vector3(-6f, 0.5f, 4f));
+            float acquired = Time.time;
+            float deadline = acquired + 0.5f;
+            while (Target(cpu) != nearer && Time.time < deadline)
+            {
+                yield return null;
+                cpu.ReadCommand(out _, out _);
+            }
+            Require(Target(cpu) == nearer, "God switches to the better flask without commitment or discovery waits");
+            distant.gameObject.SetActive(false);
+            // Approach within the natural braking distance, outside the waypoint arrival epsilon.
+            player.transform.position = nearer.transform.position + Vector3.forward * 0.4f;
+            player.transform.position = new Vector3(player.transform.position.x, 1f, player.transform.position.z);
+            deadline = Time.time + cpu.Settings.PlanningInterval + 0.02f;
+            while (Time.time < deadline) yield return null;
+            cpu.ReadCommand(out movement, out _);
+            Require(movement.magnitude > 0.99f, "God does not apply final-approach braking");
+            nearer.gameObject.SetActive(false);
+            PlayerFlaskCollector collector = PlayerFlaskCollector.GetForPlayer(1);
+            player.transform.position = collector.CollectionPoint;
+            PickupFlask carried = Spawn(prefab, collector.CollectionPoint + Vector3.up);
+            Transform holdPoint = (Transform)typeof(CouchPlayerController).GetField("holdPoint",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player);
+            Require(carried.TryPickUp(holdPoint), "God carry fixture");
+            typeof(CouchPlayerController).GetField("heldFlask", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(player, carried);
+            cpu.ReadCommand(out movement, out bool attack);
+            Require(attack && movement == Vector2.zero, "God throws immediately without preparation");
+            GameManager.Instance.EndRound();
+            cpu.ReadCommand(out movement, out attack);
+            Require(movement == Vector2.zero && !attack, "Unrestricted God still stops at round end");
         }
 
         internal static PickupFlask Target(CpuPlayerController cpu) =>

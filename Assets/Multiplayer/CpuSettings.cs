@@ -30,6 +30,19 @@ namespace UmdJam.Multiplayer
         public float BrakingDistance => Mathf.Max(0.2f, brakingDistance);
         public float ThrowPreparation => Mathf.Max(0f, throwPreparation);
 
+        public CpuSettings WithoutHandicaps()
+        {
+            CpuSettings unrestricted = this;
+            unrestricted.reactionDelay = 0f;
+            unrestricted.decisionNoise = 0f;
+            unrestricted.strategyWeight = 1f;
+            unrestricted.awarenessRadius = float.PositiveInfinity;
+            unrestricted.targetCommitment = 0f;
+            unrestricted.switchAdvantage = 0f;
+            unrestricted.throwPreparation = 0f;
+            return unrestricted;
+        }
+
         public CpuSettings(float interval, float reaction, float prediction, float noise, float strategy,
             float awareness = 9f, float commitment = 1f, float advantage = 0.3f,
             float acceleration = 5f, float braking = 0.8f, float preparation = 0.2f)

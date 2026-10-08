@@ -14,7 +14,8 @@ namespace UmdJam.Multiplayer
             awareness: 9f, commitment: 1f, advantage: 0.3f, acceleration: 5f, preparation: 0.25f);
         [SerializeField] private CpuSettings hacker = new(0.22f, 0.12f, 0.8f, 0.12f, 0.7f,
             awareness: 12f, commitment: 0.7f, advantage: 0.2f, acceleration: 6f, preparation: 0.15f);
-        [SerializeField] private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f,
+        [SerializeField, Tooltip("God ignores artificial handicaps; planning interval and prediction horizon remain tunable.")]
+        private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f,
             awareness: 18f, commitment: 0.45f, advantage: 0.1f, acceleration: 7f, preparation: 0.08f);
         [SerializeField, Range(0f, 1f)] private float stagingFraction = 0.35f;
 
@@ -51,8 +52,10 @@ namespace UmdJam.Multiplayer
             CpuDifficulty.Noob => noob,
             CpuDifficulty.Pro => pro,
             CpuDifficulty.Hacker => hacker,
-            _ => god
+            _ => god.WithoutHandicaps()
         };
+
+        private bool UsesNaturalBehavior => Difficulty != CpuDifficulty.God;
 
         public void Configure(CouchPlayerController owner, CpuNavigation map, GameManager game, CpuDifficulty difficulty)
         {
@@ -94,7 +97,9 @@ namespace UmdJam.Multiplayer
             }
             else
             {
-                steering = Vector2.MoveTowards(steering, desired, Settings.SteeringAcceleration * Time.deltaTime);
+                steering = UsesNaturalBehavior
+                    ? Vector2.MoveTowards(steering, desired, Settings.SteeringAcceleration * Time.deltaTime)
+                    : desired;
             }
             movement = steering;
         }
@@ -174,7 +179,7 @@ namespace UmdJam.Multiplayer
             }
 
             float speedFraction = Mathf.Min(1f, offset.magnitude / Mathf.Max(0.001f, player.MoveSpeed * Time.deltaTime));
-            if (routeIndex == routeCount - 1)
+            if (UsesNaturalBehavior && routeIndex == routeCount - 1)
                 speedFraction = Mathf.Min(speedFraction, Mathf.Clamp(offset.magnitude / settings.BrakingDistance, 0.2f, 1f));
             movement = new Vector2(direction.x, direction.z) * speedFraction;
             if (CpuNavigation.PlanarDistance(transform.position, lastProgressPosition) > 0.3f)
