@@ -45,6 +45,8 @@ namespace UmdJam.Gameplay
         public bool IsCollected => isCollected;
         public int LastThrowerPlayerNumber => lastThrowerPlayerNumber;
         public int PointValue => flask != null ? flask.Points : 1;
+        // Observers must distinguish a pooled relaunch or pickup/rethrow from the last free lifetime.
+        public uint AvailabilityRevision { get; private set; }
         public bool IsAvailable => isActiveAndEnabled && !IsHeld && !isCollected && body != null &&
             !body.isKinematic && body.detectCollisions;
         public Vector3 Velocity => body != null ? body.linearVelocity : Vector3.zero;
@@ -55,6 +57,7 @@ namespace UmdJam.Gameplay
 
         private void OnEnable()
         {
+            AvailabilityRevision++;
             if (!activeFlasks.Contains(this)) activeFlasks.Add(this);
         }
 
@@ -85,6 +88,7 @@ namespace UmdJam.Gameplay
 
         internal void ResetForSpawn(Flask definition, Vector3 position, Quaternion rotation)
         {
+            AvailabilityRevision++;
             ClearTransfer();
             IsHeld = false;
             isCollected = false;
@@ -184,6 +188,7 @@ namespace UmdJam.Gameplay
             }
 
             IsHeld = true;
+            AvailabilityRevision++;
             currentHoldPoint = holdPoint;
             bounceCount = 0;
             body.linearVelocity = Vector3.zero;
