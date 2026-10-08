@@ -38,7 +38,10 @@ namespace UmdJam.Editor
                 Require(!lobby.TrySetRandomEvents(false), "Event option locks during round");
                 RandomEventDirector director = RandomEventDirector.Instance;
                 Require(director != null && director.ActiveEvent == RandomEventKind.None, "Round starts with a quiet interval");
-                Set(director, "quietDuration", 120f);
+                float initialGap = GetTransition(director) - Time.time;
+                Require(initialGap >= 12f && initialGap <= 20f, "First event waits for the default quiet interval");
+                Set(director, "minimumQuietDuration", 120f);
+                Set(director, "maximumQuietDuration", 120f);
                 CouchPlayerController human = lobby.GetParticipant(0);
                 CouchPlayerController god = lobby.GetParticipant(1);
                 god.Cpu.enabled = false; // Isolate environmental movement from normal AI steering.
@@ -138,28 +141,43 @@ namespace UmdJam.Editor
                 director.StopEffects();
                 if (camera != null) Require(Vector3.Distance(camera.transform.position, cameraBefore) < 0.001f,
                     "Camera shake restores its exact baseline");
-                Set(director, "quietDuration", 0.2f);
+                Set(director, "minimumQuietDuration", 0.2f);
+                Set(director, "maximumQuietDuration", 0.4f);
                 Set(director, "eventDuration", 0.2f);
+                Set(director, "random", new System.Random(42));
                 director.StopEffects();
                 RandomEventKind visible = RandomEventKind.None;
                 RandomEventKind last = RandomEventKind.None;
                 int starts = 0;
                 int seen = 0;
-                until = Time.time + 6f;
+                float smallestGap = float.PositiveInfinity;
+                float largestGap = 0f;
+                float scheduledStart = GetTransition(director);
+                until = Time.time + 8f;
                 while (starts < 6 && Time.time < until)
                 {
                     RandomEventKind current = director.ActiveEvent;
                     if (current != RandomEventKind.None && visible == RandomEventKind.None)
                     {
+                        Require(Time.time >= scheduledStart, "Events never begin before their quiet interval ends");
                         Require(current != last, "Automatic schedule avoids consecutive repeated events");
                         seen |= 1 << (int)current;
                         last = current;
                         starts++;
                     }
+                    else if (current == RandomEventKind.None && visible != RandomEventKind.None)
+                    {
+                        scheduledStart = GetTransition(director);
+                        float gap = scheduledStart - Time.time;
+                        Require(gap >= 0.199f && gap <= 0.401f, "Each quiet interval stays within its configured bounds");
+                        smallestGap = Mathf.Min(smallestGap, gap);
+                        largestGap = Mathf.Max(largestGap, gap);
+                    }
                     visible = current;
                     yield return null;
                 }
                 Require(starts == 6 && seen == 0b1110, "Automatic schedule visits every event and repeats its bounded bag");
+                Require(largestGap - smallestGap > 0.01f, "Quiet intervals vary rather than repeating a fixed frequency");
                 round.EndRound();
                 Require(director.ActiveEvent == RandomEventKind.None && !human.IsStunned &&
                     root.Q<Label>("randomEventStatus").ClassListContains("is-hidden"), "Round end clears event HUD/status");
@@ -220,6 +238,9 @@ namespace UmdJam.Editor
 
         private static void Set(object target, string field, object value) =>
             target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
+
+        private static float GetTransition(RandomEventDirector director) =>
+            (float)typeof(RandomEventDirector).GetField("nextTransition", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(director);
 
         private static void Require(bool condition, string message)
         {

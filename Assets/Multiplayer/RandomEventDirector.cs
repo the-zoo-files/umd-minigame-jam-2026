@@ -11,7 +11,8 @@ namespace UmdJam.Multiplayer
         public static RandomEventDirector Instance { get; private set; }
         public static event Action<RandomEventKind> EventChanged;
 
-        [SerializeField, Min(1f)] private float quietDuration = 7f;
+        [SerializeField, Min(1f)] private float minimumQuietDuration = 12f;
+        [SerializeField, Min(1f)] private float maximumQuietDuration = 20f;
         [SerializeField, Min(1f)] private float eventDuration = 6f;
         [SerializeField, Min(0f)] private float earthquakeDriftSpeed = 4f;
         [SerializeField, Min(0f)] private float earthquakeFlaskAcceleration = 8f;
@@ -54,7 +55,8 @@ namespace UmdJam.Multiplayer
         public bool Configure(GameManager game)
         {
             if (round != null) return round == game && isActiveAndEnabled && visuals != null;
-            if (!isActiveAndEnabled || game == null || !Valid(quietDuration, 0.1f, 120f) ||
+            if (!isActiveAndEnabled || game == null || !Valid(minimumQuietDuration, 0.1f, 120f) ||
+                !Valid(maximumQuietDuration, minimumQuietDuration, 120f) ||
                 !Valid(eventDuration, 0.1f, 30f) || !Valid(earthquakeDriftSpeed, 0f, 10f) ||
                 !Valid(earthquakeFlaskAcceleration, 0f, 40f) || !Valid(tornadoRadius, 0.5f, 4f) ||
                 !Valid(tornadoHeight, 1f, 8f) || !Valid(tornadoSpeed, 0f, 15f) ||
@@ -110,7 +112,16 @@ namespace UmdJam.Multiplayer
             if (visuals != null) Destroy(visuals);
         }
 
-        private void OnRoundStarted() => nextTransition = Time.time + quietDuration;
+        private void OnRoundStarted() => ScheduleQuietInterval();
+
+        private void ScheduleQuietInterval()
+        {
+            // Teardown can run before configuration initializes the random source.
+            float duration = minimumQuietDuration;
+            if (random != null)
+                duration += (float)random.NextDouble() * (maximumQuietDuration - minimumQuietDuration);
+            nextTransition = Time.time + duration;
+        }
 
         private void Update()
         {
@@ -170,7 +181,7 @@ namespace UmdJam.Multiplayer
         private void FinishEvent()
         {
             ActiveEvent = RandomEventKind.None;
-            nextTransition = Time.time + quietDuration;
+            ScheduleQuietInterval();
             lastStrike = float.NegativeInfinity;
             if (visuals != null) visuals.ResetPresentation();
             EventChanged?.Invoke(RandomEventKind.None);
