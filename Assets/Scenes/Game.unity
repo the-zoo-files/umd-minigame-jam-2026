@@ -7877,7 +7877,7 @@ MonoBehaviour:
   - {fileID: 1417336076}
   - {fileID: 644792353}
   cameraMoveDuration: 1
-  framingPadding: 1.15
+  framingPadding: 1.08
   zoneIntroduction: 0.25
   flaskInterval: 0.2
   minimumFlaskInterval: 0.06
