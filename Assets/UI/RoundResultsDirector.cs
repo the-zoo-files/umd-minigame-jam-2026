@@ -182,7 +182,11 @@ namespace UmdJam.UI
             {
                 bool pressed = false;
                 foreach (InputControl control in submitHeld.controls)
-                    if (control is ButtonControl button && button.isPressed) pressed = true;
+                {
+                    if (control is not ButtonControl button || !button.isPressed) continue;
+                    pressed = true;
+                    break;
+                }
                 releasedFor = pressed ? 0f : releasedFor + Time.unscaledDeltaTime;
                 yield return null;
             }

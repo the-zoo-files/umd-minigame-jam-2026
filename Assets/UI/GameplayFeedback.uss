@@ -1,0 +1,58 @@
+.round-timer.is-urgent {
+    border-color: rgb(255, 189, 74);
+    color: rgb(255, 213, 130);
+}
+
+.round-timer.is-critical {
+    border-color: rgb(255, 82, 111);
+    color: rgb(255, 125, 147);
+}
+
+.countdown-warning {
+    margin-top: 8px;
+    padding: 4px 10px;
+    background-color: rgba(10, 15, 25, 0.9);
+    border-radius: 4px;
+    color: rgb(255, 213, 130);
+    font-size: 16px;
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+}
+
+.zone-risk {
+    position: absolute;
+    padding: 5px 10px;
+    border-left-width: 3px;
+    background-color: rgba(10, 15, 25, 0.9);
+    color: rgb(245, 248, 255);
+    font-size: 16px;
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+}
+
+.risk-one { top: 112px; left: var(--hud-edge); }
+.risk-two { top: 112px; right: var(--hud-edge); }
+.risk-three { bottom: 112px; right: var(--hud-edge); }
+.risk-four { bottom: 112px; left: var(--hud-edge); }
+
+.score-popup, .penalty-marker {
+    position: absolute;
+    padding: 3px 8px;
+    border-width: 2px;
+    border-radius: 6px;
+    background-color: rgba(10, 15, 25, 0.9);
+    color: rgb(245, 248, 255);
+    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+    -unity-text-align: middle-center;
+    translate: -50% -100%;
+}
+
+.score-popup { font-size: 28px; -unity-font-style: bold; }
+.penalty-marker { font-size: 14px; }
+
+.collector-pulse {
+    position: absolute;
+    width: 64px;
+    height: 32px;
+    border-width: 3px;
+    border-radius: 32px;
+    translate: -50% -50%;
+}

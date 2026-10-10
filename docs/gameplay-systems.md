@@ -15,6 +15,18 @@ Lobby actions are owned by `CouchMultiplayerManager` and use the new Input Syste
 
 The project uses `Assets/InputSystem_Actions.inputactions` and `PlayerInputManager`.
 
+## Random Events
+
+The ready-up menu offers **Random Events: Off / On**, defaulting to Off. The lobby owns this setting, it locks after Start Game, and replay returns it to Off. With it enabled, a scene-owned `RandomEventDirector` waits a randomly chosen 12–20 seconds before the first event and after each 6-second event. This guarantees at least 12 seconds without hazards between events, averaging about 2–3 events per minute. A randomized bag cycles through Earthquake, Tornadoes, and Lightning without an immediate repeat at bag boundaries. Only one event runs at a time; round time controls scheduling, so a paused simulation does not advance hazards.
+
+- **Earthquake:** changing per-player planar drift disturbs movement without changing paired input actions. Free flasks receive bounded horizontal shaking and a small upward force. A ground ripple and additive camera shake animate the effect.
+- **Tornadoes:** two moving mini tornadoes apply inward/tangential wind and upward lift. Players retain reduced steering while inside; leaving launches them with circular momentum and gravity brings them back down. Free flasks follow the same circular wind through Rigidbody forces. Animated tapered spiral funnels mark the tornadoes.
+- **Lightning:** a ground ring warns at a participant's position for 0.9 seconds, allowing escape before the strike. The bolt and scene/point-light flash stun players inside its 1.8-unit planar radius for 0.9 seconds. Stun blocks movement input, pickup, and throwing; existing held flasks remain attached. A rotating halo marks stunned players.
+
+Humans and CPUs, including God, obey the same world hazards. Held, collected, pooled, and direct-transfer flasks are excluded from environmental forces. Player gravity/collision recovery and stun expiry belong to `CouchPlayerController`; `PickupFlask` validates forces against its own availability state and cached Rigidbody. Tunable event values are private serialized fields on the director, validated at configuration boundaries. Disabling the owner or ending a round clears player effects and restores the camera/light before results capture; ordinary event expiry preserves airborne release momentum and lets outstanding stuns expire normally. Replay/scene teardown removes procedural visuals and subscriptions. No scene/prefab YAML wiring is required: the lobby adds the director only when enabled.
+
+The effects use a shared `Resources/RandomEvents/Effects.mat` material and the project-owned URP vertex-color shader `RandomEvent.shader`. **Tools > UmdJam > Configure Random Event Assets** creates the material through Editor APIs. Visual geometry is bounded and reused (two funnels, one ripple, one warning ring/bolt, and four stun halos); updates do not create new objects or materials.
+
 ## CPU Players
 
 Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Noob**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
@@ -53,6 +65,12 @@ After removing God's artificial handicaps, the 2026-10-08 seeded benchmark (eigh
 - Gamepad throw: south face button (A on Xbox-style controllers, Cross on PlayStation-style controllers).
 
 Do not read devices globally inside a player controller. Always use the actions cloned and paired by that player's `PlayerInput`.
+
+## Player Movement
+
+Human keyboard/stick commands use a short exponential response for acceleration and direction changes (`movementSmoothingTime`, default 0.05 seconds), with a quicker release (`stoppingSmoothingTime`, default 0.03 seconds). These are response time constants: roughly 95% of the change is reached after 0.15/0.09 seconds. Zero disables the corresponding smoothing. Values and state belong to `CouchPlayerController`. Diagonal input is bounded to unit magnitude, partial stick input keeps its speed, and residual motion snaps to exact rest. Human facing also uses an exponential response, so low frame rates no longer make turns snap more sharply.
+
+Top speed stays 9.5 units/second. CharacterController gravity and environmental movement continue to run at zero input. Spawn, disable, stun, and the non-playing round gate clear residual human input. The human filter allocates no managed memory per update. CPUs bypass it: their existing natural steering and God's immediate input/rotation behavior are preserved. Pickup, attack, and throw rules are unchanged.
 
 ## Player Colors
 
@@ -205,6 +223,14 @@ The snapshot includes held and direct-transfer flasks, but excludes collected or
 The results director eases the camera overhead using unscaled time, then counts each participant's flasks clockwise by slot. Within a zone, entries appear in descending world Z then ascending X order. Each marker shows its point value; the zone displays its combined deduction and starting-to-final score. Authoritative scores are already final; the reveal is presentation only. The arena's baked lighting remains unchanged; translucent UI masks darken areas outside the active zone. The director temporarily hides its serialized ceiling-fixture renderers to keep the overhead arena unobstructed and restores their previous render flags on release. Flask attachment/transfer updates stop immediately at time scale zero, including later callbacks in the timeout frame; late throw animation events also reject round-over releases.
 
 **Skip count** immediately shows final standings. UI Toolkit supports pointer and keyboard/gamepad submit; replay is enabled only after submit release and a short debounce, so holding submit cannot skip and replay together. **Play Again** reloads the scene and returns to fresh player setup, without retaining the roster or selections. Director timing and camera framing are private serialized fields on the scene's `RoundResults` object. The view's mask opacity lives beside the HUD document. Audio is optional and requires both the director's tick source and clip.
+
+## Countdown and Scoring Feedback
+
+During the final 10 seconds, the timer pulses on each displayed second, becomes amber, and displays **Clear your zone**. The final three seconds use red emphasis. Short synthesized countdown ticks grow louder toward timeout; skipped seconds do not replay as a burst. The presentation follows scaled round time and clears before results.
+
+Each occupied corner shows **At risk: −N**, with color-coded **P1 −3**-style labels above eligible flasks. These are current potential deductions, not predictions of where a moving flask will finish. The shared `GameManager.GetFlaskPenaltyPlayer` query retains existing 3D zone/boundary rules, including held and transferring flasks; collected, disabled, above-zone, and outside flasks are excluded. Empty slots have no markers or totals. Zero-point flasks need no warning. The default 32-marker pool is configurable up to 128; totals include every eligible flask even beyond that visual budget.
+
+A successful collector reward displays a rising **+N** popup and expanding ring in the participant's color, with a short synthesized chime. Rewards arriving while that player's popup is active accumulate into one number. Wrong collectors, duplicate collection, zero-point rewards, and final penalty deductions create no scoring feedback. Popup lifetime defaults to 0.85 seconds. Private serialized fields on `GameplayFeedback` control countdown threshold, popup duration, marker budget, and sound volume; volume zero mutes both cues. Audio clips are generated once, and owned clips/source and transient UI are cleaned up on teardown. No external audio or artwork is required.
 
 ## Safe Extension Points
 

@@ -28,6 +28,8 @@ namespace UmdJam.UI
         private Button skip;
         private Button replay;
         private PlayerRoundResult focusedZone;
+        private PlayerRoundResult deductionZone;
+        private int displayedDeductionScore;
         private Vector3 markerPosition;
         private bool hasMarker;
         private float markerStarted;
@@ -40,6 +42,7 @@ namespace UmdJam.UI
         public void Begin(RoundResults results)
         {
             focusedZone = null;
+            deductionZone = null;
             hasMarker = false;
             root.RemoveFromClassList("is-hidden");
             masks.AddToClassList("is-hidden");
@@ -54,6 +57,7 @@ namespace UmdJam.UI
         public void FocusZone(PlayerRoundResult player)
         {
             focusedZone = player;
+            deductionZone = null;
             hasMarker = false;
             marker.AddToClassList("is-hidden");
             masks.RemoveFromClassList("is-hidden");
@@ -69,6 +73,7 @@ namespace UmdJam.UI
 
         public void ShowFlask(FlaskPenaltyEntry entry, int counted, int count, int penalty)
         {
+            deductionZone = null;
             markerPosition = entry.WorldPosition;
             markerStarted = Time.unscaledTime;
             hasMarker = true;
@@ -81,12 +86,18 @@ namespace UmdJam.UI
 
         public void ShowDeduction(PlayerRoundResult player, float progress)
         {
-            zoneScore.RemoveFromClassList("is-counting");
-            zoneCount.text = $"{player.Flasks.Count} flasks counted";
-            hasMarker = false;
-            marker.AddToClassList("is-hidden");
-            zoneDeduction.text = player.Penalty == 0 ? "No penalty" : $"−{player.Penalty}";
             int displayed = Mathf.RoundToInt(Mathf.Lerp(player.StartingScore, player.FinalScore, progress));
+            if (deductionZone != player)
+            {
+                deductionZone = player;
+                zoneScore.RemoveFromClassList("is-counting");
+                zoneCount.text = $"{player.Flasks.Count} flasks counted";
+                hasMarker = false;
+                marker.AddToClassList("is-hidden");
+                zoneDeduction.text = player.Penalty == 0 ? "No penalty" : $"−{player.Penalty}";
+            }
+            else if (displayed == displayedDeductionScore) return;
+            displayedDeductionScore = displayed;
             zoneFinal.text = $"{player.StartingScore} → {displayed}";
         }
 
@@ -142,6 +153,7 @@ namespace UmdJam.UI
         {
             pendingFocus = null;
             focusedZone = null;
+            deductionZone = null;
             hasMarker = false;
             root?.AddToClassList("is-hidden");
         }

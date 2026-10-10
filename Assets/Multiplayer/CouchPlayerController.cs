@@ -29,6 +29,13 @@ namespace UmdJam.Multiplayer
 
         [SerializeField] private float moveSpeed = 9.5f;
         [SerializeField] private float turnSpeed = 30f;
+        [SerializeField, Min(0f), Tooltip("Human acceleration/turning response time in seconds; zero disables smoothing.")]
+        private float movementSmoothingTime = 0.05f;
+        [SerializeField, Min(0f), Tooltip("Human release response time in seconds; zero stops immediately.")]
+        private float stoppingSmoothingTime = 0.03f;
+        [SerializeField, Range(0f, 1f)] private float tornadoControlFraction = 0.25f;
+        [SerializeField, Min(0f)] private float tornadoReleaseLift = 4f;
+        [SerializeField, Min(0f)] private float tornadoReleaseDrag = 3f;
         [SerializeField] private float throwDistance = 8f;
         [SerializeField] private float throwApexHeight = 3f;
         [SerializeField] private float throwLandingHeight = 0.35f;
@@ -53,7 +60,12 @@ namespace UmdJam.Multiplayer
         private Animator characterAnimator;
         private bool throwPending;
         private bool throwAnimationStarted;
+        private float stunnedUntil;
+        private Vector3 environmentalVelocity;
+        private bool wasInTornado;
+        private Vector3 lastTornadoVelocity;
         private bool characterSetupPending;
+        private Vector2 smoothedHumanInput;
 
         private static readonly int SpeedAnimation = Animator.StringToHash("Speed");
         private static readonly int CarryingAnimation = Animator.StringToHash("Carrying");
@@ -70,6 +82,26 @@ namespace UmdJam.Multiplayer
         public int Score { get; private set; }
         public int ColorIndex { get; private set; } = -1;
         public Color PlayerColor => PlayerColorPalette.Get(ColorIndex).Color;
+        public bool IsStunned => Time.time < stunnedUntil;
+
+        public bool TryStun(float duration)
+        {
+            if (!isActiveAndEnabled || GameManager.Instance == null || !GameManager.Instance.IsPlaying ||
+                float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f) return false;
+            stunnedUntil = Mathf.Max(stunnedUntil, Time.time + Mathf.Min(duration, 5f));
+            smoothedHumanInput = Vector2.zero;
+            throwPending = false;
+            throwAnimationStarted = false;
+            if (characterAnimator != null) characterAnimator.ResetTrigger(ThrowAnimation);
+            return true;
+        }
+
+        public void ClearEnvironmentalEffects()
+        {
+            stunnedUntil = 0f;
+            environmentalVelocity = Vector3.zero;
+            wasInTornado = false;
+        }
         public int CharacterIndex { get; private set; }
         public int CharacterCount => characterSkins != null ? characterSkins.Count : 0;
         public string CharacterName => characterSkins?.Get(CharacterIndex)?.DisplayName ?? "Character";
@@ -249,6 +281,7 @@ namespace UmdJam.Multiplayer
 
         public void PlaceAtSpawn(int playerIndex)
         {
+            smoothedHumanInput = Vector2.zero;
             if (characterController == null)
             {
                 characterController = GetComponent<CharacterController>();
@@ -327,6 +360,7 @@ namespace UmdJam.Multiplayer
             if (characterSetupPending) ConfigureCharacterRuntime();
             if (GameManager.Instance != null && !GameManager.Instance.IsPlaying)
             {
+                smoothedHumanInput = Vector2.zero;
                 return;
             }
 
@@ -346,6 +380,16 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
+            if (IsStunned)
+            {
+                smoothedHumanInput = Vector2.zero;
+                input = Vector2.zero;
+                attack = false;
+            }
+            else if (cpu == null)
+            {
+                input = SmoothHumanInput(input, Time.deltaTime);
+            }
             Vector3 movement = new(input.x, 0f, input.y);
             Vector3 velocity = movement * moveSpeed;
             GameManager round = GameManager.Instance;
@@ -358,7 +402,7 @@ namespace UmdJam.Multiplayer
                 velocity.x = (destination.x - transform.position.x) / Mathf.Max(Time.deltaTime, 0.0001f);
                 velocity.z = (destination.z - transform.position.z) / Mathf.Max(Time.deltaTime, 0.0001f);
             }
-            characterController.SimpleMove(velocity);
+            MoveWithEnvironment(velocity);
             if (characterAnimator != null)
             {
                 characterAnimator.SetFloat(SpeedAnimation, Mathf.Clamp01(input.magnitude));
@@ -371,7 +415,7 @@ namespace UmdJam.Multiplayer
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
                     targetRotation,
-                    turnSpeed * Time.deltaTime);
+                    cpu != null ? turnSpeed * Time.deltaTime : 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
             }
 
             if (attack)
@@ -380,6 +424,66 @@ namespace UmdJam.Multiplayer
             }
 
             TryReleasePendingThrow();
+        }
+
+        private Vector2 SmoothHumanInput(Vector2 target, float deltaTime)
+        {
+            if (float.IsNaN(target.x) || float.IsInfinity(target.x) ||
+                float.IsNaN(target.y) || float.IsInfinity(target.y))
+            {
+                smoothedHumanInput = Vector2.zero;
+                return smoothedHumanInput;
+            }
+            target = Vector2.ClampMagnitude(target, 1f);
+            if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f) return smoothedHumanInput;
+            float duration = target == Vector2.zero ? stoppingSmoothingTime : movementSmoothingTime;
+            if (float.IsNaN(duration) || float.IsInfinity(duration) || duration <= 0f)
+            {
+                smoothedHumanInput = target;
+                return smoothedHumanInput;
+            }
+            float response = 1f - Mathf.Exp(-deltaTime / duration);
+            smoothedHumanInput = Vector2.Lerp(smoothedHumanInput, target, response);
+            // Reach exact rest/full input instead of retaining imperceptible residual motion.
+            if ((smoothedHumanInput - target).sqrMagnitude < 0.000001f) smoothedHumanInput = target;
+            return smoothedHumanInput;
+        }
+
+        private void OnDisable()
+        {
+            smoothedHumanInput = Vector2.zero;
+        }
+
+        private void MoveWithEnvironment(Vector3 movement)
+        {
+            RandomEventDirector events = RandomEventDirector.Instance;
+            Vector3 wind = Vector3.zero;
+            bool inTornado = events != null && events.TryGetTornadoVelocity(transform.position, out wind);
+            if (inTornado)
+            {
+                wasInTornado = true;
+                lastTornadoVelocity = wind;
+                environmentalVelocity = wind;
+                characterController.Move((movement * tornadoControlFraction + wind) * Time.deltaTime);
+                return;
+            }
+            if (wasInTornado)
+            {
+                wasInTornado = false;
+                environmentalVelocity = Vector3.ClampMagnitude(lastTornadoVelocity, 10f) + Vector3.up * tornadoReleaseLift;
+            }
+            if (events != null) movement += events.GetEarthquakeDrift(PlayerNumber);
+            if (environmentalVelocity != Vector3.zero)
+            {
+                environmentalVelocity.y += Physics.gravity.y * Time.deltaTime;
+                environmentalVelocity.x = Mathf.MoveTowards(environmentalVelocity.x, 0f, tornadoReleaseDrag * Time.deltaTime);
+                environmentalVelocity.z = Mathf.MoveTowards(environmentalVelocity.z, 0f, tornadoReleaseDrag * Time.deltaTime);
+                CollisionFlags flags = characterController.Move((movement + environmentalVelocity) * Time.deltaTime);
+                if ((flags & CollisionFlags.Above) != 0 && environmentalVelocity.y > 0f) environmentalVelocity.y = 0f;
+                if ((flags & CollisionFlags.Below) != 0 && environmentalVelocity.y <= 0f)
+                    environmentalVelocity = Vector3.zero;
+            }
+            else characterController.SimpleMove(movement);
         }
 
         private void ConfigureCharacterRuntime()
@@ -423,7 +527,7 @@ namespace UmdJam.Multiplayer
                 return;
             }
 
-            if (!isActiveAndEnabled || !pickupConfigured || holdPoint == null || heldFlask != null)
+            if (IsStunned || !isActiveAndEnabled || !pickupConfigured || holdPoint == null || heldFlask != null)
             {
                 return;
             }
@@ -478,6 +582,7 @@ namespace UmdJam.Multiplayer
 
         private void BeginThrow()
         {
+            if (IsStunned) return;
             if (heldFlask == null || throwPending) return;
             if (characterAnimator == null || characterAnimator.runtimeAnimatorController == null)
             {

@@ -35,6 +35,10 @@ Do not edit Unity YAML by hand while the Editor is connected. Do not modify `Lib
 
 ## Minimum Smoke Tests
 
+### Random events
+
+Run **Tools > UmdJam > Run Random Event Smoke Tests** (`GameplaySmokeTests.RunRandomEvents`). It verifies the actual toggle event/default-off state, mixed human/God rounds, setting lock, event exclusion, earthquake movement/flask forces, circular tornado wind and lift/release, telegraphed lightning/stun/flash, invalid stun input, disable/end/replay cleanup, exact camera restoration, quiet-state allocation/camera recovery, lingering lightning-stun visuals, and six scheduled events covering the randomized bag without consecutive repeats, default first-event delay, randomized quiet-interval bounds/variation, and no early event starts. It checks zero managed allocations across 200 warmed visual updates and empty-flask force-registry iterations; this excludes UI transitions, scoring, and native/GPU memory. A graphics-enabled run also captures the actual running camera into `.utmp/random-event-earthquake.png`, `random-event-tornadoes.png`, and `random-event-lightning.png`. Run gameplay, CPU, connection-menu, and round-results suites as shared-controller/UI regressions. Inspect the procedural shader and lightning illumination in the graphics-enabled run. Actual browser profiling still requires matching Web Build Support.
+
 ### Repeatable gameplay checks
 
 Run **Tools > UmdJam > Run Gameplay Smoke Tests** outside Play Mode. The harness opens `Game.unity`, enters Play Mode, uses temporary virtual gamepads, and returns to Edit Mode. Save any authored scene changes first. It checks four-player initialization and paired actions, HUD state, contact pickup and release, rejected transitions/trajectories, machine launch validation, material cleanup, rejoining, and missing-reference diagnostics. Unexpected runtime warnings and errors fail the run; intentional invalid-configuration errors are explicitly matched.
@@ -67,7 +71,7 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 - **Tools > UmdJam > Run CPU Behavior Checks** checks the Noob default, delayed discovery, bounded awareness, target commitment/invalidation, continued movement while observing alternatives, input acceleration, and immediate stopping. **Run CPU Balance Benchmark** runs two seeded flask layouts with all four difficulty-to-spawn rotations (eight 20-second rounds). It writes `.utmp/cpu-balance.csv` with delivered points, zone penalties, final scores, idle seconds, and voluntary target switches. Compare aggregates across rotations; Unity frame/physics timing means seeds do not promise identical results. The benchmark uses falling flasks and does not establish moving-flask interception accuracy or human difficulty.
 
-- The behavior suite also verifies God's immediate arena-wide discovery despite serialized handicap values, immediate movement, switching before a commitment wait, no approach braking, immediate throwing, and stopping at round end. Lower difficulty checks remain unchanged.
+- The behavior suite checks zero managed allocations across 200 warmed observation passes with active flasks. It also verifies God's immediate arena-wide discovery despite serialized handicap values, immediate movement, switching before a commitment wait, no approach braking, immediate throwing, and stopping at round end. Lower difficulty checks remain unchanged.
 
 - The CPU suite also exercises all 18 colors, duplicate rejection, wraparound/occupied-color skipping, invalid requests, material/marker/HUD updates, pending-removal reservations, released-color reuse, and mixed-roster join fallback. The connection-menu suite checks the actual color-arrow event and its layout at 4:3.
 
@@ -83,6 +87,8 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 - Confirm the stationary camera contains the arena and players.
 
 ### Movement or input changes
+
+Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.RunPlayerMovement`) for acceleration, curved direction changes/reversal, exact stopping/full speed, partial-stick speed, diagonal bounds, equivalent elapsed-time response at 30/60/120 FPS, invalid input/frame duration, zero-smoothing configuration, warmed zero allocations, actual paired gamepad/CharacterController movement, and spawn/stun/disable/timeout reset. Run gameplay, CPU behavior/gameplay, event, and results suites as shared-controller regressions.
 
 - Confirm each player reads only its paired device.
 - Check diagonal speed and turn response.
@@ -126,7 +132,7 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Round manager changes
 
-- Run **Tools > UmdJam > Run Round Results Smoke Tests** (`GameplaySmokeTests.RunRoundResults`) for timeout capture, mixed-value penalties, held/direct-transfer eligibility, boundary/outside exclusions, ties, negative scores, paused camera/counting, repeated end/skip, held-submit gating, and replay cleanup.
+- Run **Tools > UmdJam > Run Round Results Smoke Tests** (`GameplaySmokeTests.RunRoundResults`) for timeout capture, mixed-value penalties, held/direct-transfer eligibility, boundary/outside exclusions, ties, negative scores, paused camera/counting, repeated end/skip, held-submit gating, and replay cleanup. The results suite also verifies deduction cache invalidation/final-score text and zero managed allocations across 200 unchanged deduction frames.
 - **Tools > UmdJam > Configure Round Results** (`RoundResultsSetup.Apply`) idempotently wires the results components in the open Game scene and saves it through Editor APIs. It preserves existing target placement/tuning.
 - MCP can select the suite's SessionState flags and call `GameplaySmokeTests.BeginRun` directly when delayed menu callbacks do not advance. The ordinary menu/batch entry points remain available.
 - Compare player-selection and results screenshots at 16:9 and 4:3; verify masks, marker projection, deduction center, tie cards, button focus, and resizing. Capture the full Game view including UI; camera-only images may omit the UI document. Screenshots belong in `.utmp/`.
@@ -168,3 +174,7 @@ After modifying serialized fields or required components, inspect:
 - Test expectations changed: update this guide.
 
 Keep `AGENTS.md` and `CLAUDE.md` as indexes and guardrails, not duplicate manuals.
+
+### Gameplay feedback
+
+Run **Tools > UmdJam > Run Gameplay Feedback Smoke Tests** (`GameplaySmokeTests.RunGameplayFeedback`) in a graphics-enabled Editor. It checks lobby/normal/10-second/3-second transitions, actual collection and direct-transfer rewards, duplicate/wrong-collector rejection, rapid reward aggregation, popup/pulse expiry, zero-point delivery, fresh totals after expiry, shared held/transfer/boundary risk eligibility, live zone crossings, absent-slot hiding, 4:3 layout, zero managed allocations across 200 warmed unchanged updates, time-extension reset, component re-enable, timeout cleanup, and replay. The actual Game view is captured at 1920x1080 and 1440x1080 into `.utmp/gameplay-feedback-*.png`; the previous Game view selection is restored. Run gameplay, CPU, results, event, and menu suites as shared-scoring/HUD regressions. Listen to the chime/ticks in a normal player or Editor with audio output before tuning volume.

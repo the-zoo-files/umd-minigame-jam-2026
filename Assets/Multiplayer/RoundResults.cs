@@ -41,8 +41,7 @@ namespace UmdJam.Multiplayer
                 List<FlaskPenaltyEntry> entries = new();
                 foreach (PickupFlask flask in flasks)
                 {
-                    if (flask == null || !flask.isActiveAndEnabled || flask.IsCollected) continue;
-                    if (gameManager.GetZonePlayer(flask.transform.position) == number)
+                    if (gameManager.GetFlaskPenaltyPlayer(flask) == number)
                         entries.Add(new FlaskPenaltyEntry(flask.transform.position, flask.PointValue));
                 }
                 results.Add(new PlayerRoundResult(number, participant.DisplayName, participant.PlayerColor,

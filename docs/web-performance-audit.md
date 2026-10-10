@@ -106,3 +106,18 @@ The desktop timing probe does not justify a browser frame-rate guarantee or a re
 Real Web build profiling remains required: this Editor installation lacks Web Build Support. Heap sizing, decoded texture residency, shadow/HDR tradeoffs, tab pause policy, and physics catch-up limits remain measurement/product decisions. They were not changed speculatively.
 
 Validation completed in a separate hidden Unity project copy: navigation bake/route validation, CPU suite, gameplay suite, graphical connection-menu suite, build-loader integration checks, and Node canvas-resolution tests all passed. The suites measured zero managed allocations for 200 warmed distance-cache hits and 200 warmed direct-transfer setup/cancellation cycles. These allocation checks exclude scoring/HUD updates and do not measure browser or GPU frame time. Every Play Mode suite returned to Edit Mode before exit.
+
+## Runtime follow-up audit (2026-10-08)
+
+Reviewed every project-owned runtime C# component and data type in Gameplay, Multiplayer, and UI, plus the browser resolution script and build hooks. Sample/package code and Editor-only tooling do not run in the shipped game.
+
+Behavior-preserving changes:
+
+- Bot observations traverse the authoritative flask registry by index, eliminating the interface-enumerator allocation on every planning tick. Reuse the player position within an observation pass, the collector approach point within a candidate evaluation, the active profile's awareness radius within rival checks, and the waypoint distance within steering. Observation order, random draws, scores, paths, planning intervals, and difficulty values stay the same.
+- Event visuals collect stunned participants in one roster pass and return early during quiet intervals with no stun. Presentation teardown still restores camera/light state, and unexpired lightning stuns still render during quiet gaps. Reusable arrays upload each procedural line with one `SetPositions` call: two tornadoes need two uploads instead of 258 individual point writes, using the same geometry formulas.
+- Lightning and quiet intervals skip the free-flask force loop because neither applies flask forces. Free-flask fall limiting reads Rigidbody velocity once; paused/disabled collectors reject contacts before looking up flask components.
+- Results deductions build fixed labels once per zone and update score text only when its displayed integer changes. Begin, zone focus, flask reveal, and teardown invalidate presentation caches. Submit-release detection stops scanning once a pressed button is found.
+
+Focused regression checks cover warmed bot observations with active flasks, unchanged deduction frames, quiet event presentation, and a lightning stun surviving the transition into a quiet interval. These check managed allocations and behavior; they do not establish GPU frame time or browser FPS. Rendering-quality changes, approximate navigation caches, AI throttling, and skipping CharacterController movement were deliberately excluded because they can change visuals or gameplay. Browser profiling and the unresolved platform/asset-residency items above still apply.
+
+Validation: all six Unity Play Mode suites passed (gameplay, CPU gameplay, CPU behavior, connection menu, random events, and round results). Bot observations, quiet/event presentation, and unchanged deduction frames passed their warmed zero-managed-allocation checks. The graphical event captures retain the procedural effects. Each validation Editor returned to Edit Mode and exited; the user's separate running Editor was left alone. Only the validation copy's navigation resource was rebaked. Source scenes, prefabs, materials, package changes, and project settings were preserved.

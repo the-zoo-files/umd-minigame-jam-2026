@@ -148,6 +148,14 @@ namespace UmdJam.Editor
             }
             Require(Target(cpu) == nearer, "God switches to the better flask without commitment or discovery waits");
             distant.gameObject.SetActive(false);
+            Action<CpuSettings> observe = (Action<CpuSettings>)Delegate.CreateDelegate(typeof(Action<CpuSettings>), cpu,
+                typeof(CpuPlayerController).GetMethod("Observe", BindingFlags.Instance | BindingFlags.NonPublic));
+            CpuSettings settings = cpu.Settings;
+            observe(settings);
+            long beforeAllocation = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 200; i++) observe(settings);
+            Require(GC.GetAllocatedBytesForCurrentThread() == beforeAllocation,
+                "Warmed bot observations allocate no managed memory with active flasks");
             // Approach within the natural braking distance, outside the waypoint arrival epsilon.
             player.transform.position = nearer.transform.position + Vector3.forward * 0.4f;
             player.transform.position = new Vector3(player.transform.position.x, 1f, player.transform.position.z);

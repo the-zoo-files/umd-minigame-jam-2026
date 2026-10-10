@@ -44,6 +44,12 @@ namespace UmdJam.Multiplayer
 
         public Bounds GetPlayerZone(int playerNumber) => playerZones[playerNumber - 1].bounds;
 
+        public int GetFlaskPenaltyPlayer(PickupFlask flask)
+        {
+            return flask != null && flask.isActiveAndEnabled && !flask.IsCollected
+                ? GetZonePlayer(flask.transform.position) : 0;
+        }
+
         public bool IsInPlayerZone(int playerNumber, Vector3 position)
         {
             if (playerZones == null || playerNumber < 1 || playerNumber > playerZones.Length ||
@@ -155,6 +161,8 @@ namespace UmdJam.Multiplayer
             {
                 return;
             }
+
+            if (RandomEventDirector.Instance != null) RandomEventDirector.Instance.StopEffects();
 
             IsRoundOver = true;
             remainingTime = 0f;

@@ -10,6 +10,7 @@ namespace UmdJam.UI
     {
         private readonly Dictionary<int, Label> labels = new();
         private Label timerLabel;
+        private Label eventLabel;
         private int displayedSeconds = -1;
         private bool resultsPresentationActive;
 
@@ -22,10 +23,14 @@ namespace UmdJam.UI
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            if (!TryGetComponent(out GameplayFeedback feedback)) gameObject.AddComponent<GameplayFeedback>();
             root.EnableInClassList("results-active", resultsPresentationActive);
             labels.Clear();
             displayedSeconds = -1;
             timerLabel = root.Q<Label>("roundTimer");
+            eventLabel = root.Q<Label>("randomEventStatus");
+            RandomEventDirector.EventChanged += OnRandomEventChanged;
+            OnRandomEventChanged(RandomEventDirector.Instance != null ? RandomEventDirector.Instance.ActiveEvent : RandomEventKind.None);
             if (timerLabel == null)
             {
                 Debug.LogError("Missing round timer label in the HUD.", this);
@@ -68,6 +73,14 @@ namespace UmdJam.UI
             CouchPlayerController.ScoreChanged -= OnScoreChanged;
             CouchPlayerController.ColorChanged -= OnScoreChanged;
             GameManager.RoundTimeChanged -= OnRoundTimeChanged;
+            RandomEventDirector.EventChanged -= OnRandomEventChanged;
+        }
+
+        private void OnRandomEventChanged(RandomEventKind kind)
+        {
+            if (eventLabel == null) return;
+            eventLabel.text = RandomEventDirector.DisplayName(kind);
+            eventLabel.EnableInClassList("is-hidden", kind == RandomEventKind.None);
         }
 
         private void OnPlayerJoined(CouchPlayerController player)
