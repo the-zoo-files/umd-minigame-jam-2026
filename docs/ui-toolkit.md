@@ -11,6 +11,11 @@ Keep those responsibilities separate so UI Builder and design tooling can edit s
 
 ## HUD Layout Contract
 
+The `eventOptions` row contains `eventEarthquake`, `eventTornadoes`, and `eventLightning` buttons.
+They reuse the master switch's `is-on` colors and show explicit On/Off labels. The row is disabled
+while the master switch is off, and all event controls lock after starting. Individual choices
+are authoritative in `CouchMultiplayerManager` and remain selected when toggling the master.
+
 The `randomEvents` button toggles the manager's authoritative **Random Events: Off / On** setting before play. `is-on` styles the enabled option. The gameplay `randomEventStatus` label lives below the timer, listens to event transitions, and shows Earthquake, Tornadoes, or Lightning; it is hidden during quiet intervals and results. Both controls use the existing document and do not own hazard state.
 
 The document contains `connectionMenu` and `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the initial local multiplayer menu, headed **Players**, with a **Start Game** action. The button remains disabled until every selected slot has a ready CPU or a human with the required device(s). Connected cards keep a light background with a thicker border in the selected palette color; empty cards use their USS state styles. The menu uses four color-coded cards, a pink count selector, and a dark background; graphics are UI Toolkit elements and need no external art.
