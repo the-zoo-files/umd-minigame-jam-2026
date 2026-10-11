@@ -22,7 +22,7 @@
 8. `Play Again` reloads `Game.unity` and returns to the existing connection menu. Show `Returns to player setup` below the button so this behavior is clear. Do not promise retained devices, characters, colors, or CPU settings. An instant same-roster rematch is a separate extension.
 9. A `Skip count` button can jump to the completed winner display, without scoring again. It cannot also activate replay from the same submit press.
 10. Tick audio is optional polish: use a serialized clip only if a suitable existing asset is available. Silence must work without warnings or missing assets.
-11. All new UI must match the existing player-selection screen's vibe and style, as explicitly requested by the user. `Assets/UI/CouchConnectionMenu.uss` and its rendered screen are the visual reference. Results are an extension of this game's menu design, not a separate visual theme.
+11. All new UI must match the existing player-selection screen's vibe and style, as explicitly requested by the user. `Assets/UI/Styles/CouchConnectionMenu.uss` and its rendered screen are the visual reference. Results are an extension of this game's menu design, not a separate visual theme.
 
 ## Global constraints
 
@@ -50,19 +50,19 @@
 
 | File | Responsibility |
 | --- | --- |
-| `Assets/Multiplayer/GameManager.cs` | Capture and expose results; finalize round once |
-| `Assets/Multiplayer/RoundResults.cs` (new) | Read-only round snapshot and capture calculation |
-| `Assets/Multiplayer/PlayerRoundResult.cs` (new) | One participant's identity, score breakdown, zone, and entries |
-| `Assets/Multiplayer/FlaskPenaltyEntry.cs` (new) | Frozen flask point value and world position |
-| `Assets/Multiplayer/PlayerFlaskCollector.cs` | Reject collections/transfers after round closure |
-| `Assets/UI/RoundResultsDirector.cs` (new) | Sequence ownership, camera, input phase, replay request |
-| `Assets/UI/RoundResultsView.cs` (new) | UI binding, projections, masks, labels and button events |
-| `Assets/UI/RoundResults.uss` (new) | Results appearance and responsive layout |
-| `Assets/UI/CouchPlayerHud.uxml` | Add results hierarchy and stylesheet reference |
-| `Assets/UI/CouchPlayerHud.cs` | Hide gameplay HUD while a valid results presentation owns the screen |
-| `Assets/Editor/RoundResultsSetup.cs` (new) | Idempotent scene setup and wiring through Editor APIs |
-| `Assets/Editor/RoundResultsSmokeTests.cs` (new) | Dedicated behavioral and visual smoke exercise |
-| `Assets/Editor/GameplaySmokeTests.cs` | Register results suite in existing runner |
+| `Assets/Scripts/Multiplayer/GameManager.cs` | Capture and expose results; finalize round once |
+| `Assets/Scripts/Multiplayer/RoundResults.cs` (new) | Read-only round snapshot and capture calculation |
+| `Assets/Scripts/Multiplayer/PlayerRoundResult.cs` (new) | One participant's identity, score breakdown, zone, and entries |
+| `Assets/Scripts/Multiplayer/FlaskPenaltyEntry.cs` (new) | Frozen flask point value and world position |
+| `Assets/Scripts/Multiplayer/PlayerFlaskCollector.cs` | Reject collections/transfers after round closure |
+| `Assets/Scripts/UI/RoundResultsDirector.cs` (new) | Sequence ownership, camera, input phase, replay request |
+| `Assets/Scripts/UI/RoundResultsView.cs` (new) | UI binding, projections, masks, labels and button events |
+| `Assets/UI/Styles/RoundResults.uss` (new) | Results appearance and responsive layout |
+| `Assets/UI/Documents/CouchPlayerHud.uxml` | Add results hierarchy and stylesheet reference |
+| `Assets/Scripts/UI/CouchPlayerHud.cs` | Hide gameplay HUD while a valid results presentation owns the screen |
+| `Assets/Scripts/Editor/RoundResultsSetup.cs` (new) | Idempotent scene setup and wiring through Editor APIs |
+| `Assets/Scripts/Editor/RoundResultsSmokeTests.cs` (new) | Dedicated behavioral and visual smoke exercise |
+| `Assets/Scripts/Editor/GameplaySmokeTests.cs` | Register results suite in existing runner |
 | `Assets/Scenes/Game.unity` | Editor-authored director, view references, and overhead target |
 | `docs/architecture.md`, `docs/gameplay-systems.md`, `docs/ui-toolkit.md`, `docs/development-workflow.md` | Update ownership, behavior, UI contract, and validation |
 

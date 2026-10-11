@@ -1,6 +1,6 @@
 "use strict";
 const assert = require("node:assert/strict");
-const { dimensions, configure } = require("../../Assets/Editor/browser-resolution.js");
+const { dimensions, configure } = require("../../Assets/Scripts/Editor/browser-resolution.js");
 
 assert.deepEqual(dimensions(1920, 1080), { width: 1920, height: 1080 });
 assert.deepEqual(dimensions(3840, 2160), { width: 1920, height: 1080 });

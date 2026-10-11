@@ -2,9 +2,9 @@
 
 ## Files and Responsibilities
 
-- `Assets/UI/CouchPlayerHud.uxml`: hierarchy, element names, default label text, and editing-time state.
-- `Assets/UI/CouchPlayerHud.uss`: visual styling, corner anchors, colors, typography, and connected-state visibility.
-- `Assets/UI/CouchPlayerHud.cs`: player and score event binding, label text updates, and runtime class toggling.
+- `Assets/UI/Documents/CouchPlayerHud.uxml`: hierarchy, element names, default label text, and editing-time state.
+- `Assets/UI/Styles/CouchPlayerHud.uss`: visual styling, corner anchors, colors, typography, and connected-state visibility.
+- `Assets/Scripts/UI/CouchPlayerHud.cs`: player and score event binding, label text updates, and runtime class toggling.
 - `Assets/UI/Fonts/CascadiaMono.ttf`: monospaced HUD font.
 
 Keep those responsibilities separate so UI Builder and design tooling can edit structure and presentation without absorbing gameplay logic.

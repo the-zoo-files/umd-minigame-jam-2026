@@ -15,41 +15,36 @@ The prototype is local couch multiplayer for up to four players. There is no net
 
 ```text
 Assets/
-├── Gameplay/
-│   ├── MachineFlaskShooter.cs
-│   ├── Flask.cs
-│   ├── PickupFlask.cs
-│   ├── DefaultFlask.asset
-│   ├── Ballistics.cs
-│   └── FlaskPlaceholder.prefab
-├── Multiplayer/
-│   ├── CouchMultiplayerManager.cs
-│   ├── CouchPlayerController.cs
-│   ├── CharacterSkinCatalog.cs
-│   ├── CpuPlayerController.cs
-│   ├── CpuNavigation.cs
-│   ├── CpuNavigationBake.cs
-│   ├── CpuDifficulty.cs
-│   ├── CpuSettings.cs
-│   ├── PlayerColorPalette.cs
-│   ├── GameManager.cs
-│   ├── RandomEventDirector.cs
-│   ├── RandomEventKind.cs
-│   ├── RandomEventVisuals.cs
-│   ├── PlayerFlaskCollector.cs
-│   └── Player.prefab
+├── Animations/Characters/
+├── Data/
+│   ├── Gameplay/DefaultFlask.asset
+│   └── Multiplayer/CharacterSkinCatalog.asset
+├── Input/InputSystem_Actions.inputactions
+├── Materials/
+├── Meshes/
+├── Prefabs/
+│   ├── Characters/Testudo.prefab
+│   ├── Gameplay/FlaskPlaceholder.prefab
+│   └── Multiplayer/Player.prefab
+├── Scripts/
+│   ├── Editor/
+│   ├── Gameplay/
+│   ├── Multiplayer/
+│   └── UI/
 ├── Scenes/
 │   └── Game.unity
 ├── Resources/
 │   └── CpuNavigation/Game.asset
 ├── UI/
-│   ├── CouchConnectionMenu.cs
-│   ├── CouchConnectionMenu.uss
-│   ├── CouchPlayerHud.cs
-│   ├── CouchPlayerHud.uxml
-│   ├── CouchPlayerHud.uss
-│   └── Fonts/
-└── InputSystem_Actions.inputactions
+│   ├── Documents/
+│   ├── Fonts/
+│   ├── Settings/
+│   ├── Styles/
+│   └── Themes/
+├── Sounds/
+├── Settings/
+├── Shaders/
+└── Textures/
 ```
 
 Unity-generated `.meta` files are required companions to their assets and must remain alongside them.
@@ -110,7 +105,7 @@ Gameplay does not depend on UI or multiplayer types. Keep that boundary when add
 
 ### Player prefab
 
-`Assets/Multiplayer/Player.prefab` requires:
+`Assets/Prefabs/Multiplayer/Player.prefab` requires:
 
 - `CouchPlayerController`
 - `CharacterController`
@@ -126,7 +121,7 @@ The three child names are runtime contracts because the controller finds the dir
 
 ### Flask prefab
 
-`Assets/Gameplay/FlaskPlaceholder.prefab` requires:
+`Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab` requires:
 
 - `PickupFlask`
 - a `Flask` definition
@@ -197,4 +192,4 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 - Ballistic launches support finite, downward-only gravity; unsupported trajectories fail before changing flask state.
 - The HUD supports exactly four player labels.
 - The active flask cap counts live spawned instances; resting flasks remain active. Collected machine flasks are deactivated and reused by definition, with at most the active cap retained per definition. Inactive instances are children of their machine and are cleaned up with it. Standalone flasks are still destroyed on collection.
-- `Assets/Editor/GameplaySmokeTests.cs` provides repeatable Play Mode checks through an Editor menu or batch command. It is an Editor-only harness, not a separate test assembly.
+- `Assets/Scripts/Editor/GameplaySmokeTests.cs` provides repeatable Play Mode checks through an Editor menu or batch command. It is an Editor-only harness, not a separate test assembly.
