@@ -28,6 +28,8 @@ namespace UmdJam.Editor
                 VisualElement root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
                 Require(!lobby.RandomEventsEnabled && RandomEventDirector.Instance == null, "Events default off without runtime effects");
                 Button toggle = root.Q<Button>("randomEvents");
+                Require(root.Q<Button>("eventEarthquake") != null && root.Q<Button>("eventTornadoes") != null &&
+                    root.Q<Button>("eventLightning") != null, "Lobby exposes separate event toggles");
                 using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
                 {
                     submit.target = toggle;
@@ -199,11 +201,87 @@ namespace UmdJam.Editor
                 yield return null;
                 lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
                 Require(RandomEventDirector.Instance == null && !lobby.RandomEventsEnabled, "Replay resets event setting and singleton");
+                IEnumerator selections = CheckSelections();
+                while (selections.MoveNext()) yield return selections.Current;
             }
             finally
             {
                 if (device.added) InputSystem.RemoveDevice(device);
             }
+        }
+
+        private static IEnumerator CheckSelections()
+        {
+            for (int selection = 0; selection < 8; selection++)
+            {
+                EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+                yield return null;
+                yield return null;
+                CouchMultiplayerManager lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
+                VisualElement root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
+                Object.FindAnyObjectByType<MachineFlaskShooter>().enabled = false;
+                Require(!lobby.RandomEventsEnabled && lobby.SelectedRandomEvents == RandomEventDirector.AllEventsMask,
+                    "Replay resets master off and all individual choices on");
+                Require(!root.Q("eventOptions").enabledInHierarchy, "Master off disables individual controls");
+                Submit(root.Q<Button>("randomEvents"));
+                int expectedMask = selection << 1;
+                for (int i = 1; i <= 3; i++)
+                {
+                    RandomEventKind kind = (RandomEventKind)i;
+                    bool selected = (expectedMask & (1 << i)) != 0;
+                    Button button = root.Q<Button>("event" + kind);
+                    if (!selected) Submit(button);
+                    Require(lobby.IsRandomEventSelected(kind) == selected &&
+                        button.text.EndsWith(selected ? ": On" : ": Off"), "Individual toggle updates model and label");
+                }
+                Submit(root.Q<Button>("randomEvents"));
+                Submit(root.Q<Button>("randomEvents"));
+                Require(lobby.SelectedRandomEvents == expectedMask, "Master switch preserves individual choices");
+                Require(!lobby.TrySetRandomEvent(RandomEventKind.None, true) &&
+                    !lobby.TrySetRandomEvent((RandomEventKind)99, true), "Invalid event kinds rejected");
+                Require(lobby.TrySetPlayerCount(1) && lobby.TryAddCpu(0) && lobby.TryStartGame(), "Selected-event round starts");
+                Require(!lobby.TrySetRandomEvent(RandomEventKind.Earthquake, true) &&
+                    !root.Q("eventOptions").enabledInHierarchy, "Individual selections lock during play");
+                RandomEventDirector director = RandomEventDirector.Instance;
+                if (expectedMask == 0)
+                {
+                    Require(director == null, "Empty selection creates no hazard director");
+                }
+                else
+                {
+                    Require(director != null, "Selected events create a director");
+                    for (int i = 1; i <= 3; i++)
+                        if ((expectedMask & (1 << i)) == 0)
+                            Require(!director.TryBeginEvent((RandomEventKind)i), "Disabled events reject direct activation");
+                    int seen = 0;
+                    RandomEventKind previous = RandomEventKind.None;
+                    for (int cycle = 0; cycle < 9; cycle++)
+                    {
+                        Set(director, "nextTransition", Time.time);
+                        yield return null;
+                        yield return null;
+                        RandomEventKind current = director.ActiveEvent;
+                        Require(current != RandomEventKind.None && (expectedMask & (1 << (int)current)) != 0,
+                            "Scheduler chooses only selected events");
+                        if ((expectedMask & (expectedMask - 1)) != 0)
+                            Require(current != previous, "Multiple selected events avoid immediate repeats");
+                        seen |= 1 << (int)current;
+                        previous = current;
+                        director.StopEffects();
+                        float quiet = GetTransition(director) - Time.time;
+                        Require(quiet >= 12f && quiet <= 20f, "Selected events preserve normal quiet intervals");
+                    }
+                    Require(seen == expectedMask, "Every selected event is visited, including single-event repeats");
+                }
+                GameManager.Instance.EndRound();
+            }
+        }
+
+        private static void Submit(Button button)
+        {
+            using NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled();
+            submit.target = button;
+            button.SendEvent(submit);
         }
 
         private static void Move(CouchPlayerController player, Vector3 position)

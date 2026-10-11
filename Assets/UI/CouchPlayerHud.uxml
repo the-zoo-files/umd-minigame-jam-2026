@@ -97,6 +97,11 @@
                 </ui:VisualElement>
                 <ui:Label name="connectionStatus" text="0 / 2 ready" class="connection-status"/>
                 <ui:Button name="randomEvents" text="Random Events: Off" tooltip="Enable earthquakes, tornadoes, and lightning" class="random-events"/>
+                <ui:VisualElement name="eventOptions" class="event-options">
+                    <ui:Button name="eventEarthquake" text="Earthquake: On" class="random-events event-option is-on"/>
+                    <ui:Button name="eventTornadoes" text="Tornadoes: On" class="random-events event-option is-on"/>
+                    <ui:Button name="eventLightning" text="Lightning: On" class="random-events event-option is-on"/>
+                </ui:VisualElement>
                 <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
             </ui:VisualElement>
         </ui:VisualElement>

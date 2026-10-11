@@ -8,6 +8,7 @@ namespace UmdJam.Multiplayer
     [DisallowMultipleComponent]
     public sealed class RandomEventDirector : MonoBehaviour
     {
+        public const int AllEventsMask = 0b1110;
         public static RandomEventDirector Instance { get; private set; }
         public static event Action<RandomEventKind> EventChanged;
 
@@ -32,6 +33,7 @@ namespace UmdJam.Multiplayer
         private float eventStarted;
         private float lastStrike = float.NegativeInfinity;
         private int eventBag;
+        private int allowedEvents = AllEventsMask;
         private RandomEventKind previousEvent;
         private readonly Vector3[] tornadoOrigins = new Vector3[2];
 
@@ -52,9 +54,10 @@ namespace UmdJam.Multiplayer
             _ => string.Empty
         };
 
-        public bool Configure(GameManager game)
+        public bool Configure(GameManager game, int selectedEvents = AllEventsMask)
         {
-            if (round != null) return round == game && isActiveAndEnabled && visuals != null;
+            int selection = selectedEvents & AllEventsMask;
+            if (round != null) return round == game && isActiveAndEnabled && visuals != null && allowedEvents == selection;
             if (!isActiveAndEnabled || game == null || !Valid(minimumQuietDuration, 0.1f, 120f) ||
                 !Valid(maximumQuietDuration, minimumQuietDuration, 120f) ||
                 !Valid(eventDuration, 0.1f, 30f) || !Valid(earthquakeDriftSpeed, 0f, 10f) ||
@@ -68,6 +71,7 @@ namespace UmdJam.Multiplayer
                 return false;
             }
             round = game;
+            allowedEvents = selection;
             arena = game.ArenaBounds;
             random = new System.Random(UnityEngine.Random.Range(1, int.MaxValue));
             visuals = gameObject.AddComponent<RandomEventVisuals>();
@@ -125,7 +129,7 @@ namespace UmdJam.Multiplayer
 
         private void Update()
         {
-            if (round == null || !round.IsPlaying || random == null) return;
+            if (round == null || !round.IsPlaying || random == null || allowedEvents == 0) return;
             if (Time.time >= nextTransition)
             {
                 if (ActiveEvent == RandomEventKind.None) TryBeginEvent(ChooseEvent());
@@ -156,7 +160,8 @@ namespace UmdJam.Multiplayer
         public bool TryBeginEvent(RandomEventKind kind)
         {
             if (!isActiveAndEnabled || round == null || !round.IsPlaying || random == null ||
-                ActiveEvent != RandomEventKind.None || kind < RandomEventKind.Earthquake || kind > RandomEventKind.Lightning)
+                ActiveEvent != RandomEventKind.None || kind < RandomEventKind.Earthquake || kind > RandomEventKind.Lightning ||
+                (allowedEvents & (1 << (int)kind)) == 0)
                 return false;
             ActiveEvent = kind;
             previousEvent = kind;
@@ -249,7 +254,8 @@ namespace UmdJam.Multiplayer
 
         private RandomEventKind ChooseEvent()
         {
-            if (eventBag == 0) eventBag = 0b1110;
+            if (eventBag == 0) eventBag = allowedEvents;
+            if (eventBag == 0) return RandomEventKind.None;
             int first = random.Next(1, 4);
             for (int offset = 0; offset < 3; offset++)
             {

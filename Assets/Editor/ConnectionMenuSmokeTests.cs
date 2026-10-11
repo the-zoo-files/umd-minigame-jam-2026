@@ -139,6 +139,12 @@ namespace UmdJam.Editor
                 Rect menuBounds = root.Q("connectionMenu").worldBound;
                 Rect startBounds = root.Q("startGame").worldBound;
                 Require(menuBounds.Contains(startBounds.min) && menuBounds.Contains(startBounds.max), "Start button fits 4:3");
+                foreach (string name in new[] { "eventEarthquake", "eventTornadoes", "eventLightning" })
+                {
+                    Rect bounds = root.Q<Button>(name).worldBound;
+                    Require(bounds.width >= 160f && menuBounds.Contains(bounds.min) && menuBounds.Contains(bounds.max),
+                        "Individual event toggle is readable and fits 4:3");
+                }
                 for (int slot = 1; slot <= 4; slot++)
                 {
                     Rect cardBounds = root.Q($"connectionPlayer{slot}").worldBound;

@@ -146,6 +146,11 @@ Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.Ru
 
 ## Console Policy
 
+The random-event suite also exercises all eight individual event selections through the actual
+lobby buttons, including an empty selection, single-event repeats, filtered scheduling,
+direct-activation rejection, master-switch preservation, round-start locking, and replay defaults.
+The connection-menu suite checks the individual toggle row remains readable and within bounds at 4:3.
+
 A change is not ready while it introduces Console errors. Investigate new warnings rather than normalizing them. Framework or validator advisories may be recorded when they are false positives, but runtime warnings from physics state changes, missing references, action lookup, or UI queries must be fixed.
 
 Clear old Console entries before a focused smoke test so the result is attributable to the current change.

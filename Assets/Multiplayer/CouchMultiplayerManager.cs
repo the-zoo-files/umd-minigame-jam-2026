@@ -26,6 +26,21 @@ namespace UmdJam.Multiplayer
 
         public int SelectedPlayerCount => selectedPlayerCount;
         public bool RandomEventsEnabled { get; private set; }
+        public int SelectedRandomEvents { get; private set; } = RandomEventDirector.AllEventsMask;
+
+        public bool IsRandomEventSelected(RandomEventKind kind) =>
+            kind >= RandomEventKind.Earthquake && kind <= RandomEventKind.Lightning &&
+            (SelectedRandomEvents & (1 << (int)kind)) != 0;
+
+        public bool TrySetRandomEvent(RandomEventKind kind, bool enabled)
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen ||
+                kind < RandomEventKind.Earthquake || kind > RandomEventKind.Lightning) return false;
+            int bit = 1 << (int)kind;
+            SelectedRandomEvents = enabled ? SelectedRandomEvents | bit : SelectedRandomEvents & ~bit;
+            RefreshLobby();
+            return true;
+        }
 
         public bool TrySetRandomEvents(bool enabled)
         {
@@ -257,11 +272,11 @@ namespace UmdJam.Multiplayer
                     return false;
                 }
             }
-            if (RandomEventsEnabled)
+            if (RandomEventsEnabled && SelectedRandomEvents != 0)
             {
                 if (!gameManager.TryGetComponent(out RandomEventDirector events))
                     events = gameManager.gameObject.AddComponent<RandomEventDirector>();
-                if (!events.Configure(gameManager))
+                if (!events.Configure(gameManager, SelectedRandomEvents))
                 {
                     StartFailure = "Random events are unavailable. Disable them or check event assets.";
                     retryStartAt = Time.unscaledTime + 1f;
