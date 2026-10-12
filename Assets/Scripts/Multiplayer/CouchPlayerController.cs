@@ -29,6 +29,8 @@ namespace UmdJam.Multiplayer
 
         [SerializeField] private float moveSpeed = 9.5f;
         [SerializeField] private float turnSpeed = 30f;
+        [SerializeField, Min(0f), Tooltip("Human facing response rate per second, independent of movement smoothing.")]
+        private float humanTurnSpeed = 90f;
         [SerializeField, Min(0f), Tooltip("Human acceleration/turning response time in seconds; zero disables smoothing.")]
         private float movementSmoothingTime = 0.05f;
         [SerializeField, Min(0f), Tooltip("Human release response time in seconds; zero stops immediately.")]
@@ -394,7 +396,8 @@ namespace UmdJam.Multiplayer
                 input = Vector2.zero;
                 attack = false;
             }
-            else if (cpu == null)
+            Vector3 facing = new(input.x, 0f, input.y);
+            if (cpu == null)
             {
                 input = SmoothHumanInput(input, Time.deltaTime);
             }
@@ -417,13 +420,15 @@ namespace UmdJam.Multiplayer
                 characterAnimator.SetBool(CarryingAnimation, heldFlask != null);
             }
 
-            if (movement.sqrMagnitude > 0.001f)
+            if (facing.sqrMagnitude > 0.001f &&
+                !float.IsNaN(facing.x) && !float.IsInfinity(facing.x) &&
+                !float.IsNaN(facing.z) && !float.IsInfinity(facing.z))
             {
-                Quaternion targetRotation = Quaternion.LookRotation(movement);
+                Quaternion targetRotation = Quaternion.LookRotation(facing);
                 transform.rotation = Quaternion.Slerp(
                     transform.rotation,
                     targetRotation,
-                    cpu != null ? turnSpeed * Time.deltaTime : 1f - Mathf.Exp(-turnSpeed * Time.deltaTime));
+                    cpu != null ? turnSpeed * Time.deltaTime : 1f - Mathf.Exp(-humanTurnSpeed * Time.deltaTime));
             }
 
             if (attack)

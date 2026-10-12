@@ -78,7 +78,7 @@ Owns local player joining and per-player behavior.
 
 Owns runtime UI Toolkit presentation.
 
-- `CouchPlayerHud` maps player events to named UXML labels and USS state classes. It installs `GameplayFeedback` once on the same document if no authored instance exists. Feedback owns countdown pulses/ticks, live zone-risk markers/totals, and bounded collection popup/pulse presentation. `PlayerFlaskCollector.FlaskCollected` publishes actual successful rewards after scoring; feedback never changes scores.
+- `CouchPlayerHud` maps player events to named UXML labels and USS state classes. It installs `GameplayFeedback` and `GameAudioFeedback` once on the same document if no authored instances exist. Feedback owns countdown pulses/ticks, live zone-risk markers/totals, and bounded collection popup/pulse presentation. Audio feedback owns shared button, ready, and point cues from `Sounds/Resources/Audio`, caching three bounded voices and binding lobby/UI/reward events. `PlayerFlaskCollector.FlaskCollected` publishes actual successful rewards after scoring; feedback never changes scores.
 - `CouchConnectionMenu` presents lobby state in the same `UIDocument`, references `CouchMultiplayerManager`, and never keeps a separate roster or readiness state. Its appearance lives in `CouchConnectionMenu.uss`.
 - `RoundResultsDirector` owns the unscaled camera/count/deduction/winner sequence and scene replay. `RoundResultsView` projects snapshot positions into UI Toolkit, draws zone masks and markers, and presents standings. Both use the existing HUD document. `RoundResults/ResultsCameraTarget` is authored by `RoundResultsSetup` through Editor APIs.
 

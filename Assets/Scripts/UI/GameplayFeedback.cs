@@ -32,7 +32,6 @@ namespace UmdJam.UI
         private bool timerPulsing;
         private float timerPulseStarted;
         private AudioSource audioSource;
-        private AudioClip scoringSound;
         private AudioClip countdownSound;
 
         private sealed class CollectionPresentation
@@ -118,7 +117,6 @@ namespace UmdJam.UI
 
         private void OnDestroy()
         {
-            if (scoringSound != null) Destroy(scoringSound);
             if (countdownSound != null) Destroy(countdownSound);
             if (audioSource != null) Destroy(audioSource);
         }
@@ -169,7 +167,6 @@ namespace UmdJam.UI
             SetBorder(collection.Pulse, participant.PlayerColor);
             collection.Popup.RemoveFromClassList("is-hidden");
             collection.Pulse.RemoveFromClassList("is-hidden");
-            if (audioSource != null && soundVolume > 0f) audioSource.PlayOneShot(scoringSound, soundVolume);
         }
 
         private void LateUpdate()
@@ -324,7 +321,6 @@ namespace UmdJam.UI
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             audioSource.spatialBlend = 0f;
-            scoringSound = CreateSound("Flask collected", new[] { 660f, 880f, 1100f }, 0.21f);
             countdownSound = CreateSound("Countdown tick", new[] { 880f }, 0.045f);
         }
 

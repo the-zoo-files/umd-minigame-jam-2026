@@ -23,6 +23,7 @@ namespace UmdJam.UI
         private void OnEnable()
         {
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
+            if (!TryGetComponent(out GameAudioFeedback audio)) gameObject.AddComponent<GameAudioFeedback>();
             if (!TryGetComponent(out GameplayFeedback feedback)) gameObject.AddComponent<GameplayFeedback>();
             root.EnableInClassList("results-active", resultsPresentationActive);
             labels.Clear();

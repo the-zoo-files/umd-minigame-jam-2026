@@ -88,7 +88,7 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Movement or input changes
 
-Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.RunPlayerMovement`) for acceleration, curved direction changes/reversal, exact stopping/full speed, partial-stick speed, diagonal bounds, equivalent elapsed-time response at 30/60/120 FPS, invalid input/frame duration, zero-smoothing configuration, warmed zero allocations, actual paired gamepad/CharacterController movement, and spawn/stun/disable/timeout reset. Run gameplay, CPU behavior/gameplay, event, and results suites as shared-controller regressions.
+Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.RunPlayerMovement`) for acceleration, curved direction changes/reversal, exact stopping/full speed, partial-stick speed, diagonal bounds, equivalent elapsed-time response at 30/60/120 FPS, invalid input/frame duration, zero-smoothing configuration, warmed zero allocations, actual paired gamepad/CharacterController movement, fast facing from current input, preserved facing on release/stun, and spawn/stun/disable/timeout reset. Run gameplay, CPU behavior/gameplay, event, and results suites as shared-controller regressions.
 
 - Confirm each player reads only its paired device.
 - Check diagonal speed and turn response.
@@ -182,5 +182,7 @@ After modifying serialized fields or required components, inspect:
 Keep `AGENTS.md` and `CLAUDE.md` as indexes and guardrails, not duplicate manuals.
 
 ### Gameplay feedback
+
+Run **Tools > UmdJam > Run Game Audio Smoke Tests** (`GameplaySmokeTests.RunGameAudio`) for supplied clip import, actual UI submit/click playback, readiness transitions and unchanged-state suppression, rewarded scoring/duplicate rejection, and source/subscription lifecycle. Use a graphics-enabled Editor with audio enabled. Also run connection menu, gameplay feedback, and results suites; listen in a normal player for final volume balance.
 
 Run **Tools > UmdJam > Run Gameplay Feedback Smoke Tests** (`GameplaySmokeTests.RunGameplayFeedback`) in a graphics-enabled Editor. It checks lobby/normal/10-second/3-second transitions, actual collection and direct-transfer rewards, duplicate/wrong-collector rejection, rapid reward aggregation, popup/pulse expiry, zero-point delivery, fresh totals after expiry, shared held/transfer/boundary risk eligibility, live zone crossings, absent-slot hiding, 4:3 layout, zero managed allocations across 200 warmed unchanged updates, time-extension reset, component re-enable, timeout cleanup, and replay. The actual Game view is captured at 1920x1080 and 1440x1080 into `.utmp/gameplay-feedback-*.png`; the previous Game view selection is restored. Run gameplay, CPU, results, event, and menu suites as shared-scoring/HUD regressions. Listen to the chime/ticks in a normal player or Editor with audio output before tuning volume.

@@ -39,7 +39,7 @@ The UXML root is `hudRoot`. Player labels must retain these names:
 | `player3Name` | bottom-right |
 | `player4Name` | bottom-left |
 
-All labels use `player-name`, one player-specific class, and the runtime state class `is-connected`. Their text contains the player name and current score on separate lines.
+All labels use `player-name`, one player-specific class, and the runtime state class `is-connected`. Their text contains the player name and current score on separate lines. Score cards match the ready-up cards' light lavender surface, dark purple text, and rounded corners, with a compact 4px border in the participant's selected color. Shared styling keeps every player corner consistent; padding preserves clearance above/below the risk labels.
 
 The `roundTimer` label is inside the full-width `timerContainer`, which anchors it at the top center without fixed-width spacers. It displays the ceiling of the remaining round time in `mm:ss` format and reaches `00:00` before the game pauses. The HUD formats and assigns text only when the displayed second changes, resetting its presentation cache on enable; the authoritative timer and its events remain frame-accurate.
 
@@ -136,5 +136,7 @@ When adding a per-player HUD element:
 Each occupied card exposes `colorSelectorN`, `playerColorN`, `previousColorN`, and `nextColorN`. Arrow buttons call the manager's validated color-cycling operation. The name and swatch share the palette color, with contrasting text for dark/light entries. Empty cards hide the selector. Selection is event-driven and does not add per-frame palette or material work. HUD corner classes define position only; color is applied from participant state.
 
 ## Gameplay Feedback
+
+`GameAudioFeedback` owns the three supplied sounds under `Assets/Sounds/Resources/Audio`: `ButtonClick`, `Ready`, and `Point`. The HUD installs it once. Lobby/results buttons share one `clicked` subscription each, covering mouse and UI Toolkit submit. Readiness announces only a false-to-true `CanStart` transition; scoring listens to positive `FlaskCollected` rewards. Three cached 2D sources allow one voice per cue, bounding rapid overlap. Disable unsubscribes and stops playback; re-enable seeds readiness without repeating it. Volume is privately serialized on the component. Missing clips warn once per cue at initialization and remain silent. `GameplayFeedback` retains only the generated countdown sound.
 
 `GameplayFeedback.uss` styles the urgent/critical timer, `countdownWarning`, the four `zoneRiskN` labels, and the `feedbackOverlay` children `penaltyMarkers` and `collectionFeedback`. The overlay is inside `gameplayHud`, uses ignored picking, and is hidden with gameplay during the lobby/results. Runtime creates bounded marker labels and one `scorePopupN`/`collectorPulseN` pair per slot. Popups and markers project world positions through the same camera-to-panel convention used by results. Color borders identify participants; marker text remains white for readability across all palette choices. Scaled animation time freezes with gameplay. Display caches avoid rebuilding unchanged risk/marker text, and pools eliminate per-frame object creation. Begin/re-enable binds current round state; disable removes transient elements, restores timer scale/classes, stops sounds, and unsubscribes.

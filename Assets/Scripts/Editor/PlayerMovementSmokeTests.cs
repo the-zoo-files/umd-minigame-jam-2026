@@ -15,11 +15,14 @@ namespace UmdJam.Editor
         public static IEnumerator Exercise()
         {
             Gamepad device = null;
+            bool originalRunInBackground = Application.runInBackground;
             var settings = InputSystem.settings;
             var originalBackground = settings.backgroundBehavior;
             var originalEditorInput = settings.editorInputBehaviorInPlayMode;
             try
             {
+                Application.runInBackground = true;
+                UnityEditor.EditorWindow.GetWindow(typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameView"));
                 settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
                 settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
                 yield return null;
@@ -64,19 +67,55 @@ namespace UmdJam.Editor
 
                 // Exercise the actual paired action, CharacterController path, and animation input.
                 player.PlaceAtSpawn(0);
-                InputSystem.QueueStateEvent(device, new GamepadState { leftStick = Vector2.right });
+                // Keep this input fixture clear of scenery around the newly centered spawn.
+                CharacterController body = player.GetComponent<CharacterController>();
+                body.enabled = false;
+                player.transform.position += new Vector3(-1f, 0f, 1f);
+                body.enabled = true;
+                Physics.SyncTransforms();
+                InputSystem.QueueStateEvent(device, new GamepadState { leftStick = Vector2.left });
                 yield return null;
+                yield return null;
+                InputSystem.Update();
                 Action update = (Action)Delegate.CreateDelegate(typeof(Action), player,
                     typeof(CouchPlayerController).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic));
                 Vector3 origin = player.transform.position;
                 update();
                 float distance = CpuNavigation.PlanarDistance(origin, player.transform.position);
-                Require(distance > 0f && distance < player.MoveSpeed * Time.deltaTime && Input(player).x < 1f,
-                    "Paired stick movement uses the smoothed CharacterController command");
+                Require(distance > 0f && distance < player.MoveSpeed * Time.deltaTime &&
+                    Input(player).x < 0f && Input(player).x > -1f,
+                    $"Paired stick movement uses the smoothed CharacterController command (distance={distance}, step={player.MoveSpeed * Time.deltaTime}, input={Input(player)}, origin={origin}, position={player.transform.position})");
+                Set(player, "smoothedHumanInput", Vector2.right);
+                player.transform.rotation = Quaternion.LookRotation(Vector3.right);
+                InputSystem.QueueStateEvent(device, new GamepadState { leftStick = Vector2.up });
+                yield return null;
+                yield return null;
+                InputSystem.Update();
+                Require(player.HumanInput.actions.FindAction("Player/Move").ReadValue<Vector2>() == Vector2.up,
+                    "Paired action receives the direction-change fixture before manually updating the controller");
+                Quaternion expectedFacing = Quaternion.Slerp(player.transform.rotation, Quaternion.identity,
+                    1f - Mathf.Exp(-90f * Time.deltaTime));
+                update();
+                Require(Quaternion.Angle(player.transform.rotation, expectedFacing) < 0.1f,
+                    $"Facing responds quickly to current paired input rather than smoothed movement (actual {player.transform.eulerAngles}, expected {expectedFacing.eulerAngles})");
+                InputSystem.QueueStateEvent(device, new GamepadState());
+                yield return null;
+                yield return null;
+                InputSystem.Update();
+                Quaternion releasedFacing = player.transform.rotation;
+                update();
+                Require(Quaternion.Angle(player.transform.rotation, releasedFacing) < 0.1f,
+                    "Release preserves facing instead of rotating toward residual movement");
+                InputSystem.QueueStateEvent(device, new GamepadState { leftStick = Vector2.right });
+                yield return null;
+                yield return null;
+                InputSystem.Update();
                 player.enabled = true;
                 Require(player.TryStun(0.2f) && Input(player) == Vector2.zero, "Stun immediately clears residual human movement");
+                Quaternion stunnedFacing = player.transform.rotation;
                 yield return null;
-                Require(Input(player) == Vector2.zero, "Stunned input cannot rebuild residual movement");
+                Require(Input(player) == Vector2.zero && Quaternion.Angle(player.transform.rotation, stunnedFacing) < 0.1f,
+                    "Stunned input cannot rebuild residual movement or turn the player");
                 player.ClearEnvironmentalEffects();
                 yield return null;
                 Require(Input(player).x > 0f, "Human movement resumes after stun");
@@ -95,6 +134,7 @@ namespace UmdJam.Editor
                 if (device != null && device.added) InputSystem.RemoveDevice(device);
                 settings.backgroundBehavior = originalBackground;
                 settings.editorInputBehaviorInPlayMode = originalEditorInput;
+                Application.runInBackground = originalRunInBackground;
             }
         }
 

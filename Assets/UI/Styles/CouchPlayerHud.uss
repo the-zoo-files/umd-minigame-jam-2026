@@ -31,11 +31,11 @@
 
 .player-name {
     position: absolute;
-    padding: 10px 14px;
-    background-color: rgba(10, 15, 25, 0.82);
-    border-width: 2px;
-    border-radius: 4px;
-    color: rgb(245, 248, 255);
+    padding: 8px 14px;
+    background-color: rgb(246, 243, 255);
+    border-width: 4px;
+    border-radius: 16px;
+    color: rgb(37, 25, 64);
     font-size: 22px;
     -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
     white-space: normal;
