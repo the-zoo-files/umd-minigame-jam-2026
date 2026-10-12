@@ -24,6 +24,9 @@ namespace UmdJam.Editor
             AudioSource point = Source(audio, "pointSource");
             Require(click.clip.name == "ButtonClick" && ready.clip.name == "Ready" && point.clip.name == "Point" &&
                 click.clip.length > 0f && ready.clip.length > 0f && point.clip.length > 0f, "All supplied clips import and load");
+            ValidatePreparedClip(click.clip);
+            ValidatePreparedClip(ready.clip);
+            ValidatePreparedClip(point.clip);
             Require(!click.isPlaying && !ready.isPlaying && !point.isPlaying, "Lobby begins silent");
             Button toggle = audio.GetComponent<UIDocument>().rootVisualElement.Q<Button>("randomEvents");
             using (NavigationSubmitEvent submit = NavigationSubmitEvent.GetPooled())
@@ -50,6 +53,8 @@ namespace UmdJam.Editor
             Require(flask.TryPickUp(socket) && flask.TryThrow(Vector3.zero, 1), "Audio fixture throws a flask");
             collector.Collect(flask);
             Require(point.isPlaying && lobby.GetParticipant(0).Score > 0, "Successful scoring plays supplied point sound");
+            Require(click.volume == ready.volume && ready.volume == point.volume,
+                "All normalized cues use the same playback gain");
             point.Stop();
             collector.Collect(flask);
             Require(!point.isPlaying, "Duplicate collection cannot replay scoring sound");
@@ -68,6 +73,24 @@ namespace UmdJam.Editor
                 BindingFlags.Instance | BindingFlags.NonPublic).GetValue(audio);
             Require(source != null && source.clip != null, $"Sound source {name} is configured");
             return source;
+        }
+
+        private static void ValidatePreparedClip(AudioClip clip)
+        {
+            Require(clip.loadState == AudioDataLoadState.Loaded && clip.loadType == AudioClipLoadType.DecompressOnLoad,
+                $"{clip.name} is decoded before its first interaction");
+            float[] samples = new float[clip.samples * clip.channels];
+            Require(clip.GetData(samples, 0), $"{clip.name} samples are readable");
+            float peak = 0f;
+            float initialPeak = 0f;
+            int initialSamples = Mathf.CeilToInt(clip.frequency * 0.005f) * clip.channels;
+            for (int i = 0; i < samples.Length; i++)
+            {
+                peak = Mathf.Max(peak, Mathf.Abs(samples[i]));
+                if (i < initialSamples) initialPeak = Mathf.Max(initialPeak, Mathf.Abs(samples[i]));
+            }
+            Require(peak > 0f && peak <= 0.708f && initialPeak >= peak * 0.01f,
+                $"{clip.name} starts within 5 ms and retains at least 3 dB of peak headroom");
         }
 
         private static void Require(bool condition, string message)

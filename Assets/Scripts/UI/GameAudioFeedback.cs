@@ -82,6 +82,7 @@ namespace UmdJam.UI
                 Debug.LogWarning($"Missing game sound at Resources/{resourcePath}; this cue will be silent.", this);
                 return null;
             }
+            clip.LoadAudioData();
             AudioSource source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.spatialBlend = 0f;
