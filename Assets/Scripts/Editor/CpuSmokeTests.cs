@@ -70,7 +70,7 @@ namespace UmdJam.Editor
                 Require(!lobby.TryAddCpu(0) && !lobby.TrySetCpuDifficulty(1, CpuDifficulty.God), "CPU changes lock during round");
                 Require(root.Q<Label>("player4Name").text.StartsWith("CPU 4"), "HUD identifies CPU");
 
-                // Isolate one bot's route across the central machine without changing its movement rules.
+                // Isolate one bot's route within its assigned quadrant.
                 lobby.GetParticipant(1).Cpu.enabled = false;
                 lobby.GetParticipant(2).Cpu.enabled = false;
                 CouchPlayerController god = lobby.GetParticipant(3);
@@ -79,7 +79,10 @@ namespace UmdJam.Editor
                 blocker.transform.position = god.transform.position + new Vector3(0.8f, 0f, 0.8f);
                 blocker.enabled = true;
                 PickupFlask prefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab");
-                PickupFlask target = Object.Instantiate(prefab, new Vector3(5f, 0.5f, 4f), Quaternion.identity);
+                PickupFlask target = Object.Instantiate(prefab, new Vector3(-1f, 0.5f, -2f), Quaternion.identity);
+                Require(god.TryStun(0.15f), "CPU stun accepted during play");
+                god.Cpu.ReadCommand(out Vector2 stunnedMovement, out bool stunnedAttack);
+                Require(stunnedMovement == Vector2.zero && !stunnedAttack, "Stunned CPU stops planning movement and attacks");
                 float deadline = Time.realtimeSinceStartup + 20f;
                 while (god.Score == 0 && Time.realtimeSinceStartup < deadline) yield return null;
                 Require(god.Score > 0, $"God navigates, picks up, returns and scores; position {god.transform.position}, target {target}");

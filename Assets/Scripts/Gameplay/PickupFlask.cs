@@ -34,6 +34,8 @@ namespace UmdJam.Gameplay
         private Action<PickupFlask> transferReceiverCallback;
         private Behaviour transferReceiver;
         private bool requiresReceiver;
+        private bool followsReceiver;
+        private Vector3 receiverLocalPoint;
 
         private float MaximumFallSpeed => flask != null ? flask.MaximumFallSpeed : 14f;
         private float ImpactSpinBoost => flask != null ? flask.ImpactSpinBoost : 2.5f;
@@ -140,6 +142,7 @@ namespace UmdJam.Gameplay
             }
 
             transferElapsed += Time.deltaTime;
+            if (followsReceiver) transferTarget = transferReceiver.transform.TransformPoint(receiverLocalPoint);
             float progress = Mathf.Clamp01(transferElapsed / transferDuration);
             float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
             transform.SetPositionAndRotation(
@@ -255,13 +258,15 @@ namespace UmdJam.Gameplay
         }
 
         public bool TryThrowDirectly(Vector3 target, int playerNumber, float duration,
-            Behaviour receiver, Action<PickupFlask> onArrived)
+            Behaviour receiver, Action<PickupFlask> onArrived, bool followReceiver = false)
         {
             if (receiver == null || !receiver.isActiveAndEnabled || onArrived == null ||
                 !BeginTransfer(target, playerNumber, duration)) return false;
             transferReceiver = receiver;
             requiresReceiver = true;
             transferReceiverCallback = onArrived;
+            followsReceiver = followReceiver;
+            receiverLocalPoint = receiver.transform.InverseTransformPoint(target);
             if (duration == 0f) CompleteTransfer();
             return true;
         }
@@ -364,6 +369,8 @@ namespace UmdJam.Gameplay
             transferReceiverCallback = null;
             transferReceiver = null;
             requiresReceiver = false;
+            followsReceiver = false;
+            receiverLocalPoint = Vector3.zero;
         }
 
         private void RestoreFreePhysics()

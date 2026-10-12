@@ -85,8 +85,10 @@ namespace UmdJam.Editor
                 };
                 NavMeshPath path = new();
                 PlayerFlaskCollector[] collectors = new PlayerFlaskCollector[CouchMultiplayerManager.MaximumPlayers];
+                GameManager game = null;
                 foreach (GameObject root in scene.GetRootGameObjects())
                 {
+                    if (game == null) game = root.GetComponentInChildren<GameManager>();
                     foreach (PlayerFlaskCollector collector in root.GetComponentsInChildren<PlayerFlaskCollector>())
                     {
                         int slot = collector.PlayerNumber - 1;
@@ -96,6 +98,12 @@ namespace UmdJam.Editor
                 for (int slot = 0; slot < collectors.Length; slot++)
                 {
                     Vector3 spawn = CouchPlayerController.GetSpawnPosition(slot);
+                    if (game != null)
+                    {
+                        Bounds zone = game.GetPlayerZone(slot + 1);
+                        spawn.x = zone.center.x;
+                        spawn.z = zone.center.z;
+                    }
                     if (collectors[slot] == null)
                         throw new BuildFailedException($"CPU navigation requires collector {slot + 1}.");
                     Vector3 destination = collectors[slot].ApproachPoint(spawn);

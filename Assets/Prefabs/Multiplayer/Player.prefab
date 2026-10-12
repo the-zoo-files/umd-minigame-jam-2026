@@ -320,10 +320,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.CouchPlayerController
   moveSpeed: 9.5
   turnSpeed: 30
+  movementSmoothingTime: 0.05
+  stoppingSmoothingTime: 0.03
+  tornadoControlFraction: 0.25
+  tornadoReleaseLift: 4
+  tornadoReleaseDrag: 3
   throwDistance: 8
   throwApexHeight: 3
   throwLandingHeight: 0.35
   directThrowDuration: 0.2
+  stunThrowDistance: 6
+  assistedThrowFacingAngle: 35
+  stunCastRadius: 0.45
+  flaskStunDuration: 0.9
   throwReleaseNormalizedTime: 0.43
   holdPoint: {fileID: 5741056128739604938}
   throwPoint: {fileID: 5179201768300483648}

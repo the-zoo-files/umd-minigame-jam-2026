@@ -180,7 +180,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 - Use static events for the small, global player roster (`PlayerJoined` and `PlayerLeft`).
 - `PickupFlask.ActiveFlasks` tracks enabled flasks across pooling cycles. CPU targeting checks `IsAvailable`, excluding held, collected, inactive, and direct-transfer flasks. Gameplay owns this registry and has no dependency on CPU code.
 - Subscribe in `OnEnable` and unsubscribe in `OnDisable` for listeners.
-- Direct-transfer animation state belongs to `PickupFlask`, including receiver validity, completion, cancellation, and pooling reset. Collectors cache their completion delegate once; throws allocate neither a captured callback nor a coroutine.
+- Direct-transfer animation state belongs to `PickupFlask`, including receiver validity, optional receiver-relative targeting, completion, cancellation, and pooling reset. Collectors and stun recipients cache their completion delegates once; throws allocate neither a captured callback nor a coroutine. `CouchPlayerController` owns forward capsule targeting and stun-on-arrival; gameplay retains no multiplayer dependency.
 - Avoid global lookups in normal gameplay loops. Editor smoke tests may use object lookup for inspection.
 - Keep authoritative state with its owner: `PickupFlask.IsHeld` and last-thrower identity belong to the flask, while the held reference and score belong to the player controller.
 - `GameManager.RoundTimeChanged` drives the HUD timer without creating a gameplay-to-UI dependency.

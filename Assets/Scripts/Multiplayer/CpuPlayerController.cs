@@ -91,7 +91,7 @@ namespace UmdJam.Multiplayer
             BuildCommand(out Vector2 desired, out attack);
             if (round == null || !round.IsPlaying || !isActiveAndEnabled ||
                 player == null || player.MoveSpeed <= 0f || navigation == null || !navigation.IsReady ||
-                collector == null || throwReadyAt >= 0f)
+                collector == null || player.IsStunned || throwReadyAt >= 0f)
             {
                 steering = Vector2.zero;
             }
@@ -114,6 +114,15 @@ namespace UmdJam.Multiplayer
                 return;
             }
             if (player.MoveSpeed <= 0f) return;
+            if (player.IsStunned)
+            {
+                throwReadyAt = -1f;
+                recoveryUntil = 0f;
+                lastProgressPosition = transform.position;
+                lastProgressTime = Time.time;
+                nextPlan = 0f;
+                return;
+            }
 
             CpuSettings settings = Settings;
             bool carrying = player.IsCarrying;
@@ -130,6 +139,19 @@ namespace UmdJam.Multiplayer
 
             if (carrying && PlayerFlaskCollector.TryGetNearby(player.PlayerNumber, transform.position, out _))
             {
+                Vector3 towardCollector = Vector3.ProjectOnPlane(collector.CollectionPoint - transform.position, Vector3.up);
+                if (towardCollector.sqrMagnitude > 0.0001f)
+                {
+                    Quaternion facing = Quaternion.LookRotation(towardCollector);
+                    transform.rotation = UsesNaturalBehavior
+                        ? Quaternion.RotateTowards(transform.rotation, facing, 360f * Time.deltaTime)
+                        : facing;
+                }
+                if (!player.IsFacing(collector.CollectionPoint))
+                {
+                    throwReadyAt = -1f;
+                    return;
+                }
                 if (throwReadyAt < 0f) throwReadyAt = Time.time + settings.ThrowPreparation;
                 attack = Time.time >= throwReadyAt;
                 return;

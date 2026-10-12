@@ -104,6 +104,7 @@ Run **Tools > UmdJam > Run Player Movement Smoke Tests** (`GameplaySmokeTests.Ru
 
 ### Pickup and throw changes
 
+- The gameplay smoke suite covers cross-zone capsule targeting with collectors active, opponent priority within collector padding, nearest-target selection, release-socket origin, stun-on-arrival, moving receivers, restored drop physics, behind/sideways/out-of-range misses, and disabled-receiver cancellation.
 - Touch a flask and confirm pickup without pressing attack.
 - Move and rotate while holding; attachment position and rotation error should remain effectively zero.
 - Confirm the flask is above the head while held.

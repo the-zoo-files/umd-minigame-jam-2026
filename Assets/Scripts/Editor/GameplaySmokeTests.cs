@@ -238,7 +238,7 @@ namespace UmdJam.Editor
                 GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Multiplayer/Player.prefab");
                 PickupFlask flaskPrefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab");
                 List<CouchPlayerController> players = new();
-                Vector3[] spawns = { new(-6, 1, 6), new(6, 1, 6), new(6, 1, -6), new(-6, 1, -6) };
+                Vector3[] spawns = { new(-3, 1, 3), new(3, 1, 3), new(3, 1, -3), new(-3, 1, -3) };
                 Color[] colors = { PlayerColorPalette.Get(10).Color, PlayerColorPalette.Get(0).Color, PlayerColorPalette.Get(5).Color, PlayerColorPalette.Get(11).Color };
 
                 for (int i = 0; i < 4; i++)
@@ -280,13 +280,19 @@ namespace UmdJam.Editor
                     Require(root.Q<Label>($"player{i}Name").ClassListContains("is-connected"), "Connected HUD");
                 }
 
+                IEnumerator stunThrows = CheckStunThrows(players, flaskPrefab);
+                while (stunThrows.MoveNext()) yield return stunThrows.Current;
+
                 CheckBallistics();
                 Physics.gravity = originalGravity;
                 // The scene now places collectors near spawns. Exercise the ballistic path,
                 // not the newer direct-to-collector transfer that intentionally skips gravity.
+                PlayerFlaskCollector ballisticCollector = PlayerFlaskCollector.GetForPlayer(1);
+                ballisticCollector.enabled = false;
                 CharacterController mover = players[0].GetComponent<CharacterController>();
                 mover.enabled = false;
                 players[0].transform.position = new Vector3(1f, 1f, 3f);
+                players[0].transform.forward = Vector3.forward;
                 mover.enabled = true;
                 Require(!PlayerFlaskCollector.TryGetNearby(1, players[0].transform.position, out _), "Outside direct collection range");
                 Transform socket = Get<Transform>(players[0], "holdPoint");
@@ -337,6 +343,7 @@ namespace UmdJam.Editor
                 }
 
                 Object.Destroy(flask.gameObject);
+                ballisticCollector.enabled = true;
                 int before = Object.FindObjectsByType<PickupFlask>().Length;
                 Physics.gravity = Vector3.zero;
                 ExpectError("Cannot launch flask: check trajectory settings and downward-only gravity.",
@@ -543,6 +550,134 @@ namespace UmdJam.Editor
             hud.enabled = false;
             hud.enabled = true;
             Require(Get<int>(hud, "displayedSeconds") == Mathf.CeilToInt(GameManager.Instance.RemainingTime), "Reenabled HUD refreshes timer");
+        }
+
+        private static IEnumerator CheckStunThrows(List<CouchPlayerController> players, PickupFlask prefab)
+        {
+            CouchPlayerController thrower = players[0];
+            CouchPlayerController victim = players[1];
+            PickupFlask flask = null;
+            PlayerFlaskCollector[] collectors = Object.FindObjectsByType<PlayerFlaskCollector>();
+            try
+            {
+                PlaceForThrow(thrower, new Vector3(-1f, 1f, 2f));
+                PlaceForThrow(victim, new Vector3(1f, 1f, 2f));
+                PlaceForThrow(players[2], new Vector3(2.5f, 1f, 2f));
+                thrower.transform.forward = Vector3.right;
+                Require(PlayerFlaskCollector.TryGetNearby(1, thrower.transform.position, out _),
+                    "Boundary stun fixture also lies within collector padding");
+                flask = GiveFlask(thrower, prefab);
+                Physics.SyncTransforms();
+                int scoreBeforeHit = thrower.Score;
+                Vector3 release = Get<Transform>(thrower, "throwPoint").position;
+                Invoke(thrower, "ThrowHeldFlask");
+                Rigidbody body = flask.GetComponent<Rigidbody>();
+                Require(!thrower.IsCarrying && body.isKinematic && !body.detectCollisions,
+                    "Cross-zone aimed throw uses non-colliding fake physics");
+                Require(Vector3.Distance(flask.transform.position, release) < 0.001f, "Stun throw starts at release socket");
+                Require(!victim.IsStunned, "Stun waits for flask arrival");
+                players[2].PlaceAtSpawn(2);
+                PlaceForThrow(victim, new Vector3(1.5f, 1f, 2.5f));
+                float deadline = Time.time + 0.3f;
+                while (Time.time < deadline) yield return null;
+                Require(victim.IsStunned && !thrower.IsStunned && !players[2].IsStunned,
+                    "Only the nearest forward player is stunned on arrival");
+                Require(thrower.Score == scoreBeforeHit, "Aimed boundary hit is not redirected to collector");
+                Require(!body.isKinematic && body.detectCollisions && body.useGravity && !flask.IsHeld,
+                    "Hit flask drops with free physics restored");
+                Require(Vector2.Distance(new Vector2(flask.transform.position.x, flask.transform.position.z),
+                    new Vector2(victim.transform.position.x, victim.transform.position.z)) < 1f,
+                    "Transfer follows a moving victim");
+                Object.Destroy(flask.gameObject);
+                victim.ClearEnvironmentalEffects();
+
+                PlaceForThrow(thrower, new Vector3(-1f, 1f, 2f));
+                PlaceForThrow(victim, new Vector3(-3f, 1f, 2f));
+                thrower.transform.forward = Vector3.right;
+                flask = GiveFlask(thrower, prefab);
+                Physics.SyncTransforms();
+                Invoke(thrower, "ThrowHeldFlask");
+                Require(!flask.GetComponent<Rigidbody>().isKinematic && flask.Velocity.y > 0f,
+                    "Facing away from collector uses ballistic throw even inside padding");
+                Object.Destroy(flask.gameObject);
+                thrower.transform.forward = Vector3.ProjectOnPlane(
+                    PlayerFlaskCollector.GetForPlayer(1).CollectionPoint - thrower.transform.position, Vector3.up).normalized;
+                flask = GiveFlask(thrower, prefab);
+                int expectedScore = thrower.Score + flask.PointValue;
+                Physics.SyncTransforms();
+                Invoke(thrower, "ThrowHeldFlask");
+                deadline = Time.time + 0.3f;
+                while (Time.time < deadline) yield return null;
+                Require(!thrower.IsCarrying && thrower.Score == expectedScore && !victim.IsStunned,
+                    "Collector delivery still works when no opponent is aimed at");
+                foreach (PlayerFlaskCollector collector in collectors) collector.enabled = false;
+
+                // Behind, sideways, and beyond range must all use the ordinary ballistic path.
+                Vector3[] misses = { new(-3f, 1f, 2f), new(1f, 1f, 5f), new(12f, 1f, 2f) };
+                foreach (Vector3 position in misses)
+                {
+                    PlaceForThrow(thrower, new Vector3(-1f, 1f, 2f));
+                    thrower.transform.forward = Vector3.right;
+                    PlaceForThrow(victim, position);
+                    flask = GiveFlask(thrower, prefab);
+                    Physics.SyncTransforms();
+                    Invoke(thrower, "ThrowHeldFlask");
+                    body = flask.GetComponent<Rigidbody>();
+                    Require(!body.isKinematic && body.linearVelocity.y > 0f && !victim.IsStunned,
+                        "Missing or out-of-range opponent preserves ballistic throw");
+                    Object.Destroy(flask.gameObject);
+                }
+
+                PlaceForThrow(thrower, new Vector3(-1f, 1f, 2f));
+                thrower.transform.forward = Vector3.right;
+                PlaceForThrow(victim, new Vector3(4.8f, 1f, 2f));
+                flask = GiveFlask(thrower, prefab);
+                Set(thrower, "directThrowDuration", 0f);
+                Physics.SyncTransforms();
+                Invoke(thrower, "ThrowHeldFlask");
+                Require(victim.IsStunned, "Facing opponent within six tiles allows stun beyond old five-unit limit");
+                Set(thrower, "directThrowDuration", 0.2f);
+                victim.ClearEnvironmentalEffects();
+                Object.Destroy(flask.gameObject);
+
+                PlaceForThrow(victim, new Vector3(1f, 1f, 2f));
+                flask = GiveFlask(thrower, prefab);
+                Physics.SyncTransforms();
+                Invoke(thrower, "ThrowHeldFlask");
+                victim.enabled = false;
+                yield return null;
+                yield return null;
+                Require(!victim.IsStunned && !flask.GetComponent<Rigidbody>().isKinematic,
+                    "Disabled victim cancels transfer without stun or stranded flask");
+                victim.enabled = true;
+            }
+            finally
+            {
+                foreach (PlayerFlaskCollector collector in collectors) collector.enabled = true;
+                if (flask != null) Object.Destroy(flask.gameObject);
+                for (int i = 0; i < players.Count; i++)
+                {
+                    players[i].enabled = true;
+                    players[i].ClearEnvironmentalEffects();
+                    players[i].PlaceAtSpawn(i);
+                }
+            }
+        }
+
+        private static PickupFlask GiveFlask(CouchPlayerController player, PickupFlask prefab)
+        {
+            PickupFlask flask = Object.Instantiate(prefab);
+            Require(flask.TryPickUp(Get<Transform>(player, "holdPoint")), "Stun fixture pickup");
+            Set(player, "heldFlask", flask);
+            return flask;
+        }
+
+        private static void PlaceForThrow(CouchPlayerController player, Vector3 position)
+        {
+            CharacterController controller = player.GetComponent<CharacterController>();
+            controller.enabled = false;
+            player.transform.position = position;
+            controller.enabled = true;
         }
 
         private static void CheckBallistics()

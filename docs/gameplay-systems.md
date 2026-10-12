@@ -29,6 +29,8 @@ The effects use a shared `Resources/RandomEvents/Effects.mat` material and the p
 
 ## CPU Players
 
+CPUs turn toward their collector before preparing a delivery, so the assisted-throw facing gate applies to humans and CPUs alike. While stunned, CPU steering and attack output are zero, preparation/recovery timers reset, and navigation replans on recovery without treating the stun pause as a blockage.
+
 Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Noob**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
 
 All difficulty levels share humans' maximum movement speed, character turning, touch pickup, carrying limit, throw action, collectors, and score/penalty rules. CPU input ramps and brakes like an analog stick; difficulty changes awareness, decisions, and input timing:
@@ -175,10 +177,15 @@ Do not replace this with a physics joint unless swaying or breakable attachment 
 
 Pressing the attack action while carrying a flask:
 
-1. calculates and validates the forward ballistic target from `ThrowPoint`;
-2. transitions the held flask to dynamic Rigidbody behavior, applying velocity and spin;
-3. places it at `ThrowPoint` before the next physics step;
-4. clears the controller's held reference only after a successful release.
+1. at animation release, capsule-casts along the player's horizontal facing direction for the nearest active opponent within `stunThrowDistance` (default 6 units/tiles, measured between player positions), requiring the opponent to be within `assistedThrowFacingAngle` (default 35 degrees) of facing;
+2. if an opponent is found, transfers the flask from `ThrowPoint` to their body using the collector-style kinematic animation, following their movement and applying stun on arrival; this takes priority even within collector padding;
+3. otherwise uses nearby matching-collector delivery when available and facing its center within the same angle tolerance; facing away uses a normal ballistic throw;
+4. otherwise calculates and validates the forward ballistic target from `ThrowPoint`, restores dynamic Rigidbody behavior, and applies velocity and spin;
+5. clears the controller's held reference only after a successful release.
+
+The body-height targeting capsule uses `stunCastRadius` (default 0.45 units) and also checks initial overlaps for adjacent opponents. It ignores the thrower, zone triggers, and non-player geometry. The assisted flight disables collisions, so zone boundaries cannot block it. Ordinary ballistic flasks also pass through the existing trigger-only player zones. Player movement remains zone-constrained.
+
+The receiving player's `flaskStunDuration` defaults to 0.9 seconds. Stun blocks movement input, pickup, and throwing, preserving any held flask. The attacking flask drops with free physics restored after arrival; a disabled or destroyed receiver cancels the transfer without stun. Round-end pause freezes transfers and prevents further stun application. Transfer duration shares `directThrowDuration` with collector delivery (default 0.2 seconds).
 
 Current defaults:
 

@@ -40,6 +40,10 @@ namespace UmdJam.Multiplayer
         [SerializeField] private float throwApexHeight = 3f;
         [SerializeField] private float throwLandingHeight = 0.35f;
         [SerializeField, Min(0f)] private float directThrowDuration = 0.2f;
+        [SerializeField, Min(0f)] private float stunThrowDistance = 6f;
+        [SerializeField, Range(0f, 90f)] private float assistedThrowFacingAngle = 35f;
+        [SerializeField, Min(0.01f)] private float stunCastRadius = 0.45f;
+        [SerializeField, Range(0.01f, 5f)] private float flaskStunDuration = 0.9f;
         [SerializeField, Range(0f, 1f)] private float throwReleaseNormalizedTime = 0.43f;
         [SerializeField] private Transform holdPoint;
         [SerializeField] private Transform throwPoint;
@@ -66,6 +70,9 @@ namespace UmdJam.Multiplayer
         private Vector3 lastTornadoVelocity;
         private bool characterSetupPending;
         private Vector2 smoothedHumanInput;
+        private readonly RaycastHit[] stunHits = new RaycastHit[64];
+        private readonly Collider[] stunOverlaps = new Collider[64];
+        private Action<PickupFlask> flaskHitCompleted;
 
         private static readonly int SpeedAnimation = Animator.StringToHash("Speed");
         private static readonly int CarryingAnimation = Animator.StringToHash("Carrying");
@@ -203,6 +210,7 @@ namespace UmdJam.Multiplayer
         {
             characterController = GetComponent<CharacterController>();
             playerInput = GetComponent<PlayerInput>();
+            flaskHitCompleted = OnFlaskHit;
         }
 
         private void Start()
@@ -549,7 +557,24 @@ namespace UmdJam.Multiplayer
 
             PickupFlask flaskToThrow = heldFlask;
             Vector3 origin = throwPoint != null ? throwPoint.position : flaskToThrow.transform.position;
-            if (PlayerFlaskCollector.TryGetNearby(PlayerNumber, transform.position, out PlayerFlaskCollector collector))
+            CouchPlayerController opponent = FindStunTarget();
+            if (opponent != null)
+            {
+                Vector3 hitPoint = opponent.characterController.bounds.center;
+                Vector3 heldPosition = flaskToThrow.transform.position;
+                Quaternion heldRotation = flaskToThrow.transform.rotation;
+                flaskToThrow.transform.SetPositionAndRotation(origin, Quaternion.LookRotation(transform.forward));
+                if (flaskToThrow.TryThrowDirectly(hitPoint, PlayerNumber, directThrowDuration,
+                    opponent, opponent.flaskHitCompleted, true))
+                {
+                    heldFlask = null;
+                    return;
+                }
+                flaskToThrow.transform.SetPositionAndRotation(heldPosition, heldRotation);
+            }
+
+            if (PlayerFlaskCollector.TryGetNearby(PlayerNumber, transform.position, out PlayerFlaskCollector collector) &&
+                IsFacing(collector.CollectionPoint))
             {
                 if (collector.TryTransfer(flaskToThrow, directThrowDuration))
                 {
@@ -578,6 +603,74 @@ namespace UmdJam.Multiplayer
 
                 heldFlask = null;
             }
+        }
+
+        private CouchPlayerController FindStunTarget()
+        {
+            if (!characterController.enabled || !float.IsFinite(stunThrowDistance) || stunThrowDistance <= 0f ||
+                !float.IsFinite(stunCastRadius) || stunCastRadius <= 0f) return null;
+
+            Bounds bounds = characterController.bounds;
+            float halfSegment = Mathf.Max(0f, bounds.extents.y - stunCastRadius);
+            Vector3 top = bounds.center + Vector3.up * halfSegment;
+            Vector3 bottom = bounds.center - Vector3.up * halfSegment;
+            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            CouchPlayerController nearest = null;
+            float nearestDistance = stunThrowDistance * stunThrowDistance;
+
+            // Only player bodies are targets. Zone triggers and arena geometry do not block this
+            // assisted transfer, just as they do not block the direct collector transfer.
+            int count = Physics.CapsuleCastNonAlloc(top, bottom, stunCastRadius, forward, stunHits,
+                stunThrowDistance, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+            RaycastHit[] hits = stunHits;
+            if (count == hits.Length)
+            {
+                hits = Physics.CapsuleCastAll(top, bottom, stunCastRadius, forward,
+                    stunThrowDistance, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+                count = hits.Length;
+            }
+            for (int i = 0; i < count; i++)
+                ConsiderStunTarget(hits[i].collider, forward, ref nearest, ref nearestDistance);
+
+            // Casts omit colliders overlapping the initial capsule (adjacent players).
+            count = Physics.OverlapCapsuleNonAlloc(top, bottom, stunCastRadius, stunOverlaps,
+                Physics.AllLayers, QueryTriggerInteraction.Ignore);
+            Collider[] overlaps = stunOverlaps;
+            if (count == overlaps.Length)
+            {
+                overlaps = Physics.OverlapCapsule(top, bottom, stunCastRadius,
+                    Physics.AllLayers, QueryTriggerInteraction.Ignore);
+                count = overlaps.Length;
+            }
+            for (int i = 0; i < count; i++)
+                ConsiderStunTarget(overlaps[i], forward, ref nearest, ref nearestDistance);
+            return nearest;
+        }
+
+        private void ConsiderStunTarget(Collider collider, Vector3 forward,
+            ref CouchPlayerController nearest, ref float nearestDistance)
+        {
+            CouchPlayerController candidate = collider.GetComponentInParent<CouchPlayerController>();
+            if (candidate == null || candidate == this || !candidate.isActiveAndEnabled ||
+                candidate.PlayerNumber <= 0 || !candidate.characterController.enabled) return;
+            Vector3 offset = Vector3.ProjectOnPlane(candidate.transform.position - transform.position, Vector3.up);
+            float distance = offset.sqrMagnitude;
+            if (!IsFacing(candidate.transform.position) || distance > nearestDistance) return;
+            nearest = candidate;
+            nearestDistance = distance;
+        }
+
+        internal bool IsFacing(Vector3 point)
+        {
+            Vector3 direction = Vector3.ProjectOnPlane(point - transform.position, Vector3.up);
+            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            return direction.sqrMagnitude <= 0.0001f ||
+                Vector3.Dot(direction.normalized, forward) >= Mathf.Cos(assistedThrowFacingAngle * Mathf.Deg2Rad);
+        }
+
+        private void OnFlaskHit(PickupFlask flask)
+        {
+            TryStun(flaskStunDuration);
         }
 
         private void BeginThrow()
