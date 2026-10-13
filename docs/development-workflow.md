@@ -77,9 +77,9 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 - Run **Tools > UmdJam > Run CPU Smoke Tests** (`UmdJam.Editor.GameplaySmokeTests.RunCpu` in batch mode) for difficulty selection, device-free CPU creation, mixed/CPU-only rosters, removal/start races, obstacle navigation, actual pickup/delivery/scoring at every level, round-end stopping, and scene reload cleanup. Run the existing gameplay and connection-menu suites as regressions after changes to shared player or lobby code.
 
-- Run **Tools > UmdJam > Run Connection Menu Smoke Tests** for selected-count bounds, simultaneous joining, duplicate/full-slot rejection, disconnect/reconnect readiness, leaving/rejoining, keyboard/mouse plus gamepads, and round-start/end gating. It captures the empty and ready menu into `.utmp/connection-menu-*.png` with a graphics-enabled Editor.
+- Run **Tools > UmdJam > Run Connection Menu Smoke Tests** for four empty initial slots, absence of player-count controls, simultaneous joining, duplicate/full-slot rejection, disconnect/reconnect readiness, leaving/rejoining, keyboard/mouse plus gamepads, automatic CPU fill while preserving humans/configured CPUs, and round-start/end gating. CPU smoke tests also check empty-lobby automatic fill, four-slot fill, repeat-start rejection, and replay cleanup. It captures the empty and ready menu into `.utmp/connection-menu-*.png` with a graphics-enabled Editor.
 - The connection menu is wired in `Game.unity`. **Tools > UmdJam > Configure Connection Menu** can restore its component and serialized references using Editor APIs.
-- Verify pointer controls and the count selector at 16:9 and 4:3, confirm controls remain readable, and confirm leaving an occupied high-numbered slot permits reducing the count.
+- Verify pointer controls at 16:9 and 4:3, confirm controls remain readable, and confirm all four slots remain open for joining until the round starts.
 
 - Join Player 1 with keyboard/mouse.
 - Join additional players with controllers when device access is available.

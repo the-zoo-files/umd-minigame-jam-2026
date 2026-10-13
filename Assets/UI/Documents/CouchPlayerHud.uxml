@@ -29,18 +29,13 @@
             <ui:VisualElement class="connection-content">
                 <ui:Label text="LOCAL MULTIPLAYER" class="connection-eyebrow"/>
                 <ui:Label text="Players" class="connection-title"/>
-                <ui:VisualElement class="player-count-selector">
-                    <ui:Button name="previousPlayerCount" text="‹" tooltip="Fewer players" focusable="false" class="count-arrow"/>
-                    <ui:Label name="playerCount" text="2" class="player-count"/>
-                    <ui:Button name="nextPlayerCount" text="›" tooltip="More players" focusable="false" class="count-arrow"/>
-                </ui:VisualElement>
-                <ui:Label text="1–4 players · One screen" class="connection-subtitle"/>
+                <ui:Label text="Join to play · Empty slots become CPUs on start" class="connection-subtitle"/>
                 <ui:VisualElement class="connection-cards">
                     <ui:VisualElement name="connectionPlayer1" class="connection-card slot-one is-selected">
                         <ui:Label text="PLAYER 1" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
-                        <ui:Label name="connectionDevice1" text="Waiting for player" class="slot-device"/>
-                        <ui:Label name="connectionState1" text="Not connected" class="slot-state"/>
+                        <ui:Label name="connectionDevice1" text="Join or play with CPU" class="slot-device"/>
+                        <ui:Label name="connectionState1" text="CPU on start" class="slot-state"/>
                         <ui:Button name="addCpu1" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty1" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:VisualElement name="colorSelector1" class="color-selector is-hidden">
@@ -54,8 +49,8 @@
                     <ui:VisualElement name="connectionPlayer2" class="connection-card slot-two is-selected">
                         <ui:Label text="PLAYER 2" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
-                        <ui:Label name="connectionDevice2" text="Waiting for player" class="slot-device"/>
-                        <ui:Label name="connectionState2" text="Not connected" class="slot-state"/>
+                        <ui:Label name="connectionDevice2" text="Join or play with CPU" class="slot-device"/>
+                        <ui:Label name="connectionState2" text="CPU on start" class="slot-state"/>
                         <ui:Button name="addCpu2" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty2" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:VisualElement name="colorSelector2" class="color-selector is-hidden">
@@ -66,11 +61,11 @@
                         <ui:VisualElement name="characterSelector2" class="character-selector is-hidden"><ui:Button name="previousCharacter2" text="‹" tooltip="Previous character" class="character-arrow"/><ui:Label name="playerCharacter2" text="Criminal" class="character-name"/><ui:Button name="nextCharacter2" text="›" tooltip="Next character" class="character-arrow"/></ui:VisualElement>
                         <ui:Button name="leavePlayer2" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three">
+                    <ui:VisualElement name="connectionPlayer3" class="connection-card slot-three is-selected">
                         <ui:Label text="PLAYER 3" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
-                        <ui:Label name="connectionDevice3" text="Not selected" class="slot-device"/>
-                        <ui:Label name="connectionState3" text="Open slot" class="slot-state"/>
+                        <ui:Label name="connectionDevice3" text="Join or play with CPU" class="slot-device"/>
+                        <ui:Label name="connectionState3" text="CPU on start" class="slot-state"/>
                         <ui:Button name="addCpu3" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty3" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:VisualElement name="colorSelector3" class="color-selector is-hidden">
@@ -81,11 +76,11 @@
                         <ui:VisualElement name="characterSelector3" class="character-selector is-hidden"><ui:Button name="previousCharacter3" text="‹" tooltip="Previous character" class="character-arrow"/><ui:Label name="playerCharacter3" text="Criminal" class="character-name"/><ui:Button name="nextCharacter3" text="›" tooltip="Next character" class="character-arrow"/></ui:VisualElement>
                         <ui:Button name="leavePlayer3" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="connectionPlayer4" class="connection-card slot-four">
+                    <ui:VisualElement name="connectionPlayer4" class="connection-card slot-four is-selected">
                         <ui:Label text="PLAYER 4" class="slot-title"/>
                         <ui:VisualElement class="controller-icon"><ui:Label text="+" class="controller-dpad"/><ui:Label text="••" class="controller-buttons"/><ui:Label text="WASD" class="keyboard-keys"/><ui:Label text="CPU" class="cpu-icon"/></ui:VisualElement>
-                        <ui:Label name="connectionDevice4" text="Not selected" class="slot-device"/>
-                        <ui:Label name="connectionState4" text="Open slot" class="slot-state"/>
+                        <ui:Label name="connectionDevice4" text="Join or play with CPU" class="slot-device"/>
+                        <ui:Label name="connectionState4" text="CPU on start" class="slot-state"/>
                         <ui:Button name="addCpu4" text="Add CPU" class="slot-leave"/>
                         <ui:Button name="cpuDifficulty4" text="Pro" tooltip="Change CPU difficulty" class="slot-leave is-hidden"/>
                         <ui:VisualElement name="colorSelector4" class="color-selector is-hidden">
@@ -97,14 +92,14 @@
                         <ui:Button name="leavePlayer4" text="Leave" focusable="false" class="slot-leave is-hidden"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:Label name="connectionStatus" text="0 / 2 ready" class="connection-status"/>
+                <ui:Label name="connectionStatus" text="Ready to start · 4 CPUs will join" class="connection-status"/>
                 <ui:Button name="randomEvents" text="Random Events: Off" tooltip="Enable earthquakes, tornadoes, and lightning" class="random-events"/>
                 <ui:VisualElement name="eventOptions" class="event-options">
                     <ui:Button name="eventEarthquake" text="Earthquake: On" class="random-events event-option is-on"/>
                     <ui:Button name="eventTornadoes" text="Tornadoes: On" class="random-events event-option is-on"/>
                     <ui:Button name="eventLightning" text="Lightning: On" class="random-events event-option is-on"/>
                 </ui:VisualElement>
-                <ui:Button name="startGame" text="Start Game" focusable="false" enabled="false" class="start-game"/>
+                <ui:Button name="startGame" text="Start Game" focusable="false" class="start-game"/>
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="roundResults" class="round-results is-hidden">

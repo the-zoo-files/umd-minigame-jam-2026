@@ -42,13 +42,15 @@ namespace UmdJam.Editor
                 Require(lobby.IsLobbyOpen && !round.IsPlaying && Time.timeScale == 0, "Lobby pauses simulation");
                 Require(!root.Q("connectionMenu").ClassListContains("is-hidden"), "Menu visible");
                 Require(root.Q("gameplayHud").ClassListContains("is-hidden"), "HUD hidden");
-                Require(root.Q<Label>("playerCount").text == "4", "Default player count");
+                Require(root.Q("playerCount") == null && root.Q("previousPlayerCount") == null &&
+                    root.Q("nextPlayerCount") == null, "Player-count selection is removed");
+                Require(lobby.SelectedPlayerCount == 4 && CouchPlayerController.ActivePlayers.Count == 0,
+                    "Lobby starts with four empty slots");
                 Require(root.Q<Button>("startGame").text == "OK!", "Figma start wording");
                 Require(root.Q<Button>("randomEvents").text == "Random Events: Off" && !lobby.RandomEventsEnabled,
                     "Random event toggle defaults off");
-                Require(!lobby.TryStartGame(), "Cannot start empty lobby");
-                Require(!lobby.TrySetPlayerCount(0) && !lobby.TrySetPlayerCount(5), "Count bounds");
-                Require(lobby.TrySetPlayerCount(2), "Two-player selection");
+                Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
+                    "Empty selected slots can be filled with CPUs on start");
                 float initialTime = round.RemainingTime;
                 float deadline = Time.realtimeSinceStartup + 1;
                 while (Time.realtimeSinceStartup < deadline) yield return null;
@@ -64,6 +66,12 @@ namespace UmdJam.Editor
                 devices.Add(first);
                 devices.Add(second);
                 devices.Add(third);
+                InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.DpadLeft));
+                InputSystem.QueueStateEvent(second, new GamepadState().WithButton(GamepadButton.DpadRight));
+                yield return null;
+                yield return null;
+                Require(lobby.SelectedPlayerCount == 4 && CouchPlayerController.ActivePlayers.Count == 0,
+                    "Former count shortcuts do not change the empty four-slot lobby");
                 InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.South));
                 InputSystem.QueueStateEvent(second, new GamepadState().WithButton(GamepadButton.South));
                 yield return null;
@@ -79,8 +87,8 @@ namespace UmdJam.Editor
                 Require(root.Q("connectionPlayer1").ClassListContains("is-ready") &&
                     root.Q<Label>("cardPromptText1").text == "Cancel", "Ready card uses selected variant");
                 Require(!lobby.TryJoin(first), "Duplicate join rejected");
-                Require(!lobby.TryJoin(third), "Unselected slot cannot join");
-                Require(!lobby.TrySetPlayerCount(1), "Count cannot remove a joined slot");
+                Require(lobby.GetParticipant(2) == null && lobby.GetParticipant(3) == null,
+                    "Remaining slots stay empty until joining or starting");
                 InputSystem.QueueStateEvent(first, new GamepadState());
                 InputSystem.QueueStateEvent(second, new GamepadState());
                 InputSystem.RemoveDevice(second);
@@ -100,11 +108,10 @@ namespace UmdJam.Editor
                 Require(!lobby.TryStartGame(), "Pending leave blocks same-frame start");
                 yield return null;
                 yield return null;
-                Require(lobby.GetPlayer(0) == null && !lobby.CanStart, "Leave frees slot and blocks start");
+                Require(lobby.GetPlayer(0) == null && lobby.CanStart, "Leave frees slot for automatic CPU fill");
                 Require(lobby.TryJoin(first), "Join fills lowest vacant slot");
                 Require(lobby.GetPlayer(0).devices[0] == first, "Rejoined device ownership");
                 Require(lobby.TrySetPlayerReady(0, true), "Rejoined player confirms readiness");
-                Require(lobby.TrySetPlayerCount(4), "Four-player selection");
 
                 Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
                 Mouse mouse = InputSystem.AddDevice<Mouse>();
@@ -203,10 +210,31 @@ namespace UmdJam.Editor
                 Require(lobby.TryJoin(third) && lobby.TrySetPlayerReady(3, true) && lobby.CanStart,
                     "Human can rejoin and ready former CPU slot");
 
+                Require(lobby.TryLeave(1) && lobby.TryLeave(2) && lobby.TryLeave(3), "Prepare partial roster");
+                Require(!lobby.TryStartGame(), "Pending removals block automatic CPU fill");
+                yield return null;
+                yield return null;
+                Require(lobby.TryAddCpu(3, CpuDifficulty.Pro), "Preserve manually configured CPU");
+                CouchPlayerController human = lobby.GetParticipant(0);
+                CouchPlayerController configuredCpu = lobby.GetParticipant(3);
+                Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf, "Partial roster enables Start Game");
+
                 InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.Start));
                 yield return null;
                 yield return null;
                 Require(round.IsPlaying && !lobby.IsLobbyOpen && Time.timeScale == 1, "Start input begins round");
+                Require(lobby.GetParticipant(0) == human && lobby.GetPlayer(0).devices[0] == first,
+                    "Automatic fill preserves human and device ownership");
+                Require(lobby.GetParticipant(3) == configuredCpu && configuredCpu.Cpu.Difficulty == CpuDifficulty.Pro,
+                    "Automatic fill preserves configured CPU difficulty");
+                for (int slot = 1; slot <= 2; slot++)
+                {
+                    CouchPlayerController cpu = lobby.GetParticipant(slot);
+                    Require(cpu != null && cpu.IsCpu && cpu.Cpu.Difficulty == CpuDifficulty.Noob,
+                        "Empty slot starts with default CPU");
+                }
+                Require(CouchPlayerController.ActivePlayers.Count == 4 && PlayerInput.all.Count == 1,
+                    "Automatic fill completes selected roster without pairing CPU devices");
                 Require(root.Q("connectionMenu").ClassListContains("is-hidden"), "Start hides menu");
                 Require(!root.Q("gameplayHud").ClassListContains("is-hidden"), "Start shows HUD");
                 Require(!lobby.TryStartGame() && !lobby.TrySetPlayerCount(2) && !lobby.TryLeave(0), "Lobby mutations locked after start");

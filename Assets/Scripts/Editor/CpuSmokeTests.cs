@@ -131,6 +131,25 @@ namespace UmdJam.Editor
                 }
                 Require(allScored, "All four difficulties deliver and score");
                 round.EndRound();
+
+                EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+                yield return null;
+                yield return null;
+                lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
+                round = GameManager.Instance;
+                Require(CouchPlayerController.ActivePlayers.Count == 0 && lobby.SelectedPlayerCount == 4,
+                    "Replay restores four empty slots");
+                Require(lobby.TryStartGame(), "Empty lobby starts a CPU-only round");
+                Require(CouchPlayerController.ActivePlayers.Count == 4 && PlayerInput.all.Count == 0,
+                    "Automatic fill completes all four slots without pairing devices");
+                for (int slot = 0; slot < 4; slot++)
+                {
+                    Require(lobby.GetParticipant(slot).IsCpu && lobby.GetParticipant(slot).Cpu.Difficulty == CpuDifficulty.Noob,
+                        "Empty lobby fills with default CPUs");
+                }
+                Require(!lobby.TryStartGame() && CouchPlayerController.ActivePlayers.Count == 4,
+                    "Repeated start cannot add duplicate CPUs");
+                round.EndRound();
             }
             finally
             {

@@ -13,10 +13,7 @@ namespace UmdJam.UI
 
         private VisualElement menu;
         private VisualElement gameplayHud;
-        private Label countLabel;
         private Label statusLabel;
-        private Button previousButton;
-        private Button nextButton;
         private Button startButton;
         private Button randomEventsButton;
         private VisualElement eventOptions;
@@ -61,15 +58,12 @@ namespace UmdJam.UI
             VisualElement root = GetComponent<UIDocument>().rootVisualElement;
             menu = root.Q("connectionMenu");
             gameplayHud = root.Q("gameplayHud");
-            countLabel = root.Q<Label>("playerCount");
             statusLabel = root.Q<Label>("connectionStatus");
-            previousButton = root.Q<Button>("previousPlayerCount");
-            nextButton = root.Q<Button>("nextPlayerCount");
             startButton = root.Q<Button>("startGame");
             randomEventsButton = root.Q<Button>("randomEvents");
             eventOptions = root.Q("eventOptions");
-            if (multiplayer == null || menu == null || gameplayHud == null || countLabel == null ||
-                statusLabel == null || previousButton == null || nextButton == null || startButton == null ||
+            if (multiplayer == null || menu == null || gameplayHud == null ||
+                statusLabel == null || startButton == null ||
                 randomEventsButton == null || eventOptions == null)
             {
                 Debug.LogError("Connection menu requires its multiplayer manager and named UI elements.", this);
@@ -156,8 +150,6 @@ namespace UmdJam.UI
                 nextCharacterButtons[slot].clicked += nextCharacterCallbacks[slot];
             }
 
-            previousButton.clicked += PreviousCount;
-            nextButton.clicked += NextCount;
             startButton.clicked += StartGame;
             randomEventsButton.clicked += ToggleRandomEvents;
             multiplayer.LobbyChanged += Refresh;
@@ -172,16 +164,6 @@ namespace UmdJam.UI
             if (multiplayer != null)
             {
                 multiplayer.LobbyChanged -= Refresh;
-            }
-
-            if (previousButton != null)
-            {
-                previousButton.clicked -= PreviousCount;
-            }
-
-            if (nextButton != null)
-            {
-                nextButton.clicked -= NextCount;
             }
 
             if (startButton != null)
@@ -210,11 +192,6 @@ namespace UmdJam.UI
             }
         }
 
-        private void PreviousCount()
-        {
-            multiplayer.TrySetPlayerCount(multiplayer.SelectedPlayerCount - 1);
-        }
-
         private void CycleDifficulty(int slot)
         {
             CouchPlayerController player = multiplayer.GetParticipant(slot);
@@ -223,11 +200,6 @@ namespace UmdJam.UI
                 CpuDifficulty next = player.Cpu.Difficulty == CpuDifficulty.God ? CpuDifficulty.Noob : player.Cpu.Difficulty + 1;
                 multiplayer.TrySetCpuDifficulty(slot, next);
             }
-        }
-
-        private void NextCount()
-        {
-            multiplayer.TrySetPlayerCount(multiplayer.SelectedPlayerCount + 1);
         }
 
         private void StartGame()
@@ -268,9 +240,7 @@ namespace UmdJam.UI
 
             int selected = multiplayer.SelectedPlayerCount;
             int connected = 0;
-            countLabel.text = selected.ToString();
-            previousButton.SetEnabled(multiplayer.CanSelectPlayerCount(selected - 1));
-            nextButton.SetEnabled(multiplayer.CanSelectPlayerCount(selected + 1));
+            int empty = 0;
             startButton.SetEnabled(true);
             for (int slot = 0; slot < cards.Length; slot++)
             {
@@ -280,6 +250,7 @@ namespace UmdJam.UI
                 bool isConnected = CouchMultiplayerManager.IsReady(participant);
                 bool isReady = multiplayer.IsPlayerReady(participant);
                 bool isSelected = slot < selected;
+                if (isSelected && participant == null) empty++;
                 if (isReady) connected++;
                 cards[slot].EnableInClassList("is-selected", isSelected);
                 cards[slot].EnableInClassList("is-connected", isConnected);
@@ -291,11 +262,11 @@ namespace UmdJam.UI
                 cards[slot].EnableInClassList("is-keyboard", player != null && player.currentControlScheme == "Keyboard&Mouse");
                 UpdatePrompt(slot, participant, player, isReady);
                 deviceLabels[slot].text = isCpu ? "CPU" : player == null
-                    ? (isSelected ? "Waiting for player" : "Not selected")
+                    ? (isSelected ? "Join or play with CPU" : "Not selected")
                     : (player.currentControlScheme == "Keyboard&Mouse" ? "Keyboard / Mouse" : "Controller");
                 stateLabels[slot].text = isCpu ? "Ready" : isConnected ? "Connected"
                     : player != null ? "Reconnect device"
-                    : isSelected ? "Not connected" : "Open slot";
+                    : isSelected ? "CPU on start" : "Open slot";
                 leaveButtons[slot].EnableInClassList("is-hidden", participant == null);
                 leaveButtons[slot].text = isCpu ? "Remove" : "Leave";
                 cpuButtons[slot].EnableInClassList("is-hidden", participant != null || !isSelected);
@@ -320,7 +291,9 @@ namespace UmdJam.UI
             }
 
             statusLabel.text = multiplayer.StartFailure ??
-                (multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready");
+                (multiplayer.CanStart
+                    ? (empty > 0 ? $"Ready to start · {empty} CPU{(empty == 1 ? "" : "s")} will join" : "Ready to start")
+                    : $"{connected} / {selected} ready");
         }
 
         private void UpdatePrompt(int slot, CouchPlayerController participant, PlayerInput player, bool isReady)

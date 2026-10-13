@@ -311,9 +311,6 @@
             </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement class="lobby-hidden-controls">
-            <ui:Button name="previousPlayerCount"/>
-            <ui:Label name="playerCount"/>
-            <ui:Button name="nextPlayerCount"/>
             <ui:Label name="connectionStatus"/>
             <ui:Button name="randomEvents"/>
             <ui:VisualElement name="eventOptions">

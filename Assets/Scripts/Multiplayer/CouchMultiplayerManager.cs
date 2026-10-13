@@ -13,9 +13,9 @@ namespace UmdJam.Multiplayer
         public event Action LobbyChanged;
 
         [SerializeField] private GameManager gameManager;
-        [SerializeField, Range(1, MaximumPlayers)] private int selectedPlayerCount = MaximumPlayers;
         [SerializeField] private int[] defaultPlayerColors = { 0, 1, 5, 2 };
 
+        private int selectedPlayerCount = MaximumPlayers;
         private PlayerInputManager manager;
         private InputActionMap lobbyActions;
         private bool refreshPending;
@@ -63,7 +63,8 @@ namespace UmdJam.Multiplayer
 
                 for (int slot = 0; slot < selectedPlayerCount; slot++)
                 {
-                    if (!IsPlayerReady(GetParticipant(slot)))
+                    CouchPlayerController player = GetParticipant(slot);
+                    if (player == null ? manager.playerPrefab == null : !IsPlayerReady(player))
                     {
                         return false;
                     }
@@ -283,6 +284,18 @@ namespace UmdJam.Multiplayer
 
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {
+                if (GetParticipant(slot) == null && !TryAddCpu(slot))
+                {
+                    StartFailure = "Could not fill an empty slot with a CPU. Check the player prefab and try again.";
+                    retryStartAt = Time.unscaledTime + 1f;
+                    LobbyChanged?.Invoke();
+                    return false;
+                }
+            }
+            if (!CanStart) return false;
+
+            for (int slot = 0; slot < selectedPlayerCount; slot++)
+            {
                 CouchPlayerController player = GetParticipant(slot);
                 if (player.IsCpu && (!navigation.Build(gameManager.ArenaBounds, player.GetComponent<CharacterController>()) ||
                     !player.Cpu.CanNavigate()))
@@ -347,8 +360,6 @@ namespace UmdJam.Multiplayer
                     else TryLeave(player.playerIndex);
                 }
             });
-            AddButton("Previous", "<Keyboard>/leftArrow", "<Gamepad>/dpad/left", _ => TrySetPlayerCount(selectedPlayerCount - 1));
-            AddButton("Next", "<Keyboard>/rightArrow", "<Gamepad>/dpad/right", _ => TrySetPlayerCount(selectedPlayerCount + 1));
             AddButton("PreviousColor", "<Keyboard>/q", "<Gamepad>/leftShoulder", context => ChangeDeviceColor(context.control.device, -1));
             AddButton("NextColor", "<Keyboard>/e", "<Gamepad>/rightShoulder", context => ChangeDeviceColor(context.control.device, 1));
             AddButton("PreviousCharacter", "<Keyboard>/z", "<Gamepad>/dpad/down", context => ChangeDeviceCharacter(context.control.device, -1));
@@ -383,6 +394,12 @@ namespace UmdJam.Multiplayer
                 lobbyActions.Enable();
             }
 
+            RefreshLobby();
+        }
+
+        private void Start()
+        {
+            // Refresh after all scene components have completed Awake/OnEnable.
             RefreshLobby();
         }
 

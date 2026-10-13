@@ -2,14 +2,13 @@
 
 ## Controls and Joining
 
-The game starts at a four-card local lobby. All players share one screen; online play and split-screen are not implemented. Fill the slots with connected humans or CPUs, confirm each human with **Ready!**, then choose **OK!**. The round timer, player movement/pickup, and physics wait until the round starts. The scene defaults to four slots, while the manager's existing 1–4 player-count API remains available for alternate flows and tests.
+The game starts at a four-card local lobby. All players share one screen; online play and split-screen are not implemented. The lobby opens with four empty slots and no player-count selector. Join any human players, confirm each human with **Ready!**, then choose **OK!**. Remaining empty slots automatically receive Noob CPUs; existing participants retain their settings. The round timer, player movement/pickup, and physics wait until the round starts. The scene defaults to four slots, while the manager's existing 1–4 player-count API remains available for alternate flows and tests.
 
-- Left/Right arrows or gamepad D-pad: change the selected player count.
 - Enter or gamepad south button: join the lowest available slot, then confirm that player's ready state. The card prompt uses the matching keyboard, Nintendo, or Xbox-style input font; unknown controllers use the Xbox-style glyphs.
-- Space or gamepad Menu/Start: start when every selected human is explicitly ready and every selected CPU is initialized. The device issuing this command must already be paired to a player. The mouse can also activate **OK!**.
+- Space or gamepad Menu/Start: start when every joined human is explicitly ready and every existing CPU is initialized, filling empty slots with CPUs. The device issuing this command must already be paired to a player. The mouse can also activate **OK!**, including from an empty lobby for a CPU-only match.
 - Escape or gamepad east button: cancel ready first, then leave that device's slot on a second press. The ready card's **Cancel** action follows the same rule. A CPU's **Cancel** action removes it.
 - One keyboard/mouse player is supported; every additional player needs a gamepad.
-- The count cannot shrink past an occupied slot. Disconnecting a required device blocks starting until it reconnects or the player leaves. Joining and lobby changes lock when the round starts.
+- Disconnecting a required device blocks starting until it reconnects or the player leaves. Joining and lobby changes lock when the round starts.
 
 Lobby actions are owned by `CouchMultiplayerManager` and use the new Input System. They are separate from paired gameplay actions, allowing unpaired devices to join without driving an existing player. `SelectedPlayerCount` is authoritative in that manager; device connectivity and explicit player confirmation are tracked separately, and reconnecting requires a fresh ready confirmation.
 

@@ -65,7 +65,7 @@ Owns world interactions and physics objects.
 Owns local player joining and per-player behavior.
 
 - `CouchMultiplayerManager` configures `PlayerInputManager` and places joined players.
-- It also owns the selected lobby count, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
+- It also owns the four-slot lobby, explicit join/leave/start inputs, and readiness derived from paired devices. It references the scene's `GameManager` directly.
 - `CouchPlayerController` reads player-scoped actions, owns the smoothed human movement command, moves and rotates the avatar, instantiates the selected catalog skin, drives the shared animator, manages flask contact/pickup/throw, owns the player's score, and publishes roster and score events.
 - Its `ActivePlayers` roster includes both humans and CPUs and is the authoritative participant list. `PlayerInput` is only the human device adapter; lobby occupancy/readiness comes from participants, not the Input System's human-only list.
 - `CpuPlayerController` supplies movement and attack decisions to the same controller used by humans. Its four serialized `CpuSettings` profiles are authored on a disabled component in `Player.prefab`; the lobby enables it only for CPUs. The driver owns nearby flask observations, stable preference errors, target commitment, and smoothed analog commands. `CpuNavigation` registers compatible prebaked navigation before CPU rounds, with runtime baking as a fallback. `CpuNavigationBaker` regenerates and validates the static arena bake before builds using the same capsule configuration and geometry exclusions. Registrations and owned fallback data are released on teardown; shared baked assets are preserved. Bots still move with `CharacterController`, not a second movement system.
@@ -137,7 +137,7 @@ The three child names are runtime contracts because the controller finds the dir
 
 CPU slots instantiate the existing player prefab under an inactive staging parent. The manager disables `PlayerInput`, initializes identity and the CPU driver, and only then activates the avatar. This avoids device pairing or temporary human roster entries. CPU difficulty and removal are lobby-only operations; pending destruction blocks starting. `GetParticipant` covers both participant types; `GetPlayer` returns a human's `PlayerInput` or null for a CPU/empty slot.
 
-1. `CouchMultiplayerManager.Awake` configures manual `PlayerInputManager` joining. Lobby join actions explicitly assign a device to an empty selected slot; joining is disabled when the selected slots are full or play starts.
+1. `CouchMultiplayerManager.Awake` configures manual `PlayerInputManager` joining. Lobby join actions explicitly assign a device to an empty slot; joining is disabled when all four slots are full or play starts.
 2. The Input System instantiates `Player.prefab` for a keyboard/mouse or gamepad device.
 3. `CouchPlayerController.Awake` caches required components. `PlayerInput.OnEnable` completes identity assignment, device pairing, and action cloning.
 4. `CouchMultiplayerManager.OnPlayerJoined` calls the controller's idempotent `InitializePlayer`, which caches the paired actions, assigns spawn/name/color, instantiates the default selected character, and publishes `PlayerJoined`. `Start` provides the same initialization for standalone players. Player numbering is cached for safe teardown notifications.
