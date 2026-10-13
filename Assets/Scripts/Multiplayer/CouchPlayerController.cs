@@ -281,6 +281,7 @@ namespace UmdJam.Multiplayer
             Transform directionGizmo = transform.Find("DirectionGizmo");
             if (directionGizmo != null && directionGizmo.TryGetComponent(out Renderer gizmoRenderer))
             {
+                gizmoRenderer.enabled = false;
                 directionMaterial = gizmoRenderer.material;
             }
             ApplyColor();
