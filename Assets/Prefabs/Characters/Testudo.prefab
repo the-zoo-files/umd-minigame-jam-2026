@@ -64,6 +64,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Testudo
       objectReference: {fileID: 0}
+    - target: {fileID: 2744664100756145187, guid: fd88dcd6c2e25ca4e895ab2ea1bc52bf, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1b51b9b5a22431b498643825ba853a18, type: 2}
+    - target: {fileID: 2744664100756145187, guid: fd88dcd6c2e25ca4e895ab2ea1bc52bf, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c9411308d5756bc4483c41989c346c46, type: 2}
+    - target: {fileID: 2744664100756145187, guid: fd88dcd6c2e25ca4e895ab2ea1bc52bf, type: 3}
+      propertyPath: 'm_Materials.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 49ff984e7c05eac43a8708537043d3ed, type: 2}
     - target: {fileID: 5866666021909216657, guid: fd88dcd6c2e25ca4e895ab2ea1bc52bf, type: 3}
       propertyPath: m_Controller
       value: 
