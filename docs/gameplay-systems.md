@@ -135,7 +135,7 @@ The shooter's `flasks` array contains `Flask` definitions. A definition selects 
 
 The shuffled bag contains each quadrant once. It is shuffled and consumed before being refilled, so every four machine launches serve each quadrant exactly once in random order.
 
-Landing coordinates use both X and Z magnitudes in `quadrantLandingRange` (currently `4.5–8`). This keeps targets away from the center machine. The launch apex is currently `4.5` units above the launch point.
+Landing coordinates use both X and Z magnitudes in `quadrantLandingRange` (currently `2–2.5`). First landings stay before the goals' inward-facing collection bounds, which begin around 3 units on each axis. Later bounces use normal physics. The main scene launch apex is `2.5` units above the launch point.
 
 ## Ballistic Formula
 

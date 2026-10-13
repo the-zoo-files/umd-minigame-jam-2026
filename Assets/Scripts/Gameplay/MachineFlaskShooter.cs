@@ -18,7 +18,7 @@ namespace UmdJam.Gameplay
         [SerializeField, Min(0.05f)] private float finalSecondsLaunchInterval = 0.25f;
         [SerializeField, Min(0f)] private float finalSecondsRampDuration = 10f;
         [SerializeField] private float launchApexHeight = 4.5f;
-        [SerializeField] private Vector2 quadrantLandingRange = new(4.5f, 8f);
+        [SerializeField] private Vector2 quadrantLandingRange = new(2f, 2.5f);
         [SerializeField] private float landingHeight = 0.35f;
         [SerializeField] private float spinSpeed = 12f;
         [SerializeField] private int maximumActiveFlasks = 12;

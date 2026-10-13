@@ -4355,7 +4355,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.CouchMultiplayerManager
   gameManager: {fileID: 247665704}
-  selectedPlayerCount: 4
   defaultPlayerColors: 00000000010000000500000002000000i
 --- !u!114 &788590085
 MonoBehaviour:
@@ -7596,7 +7595,7 @@ MonoBehaviour:
   finalSecondsLaunchInterval: 0.25
   finalSecondsRampDuration: 10
   launchApexHeight: 2.5
-  quadrantLandingRange: {x: 4.5, y: 8}
+  quadrantLandingRange: {x: 2, y: 2.5}
   landingHeight: 0.35
   spinSpeed: 12
   maximumActiveFlasks: 20
