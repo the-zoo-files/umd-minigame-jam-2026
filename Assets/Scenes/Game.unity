@@ -548,6 +548,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
   m_PrefabInstance: {fileID: 90773924}
   m_PrefabAsset: {fileID: 0}
+--- !u!23 &90773926 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4791300549530949414, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
+  m_PrefabInstance: {fileID: 90773924}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &97306941
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -674,6 +679,11 @@ PrefabInstance:
 --- !u!4 &97306942 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
+  m_PrefabInstance: {fileID: 97306941}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &97306943 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4791300549530949414, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
   m_PrefabInstance: {fileID: 97306941}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &103869274
@@ -3264,6 +3274,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.PlayerFlaskCollector
   playerNumber: 4
   directThrowPadding: 2.5
+  indicatorRenderer: {fileID: 1034501859}
+  indicatorMaterialIndex: 0
 --- !u!65 &1034501858
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3285,6 +3297,11 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 5.4129, y: 4.0315433, z: 5.7835665}
   m_Center: {x: -0.00000023841858, y: 2.0354135, z: -0.8594022}
+--- !u!23 &1034501859 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4791300549530949414, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
+  m_PrefabInstance: {fileID: 1034501855}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1080134557
 GameObject:
   m_ObjectHideFlags: 1
@@ -4130,6 +4147,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.PlayerFlaskCollector
   playerNumber: 3
   directThrowPadding: 2.5
+  indicatorRenderer: {fileID: 97306943}
+  indicatorMaterialIndex: 0
 --- !u!65 &1592764271
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4654,6 +4673,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.PlayerFlaskCollector
   playerNumber: 1
   directThrowPadding: 2.5
+  indicatorRenderer: {fileID: 1710089759}
+  indicatorMaterialIndex: 0
 --- !u!65 &1710089758
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4675,6 +4696,11 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 5.4129024, y: 4.0315433, z: 5.7835684}
   m_Center: {x: 0.00000023841858, y: 2.0354135, z: -0.8594029}
+--- !u!23 &1710089759 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -4791300549530949414, guid: 2ffb1216bd540914ea3a9ed1b8cd3fb6, type: 3}
+  m_PrefabInstance: {fileID: 1710089755}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1792981973
 GameObject:
   m_ObjectHideFlags: 0
@@ -5097,6 +5123,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.PlayerFlaskCollector
   playerNumber: 2
   directThrowPadding: 2.5
+  indicatorRenderer: {fileID: 90773926}
+  indicatorMaterialIndex: 0
 --- !u!65 &1953779146
 BoxCollider:
   m_ObjectHideFlags: 0
