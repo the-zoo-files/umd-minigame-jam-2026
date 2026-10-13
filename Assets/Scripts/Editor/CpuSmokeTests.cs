@@ -69,7 +69,7 @@ namespace UmdJam.Editor
                 CheckNavigation(map, lobby.GetParticipant(1));
                 Require(!lobby.TrySetPlayerColor(0, 17) && !lobby.TryCyclePlayerColor(1, 1), "Colors lock after start");
                 Require(!lobby.TryAddCpu(0) && !lobby.TrySetCpuDifficulty(1, CpuDifficulty.God), "CPU changes lock during round");
-                Require(root.Q<Label>("player4Name").text.StartsWith("CPU 4"), "HUD identifies CPU");
+                Require(root.Q("player4Hud").tooltip.StartsWith("CPU 4"), "HUD identifies CPU");
 
                 // Isolate one bot's route across a quadrant divider and back to its own collector.
                 lobby.GetParticipant(1).Cpu.enabled = false;

@@ -41,7 +41,7 @@ namespace UmdJam.Editor
                 Require(!timer.ClassListContains("is-urgent") && root.Q("countdownWarning").ClassListContains("is-hidden"),
                     "Lobby has no countdown warning");
                 device = InputSystem.AddDevice<Gamepad>();
-                Require(lobby.TryJoin(device) && lobby.TrySetPlayerReady(0, true) && lobby.TryAddCpu(1) &&
+                Require(lobby.TrySetPlayerCount(2) && lobby.TryJoin(device) && lobby.TrySetPlayerReady(0, true) && lobby.TryAddCpu(1) &&
                     lobby.TryStartGame(), "Mixed feedback fixture starts");
                 lobby.GetParticipant(0).enabled = false;
                 lobby.GetParticipant(1).Cpu.enabled = false;

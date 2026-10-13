@@ -318,7 +318,7 @@ namespace UmdJam.Editor
                 VisualElement root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
                 for (int i = 1; i <= 4; i++)
                 {
-                    Require(root.Q<Label>($"player{i}Name").ClassListContains("is-connected"), "Connected HUD");
+                    Require(root.Q($"player{i}Hud").ClassListContains("is-connected"), "Connected HUD");
                 }
 
                 IEnumerator stunThrows = CheckStunThrows(players, flaskPrefab);
@@ -409,7 +409,7 @@ namespace UmdJam.Editor
                 yield return null;
                 Require(bodyMaterial == null && markerMaterial == null, "Owned materials destroyed");
                 Require(CouchPlayerController.ActivePlayers.Count == 3, "Player removed from roster");
-                Require(!root.Q<Label>("player1Name").ClassListContains("is-connected"), "Disconnected HUD");
+                Require(!root.Q("player1Hud").ClassListContains("is-connected"), "Disconnected HUD");
                 PlayerInput replacement = PlayerInput.Instantiate(playerPrefab, 0, controlScheme: "Gamepad", pairWithDevice: devices[0]);
                 Require(replacement.GetComponent<CouchPlayerController>().PlayerNumber == 1, "Rejoin identity");
                 Require(CouchPlayerController.ActivePlayers.Count == 4, "Rejoin roster");

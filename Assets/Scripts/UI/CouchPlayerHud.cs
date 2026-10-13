@@ -8,7 +8,15 @@ namespace UmdJam.UI
     [RequireComponent(typeof(UIDocument))]
     public sealed class CouchPlayerHud : MonoBehaviour
     {
-        private readonly Dictionary<int, Label> labels = new();
+        private sealed class PlayerDisplay
+        {
+            public VisualElement Root;
+            public VisualElement PortraitFrame;
+            public Label Name;
+            public Label Score;
+        }
+
+        private readonly Dictionary<int, PlayerDisplay> displays = new();
         private Label timerLabel;
         private Label eventLabel;
         private int displayedSeconds = -1;
@@ -26,7 +34,7 @@ namespace UmdJam.UI
             if (!TryGetComponent(out GameAudioFeedback audio)) gameObject.AddComponent<GameAudioFeedback>();
             if (!TryGetComponent(out GameplayFeedback feedback)) gameObject.AddComponent<GameplayFeedback>();
             root.EnableInClassList("results-active", resultsPresentationActive);
-            labels.Clear();
+            displays.Clear();
             displayedSeconds = -1;
             timerLabel = root.Q<Label>("roundTimer");
             eventLabel = root.Q<Label>("randomEventStatus");
@@ -40,19 +48,24 @@ namespace UmdJam.UI
             for (int playerNumber = 1; playerNumber <= 4; playerNumber++)
             {
                 Label label = root.Q<Label>($"player{playerNumber}Name");
-                if (label == null)
+                VisualElement card = root.Q($"player{playerNumber}Hud");
+                VisualElement portrait = root.Q($"player{playerNumber}Portrait");
+                VisualElement portraitFrame = card?.Q(className: "portrait-frame");
+                Label score = root.Q<Label>($"player{playerNumber}Score");
+                if (label == null || card == null || portrait == null || portraitFrame == null || score == null)
                 {
                     Debug.LogError($"Missing HUD label for Player {playerNumber}.", this);
                     continue;
                 }
 
-                labels[playerNumber] = label;
+                displays[playerNumber] = new PlayerDisplay { Root = card, PortraitFrame = portraitFrame, Name = label, Score = score };
                 SetConnected(playerNumber, false);
             }
 
             CouchPlayerController.PlayerJoined += OnPlayerJoined;
             CouchPlayerController.PlayerLeft += OnPlayerLeft;
             CouchPlayerController.ScoreChanged += OnScoreChanged;
+            CouchPlayerController.CharacterChanged += OnScoreChanged;
             CouchPlayerController.ColorChanged += OnScoreChanged;
             GameManager.RoundTimeChanged += OnRoundTimeChanged;
 
@@ -72,6 +85,7 @@ namespace UmdJam.UI
             CouchPlayerController.PlayerJoined -= OnPlayerJoined;
             CouchPlayerController.PlayerLeft -= OnPlayerLeft;
             CouchPlayerController.ScoreChanged -= OnScoreChanged;
+            CouchPlayerController.CharacterChanged -= OnScoreChanged;
             CouchPlayerController.ColorChanged -= OnScoreChanged;
             GameManager.RoundTimeChanged -= OnRoundTimeChanged;
             RandomEventDirector.EventChanged -= OnRandomEventChanged;
@@ -120,28 +134,33 @@ namespace UmdJam.UI
 
         private void SetPlayer(CouchPlayerController player, bool isConnected)
         {
-            if (!labels.TryGetValue(player.PlayerNumber, out Label label))
+            if (!displays.TryGetValue(player.PlayerNumber, out PlayerDisplay display))
             {
                 return;
             }
 
-            label.text = $"{player.DisplayName}\nScore: {player.Score}";
-            label.style.borderTopColor = player.PlayerColor;
-            label.style.borderRightColor = player.PlayerColor;
-            label.style.borderBottomColor = player.PlayerColor;
-            label.style.borderLeftColor = player.PlayerColor;
-            label.EnableInClassList("is-connected", isConnected);
+            display.Name.text = player.CharacterName;
+            display.Score.text = player.Score.ToString();
+            display.Score.style.fontSize = Mathf.Min(46f, 190f / display.Score.text.Length);
+            display.Root.tooltip = player.DisplayName;
+            display.PortraitFrame.style.borderTopColor = player.PlayerColor;
+            display.PortraitFrame.style.borderRightColor = player.PlayerColor;
+            display.PortraitFrame.style.borderBottomColor = player.PlayerColor;
+            display.PortraitFrame.style.borderLeftColor = player.PlayerColor;
+            display.Root.EnableInClassList("is-connected", isConnected);
         }
 
         private void SetConnected(int playerNumber, bool isConnected)
         {
-            if (!labels.TryGetValue(playerNumber, out Label label))
+            if (!displays.TryGetValue(playerNumber, out PlayerDisplay display))
             {
                 return;
             }
 
-            label.text = $"Player {playerNumber}";
-            label.EnableInClassList("is-connected", isConnected);
+            display.Name.text = $"Player {playerNumber}";
+            display.Score.text = "0";
+            display.Root.tooltip = string.Empty;
+            display.Root.EnableInClassList("is-connected", isConnected);
         }
     }
 }
