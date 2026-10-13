@@ -7,6 +7,11 @@ namespace UmdJam.Gameplay
 {
     public sealed class MachineFlaskShooter : MonoBehaviour
     {
+        public static event System.Action<MachineFlaskShooter> FlaskLaunched;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEvents() => FlaskLaunched = null;
+
         [SerializeField] private Flask[] flasks;
         [SerializeField, FormerlySerializedAs("launchPoint")] private Transform spawnPoint;
         [SerializeField] private float launchInterval = 2.5f;
@@ -31,6 +36,11 @@ namespace UmdJam.Gameplay
         private readonly Dictionary<Flask, Stack<PickupFlask>> pooledFlasks = new();
         private readonly List<int> quadrantBag = new();
         private float launchTimer = 0.75f;
+
+        private void Awake()
+        {
+            if (!TryGetComponent(out MachineAmbience ambience)) gameObject.AddComponent<MachineAmbience>();
+        }
 
         private void OnDestroy()
         {
@@ -126,6 +136,7 @@ namespace UmdJam.Gameplay
             body.linearVelocity = velocity;
             body.angularVelocity = Random.onUnitSphere * spinSpeed;
             spawnedFlasks.Add(flask);
+            FlaskLaunched?.Invoke(this);
         }
 
         internal void ReturnToPool(PickupFlask flask, Flask definition)

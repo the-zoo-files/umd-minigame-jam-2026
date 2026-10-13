@@ -95,6 +95,13 @@ namespace UmdJam.Editor
             EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
         }
 
+        [MenuItem("Tools/UmdJam/Run Machine Ambience Smoke Tests")]
+        public static void RunMachineAmbience()
+        {
+            SessionState.SetBool("UmdJam.SmokeTests.Ambience", true);
+            EditorApplication.delayCall += () => EditorApplication.delayCall += BeginRun;
+        }
+
         [MenuItem("Tools/UmdJam/Run Game Audio Smoke Tests")]
         public static void RunGameAudio()
         {
@@ -167,7 +174,10 @@ namespace UmdJam.Editor
                 SessionState.SetBool("UmdJam.SmokeTests.Movement", false);
                 bool audio = SessionState.GetBool("UmdJam.SmokeTests.Audio", false);
                 SessionState.SetBool("UmdJam.SmokeTests.Audio", false);
+                bool ambience = SessionState.GetBool("UmdJam.SmokeTests.Ambience", false);
+                SessionState.SetBool("UmdJam.SmokeTests.Ambience", false);
                 exercise = cpuStuns ? CpuBehaviorChecks.ExerciseStuns() :
+                    ambience ? MachineAmbienceSmokeTests.Exercise() :
                     audio ? GameAudioSmokeTests.Exercise() :
                     movement ? PlayerMovementSmokeTests.Exercise() :
                     feedback ? GameplayFeedbackSmokeTests.Exercise() :

@@ -9,6 +9,11 @@ namespace UmdJam.UI
 {
     public sealed class RoundResultsDirector : MonoBehaviour
     {
+        public static event System.Action WinnersRevealed;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetEvents() => WinnersRevealed = null;
+
         [SerializeField] private GameManager gameManager;
         [SerializeField] private Camera arenaCamera;
         [SerializeField] private Transform resultsCameraTarget;
@@ -176,6 +181,7 @@ namespace UmdJam.UI
         {
             IsComplete = true;
             view.ShowWinners(results);
+            if (results.WinnerPlayerNumbers.Count > 0) WinnersRevealed?.Invoke();
             yield return new WaitForSecondsRealtime(winnerHold);
             float releasedFor = 0f;
             while (releasedFor < 0.2f)

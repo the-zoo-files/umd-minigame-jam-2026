@@ -56,8 +56,10 @@ Unity-generated `.meta` files are required companions to their assets and must r
 Owns world interactions and physics objects.
 
 - `Flask` is the designer-facing definition for a flask prefab, point value, and physics tuning.
-- `MachineFlaskShooter` schedules and launches flask instances from configured `Flask` definitions.
+- `MachineFlaskShooter` schedules and launches flask instances from configured `Flask` definitions. `MachineFlaskShooter.FlaskLaunched` publishes only after launch physics and tracking are committed. Audio subscribes to this event rather than polling the spawn timer, so blocked launches remain silent.
+- It installs `MachineAmbience` once on the central emitter. Ambience owns two spatial audio voices and its independent excerpt/pitch/gain scheduling; it never consumes gameplay randomness.
 - `PickupFlask` owns free-flight, collision response, held state, and the transition between physics and attachment modes.
+- Its `PickedUp` event publishes only after successful physical attachment. `GameAudioFeedback` subscribes for the shared pickup cue, keeping sound playback out of physics and player ownership code.
 - `Ballistics` calculates and validates launch velocities for both machine and player throws.
 
 ### `UmdJam.Multiplayer`
@@ -78,7 +80,7 @@ Owns local player joining and per-player behavior.
 
 Owns runtime UI Toolkit presentation.
 
-- `CouchPlayerHud` maps player events to named UXML labels and USS state classes. It installs `GameplayFeedback` and `GameAudioFeedback` once on the same document if no authored instances exist. Feedback owns countdown pulses/ticks, live zone-risk markers/totals, and bounded collection popup/pulse presentation. Audio feedback owns shared button, ready, and point cues from `Sounds/Resources/Audio`, caching three bounded voices and binding lobby/UI/reward events. `PlayerFlaskCollector.FlaskCollected` publishes actual successful rewards after scoring; feedback never changes scores.
+- `CouchPlayerHud` maps player events to named UXML labels and USS state classes. It installs `GameplayFeedback` and `GameAudioFeedback` once on the same document if no authored instances exist. Feedback owns countdown pulses/ticks, live zone-risk markers/totals, and bounded collection popup/pulse presentation. Audio feedback owns shared button, ready, point, pickup, connection, machine launch, round end, and winner reveal cues from `Sounds/Resources/Audio`, caching eight bounded voices and binding lobby/UI/gameplay events. `PlayerFlaskCollector.FlaskCollected` publishes actual successful rewards after scoring; feedback never changes scores.
 - `CouchConnectionMenu` presents lobby state in the same `UIDocument`, references `CouchMultiplayerManager`, and never keeps a separate roster or readiness state. Its appearance lives in `CouchConnectionMenu.uss`.
 - `RoundResultsDirector` owns the unscaled camera/count/deduction/winner sequence and scene replay. `RoundResultsView` projects snapshot positions into UI Toolkit, draws zone masks and markers, and presents standings. Both use the existing HUD document. `RoundResults/ResultsCameraTarget` is authored by `RoundResultsSetup` through Editor APIs.
 

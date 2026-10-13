@@ -20,7 +20,7 @@ def true_peak(samples):
     return float(20 * np.log10(max(peak, 1e-12)))
 
 
-def prepare(path):
+def prepare(path, first_section=False):
     samples, rate = soundfile.read(path, always_2d=True, dtype="float64")
     if samples.shape[1] > 2 or not np.isfinite(samples).all():
         raise ValueError(f"Invalid audio channels/samples: {path}")
@@ -29,6 +29,10 @@ def prepare(path):
         raise ValueError(f"Silent cue: {path}")
     threshold = max(1e-5, peak * 10 ** (-40 / 20))
     audible = np.flatnonzero(np.max(np.abs(samples), axis=1) >= threshold)
+    if first_section:
+        breaks = np.flatnonzero(np.diff(audible) > rate * 0.08)
+        if len(breaks):
+            audible = audible[:int(breaks[0]) + 1]
     start = max(0, int(audible[0]) - int(rate * 0.001))
     end = min(len(samples), int(audible[-1]) + int(rate * 0.02) + 1)
     trimmed = samples[start:end].copy()
@@ -49,7 +53,11 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("Assets/Sounds/Resources/Audio"))
     parser.add_argument("--report", type=Path, default=Path(".utmp/game-audio-levels.json"))
     args = parser.parse_args()
-    cues = {name: prepare(args.source / f"{name}.mp3") for name in ("ButtonClick", "Point", "Ready")}
+    names = ["ButtonClick", "Point", "Ready"]
+    names.extend(name for name in ("Connection", "PotionLaunch", "End", "Winner") if (args.source / f"{name}.mp3").exists())
+    cues = {name: prepare(args.source / f"{name}.mp3") for name in names}
+    if (args.source / "BottleOpen.mp3").exists():
+        cues["Pickup"] = prepare(args.source / "BottleOpen.mp3", first_section=True)
     # Reduce the common target if any cue needs more headroom; never distort transients with a limiter.
     target = min(-20.0, *(value[2] - 3.0 - value[3] for value in cues.values()))
     report = {"target_lufs": target, "true_peak_ceiling_db": -3.0, "clips": {}}
@@ -67,6 +75,16 @@ def main():
         report["clips"][name] = {"removed_leading_ms": removed_ms, "onset_ms": onset_ms,
                                 "lufs": actual_lufs, "true_peak_db": actual_peak,
                                 "duration_seconds": len(output) / rate}
+    ambience_source = args.source / "Bubbling.mp3"
+    if ambience_source.exists():
+        samples, rate, _, _, removed_ms = prepare(ambience_source)
+        samples = samples.mean(axis=1, keepdims=True)
+        measured = loudness(samples, rate)
+        ambience_target = min(-27.0, measured - 3.0 - true_peak(samples))
+        soundfile.write(args.output / "Bubbling.wav", samples * 10 ** ((ambience_target - measured) / 20),
+                        rate, subtype="PCM_16")
+        report["ambience"] = {"lufs": ambience_target, "channels": 1, "removed_leading_ms": removed_ms,
+                              "duration_seconds": len(samples) / rate}
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UmdJam.Gameplay;
 using UmdJam.Multiplayer;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -16,6 +17,13 @@ namespace UmdJam.UI
         private AudioSource clickSource;
         private AudioSource readySource;
         private AudioSource pointSource;
+        private AudioSource pickupSource;
+        private AudioSource connectionSource;
+        private AudioSource launchSource;
+        private AudioSource endSource;
+        private AudioSource winnerSource;
+        private readonly CouchPlayerController[] connectedPlayers = new CouchPlayerController[CouchMultiplayerManager.MaximumPlayers];
+        private readonly bool[] connected = new bool[CouchMultiplayerManager.MaximumPlayers];
         private bool wasReady;
 
         private void Awake()
@@ -23,6 +31,11 @@ namespace UmdJam.UI
             clickSource = CreateSource("Audio/ButtonClick");
             readySource = CreateSource("Audio/Ready");
             pointSource = CreateSource("Audio/Point");
+            pickupSource = CreateSource("Audio/Pickup");
+            connectionSource = CreateSource("Audio/Connection");
+            launchSource = CreateSource("Audio/PotionLaunch");
+            endSource = CreateSource("Audio/End");
+            winnerSource = CreateSource("Audio/Winner");
         }
 
         private void OnEnable()
@@ -31,8 +44,13 @@ namespace UmdJam.UI
             foreach (Button button in buttons) button.clicked += OnButtonClicked;
             lobby = FindAnyObjectByType<CouchMultiplayerManager>();
             wasReady = lobby != null && lobby.CanStart;
+            RefreshConnections(false);
             if (lobby != null) lobby.LobbyChanged += OnLobbyChanged;
             PlayerFlaskCollector.FlaskCollected += OnFlaskCollected;
+            PickupFlask.PickedUp += OnFlaskPickedUp;
+            MachineFlaskShooter.FlaskLaunched += OnFlaskLaunched;
+            GameManager.RoundEnded += OnRoundEnded;
+            RoundResultsDirector.WinnersRevealed += OnWinnersRevealed;
         }
 
         private void OnDisable()
@@ -41,9 +59,18 @@ namespace UmdJam.UI
             buttons.Clear();
             if (lobby != null) lobby.LobbyChanged -= OnLobbyChanged;
             PlayerFlaskCollector.FlaskCollected -= OnFlaskCollected;
+            PickupFlask.PickedUp -= OnFlaskPickedUp;
+            MachineFlaskShooter.FlaskLaunched -= OnFlaskLaunched;
+            GameManager.RoundEnded -= OnRoundEnded;
+            RoundResultsDirector.WinnersRevealed -= OnWinnersRevealed;
             if (clickSource != null) clickSource.Stop();
             if (readySource != null) readySource.Stop();
             if (pointSource != null) pointSource.Stop();
+            if (pickupSource != null) pickupSource.Stop();
+            if (connectionSource != null) connectionSource.Stop();
+            if (launchSource != null) launchSource.Stop();
+            if (endSource != null) endSource.Stop();
+            if (winnerSource != null) winnerSource.Stop();
         }
 
         private void OnDestroy()
@@ -51,15 +78,48 @@ namespace UmdJam.UI
             if (clickSource != null) Destroy(clickSource);
             if (readySource != null) Destroy(readySource);
             if (pointSource != null) Destroy(pointSource);
+            if (pickupSource != null) Destroy(pickupSource);
+            if (connectionSource != null) Destroy(connectionSource);
+            if (launchSource != null) Destroy(launchSource);
+            if (endSource != null) Destroy(endSource);
+            if (winnerSource != null) Destroy(winnerSource);
         }
 
         private void OnButtonClicked() => Play(clickSource);
 
+        private void OnRoundEnded() => Play(endSource);
+
+        private void OnWinnersRevealed() => Play(winnerSource);
+
+        private void OnFlaskPickedUp(PickupFlask flask)
+        {
+            if (flask != null && flask.IsHeld && GameManager.Instance != null && GameManager.Instance.IsPlaying)
+                Play(pickupSource);
+        }
+
         private void OnLobbyChanged()
         {
+            RefreshConnections(true);
             bool ready = lobby != null && lobby.CanStart;
-            if (ready && !wasReady) Play(readySource);
+            if (ready && !wasReady && CouchPlayerController.ActivePlayers.Count > 0) Play(readySource);
             wasReady = ready;
+        }
+
+        private void RefreshConnections(bool announce)
+        {
+            for (int slot = 0; slot < connected.Length; slot++)
+            {
+                CouchPlayerController player = lobby != null ? lobby.GetParticipant(slot) : null;
+                bool ready = player != null && !player.IsCpu && CouchMultiplayerManager.IsReady(player);
+                if (announce && ready && (!connected[slot] || connectedPlayers[slot] != player)) Play(connectionSource);
+                connected[slot] = ready;
+                connectedPlayers[slot] = player;
+            }
+        }
+
+        private void OnFlaskLaunched(MachineFlaskShooter machine)
+        {
+            if (machine != null && GameManager.Instance != null && GameManager.Instance.IsPlaying) Play(launchSource);
         }
 
         private void OnFlaskCollected(PlayerFlaskCollector collector, int points)

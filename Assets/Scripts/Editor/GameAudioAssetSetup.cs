@@ -8,7 +8,7 @@ namespace UmdJam.Editor
         [MenuItem("Tools/UmdJam/Configure Game Audio Imports")]
         public static void Apply()
         {
-            foreach (string name in new[] { "ButtonClick", "Ready", "Point" })
+            foreach (string name in new[] { "ButtonClick", "Ready", "Point", "Pickup", "Connection", "PotionLaunch", "End", "Winner", "Bubbling" })
             {
                 string path = $"Assets/Sounds/Resources/Audio/{name}.wav";
                 AudioImporter importer = AssetImporter.GetAtPath(path) as AudioImporter;

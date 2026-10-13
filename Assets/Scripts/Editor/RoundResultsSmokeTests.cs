@@ -39,6 +39,10 @@ namespace UmdJam.Editor
                 RoundResultsDirector director = Object.FindAnyObjectByType<RoundResultsDirector>();
                 Require(director != null, "Scene has a results director");
                 UIDocument document = Object.FindAnyObjectByType<UIDocument>();
+                GameAudioFeedback audio = document.GetComponent<GameAudioFeedback>();
+                AudioSource winner = (AudioSource)typeof(GameAudioFeedback).GetField("winnerSource",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(audio);
+                Require(winner != null && winner.clip != null && !winner.isPlaying, "Winner cue waits in lobby");
                 VisualElement root = document.rootVisualElement;
                 Camera camera = Camera.main;
                 Vector3 originalCamera = camera.transform.position;
@@ -94,6 +98,7 @@ namespace UmdJam.Editor
                 Require(lobby.GetParticipant(0).Score == 18 && lobby.GetParticipant(1).Score == -2,
                     "Authoritative scores finalized immediately");
                 Require(director.IsPresenting && root.ClassListContains("results-active"), "Results owns presentation");
+                Require(!winner.isPlaying, "End of gameplay does not reveal winner audio early");
                 foreach (Renderer fixture in GameObject.Find("CeilingLights").GetComponentsInChildren<Renderer>())
                     Require(fixture.forceRenderingOff, "Ceiling fixture geometry does not obscure the overhead arena");
                 Require(root.Q("gameplayHud").resolvedStyle.display == DisplayStyle.None, "Final HUD scores hidden");
@@ -117,6 +122,11 @@ namespace UmdJam.Editor
                     yield return null;
                 }
                 Require(director.IsComplete && moved, "Camera and complete reveal run while time is paused");
+                Require(winner.isPlaying && winner.volume == 0.5f, "Normal tie reveal plays the normalized winner cue");
+                audio.enabled = false;
+                Require(!winner.isPlaying, "Disable stops winner audio");
+                audio.enabled = true;
+                Require(!winner.isPlaying, "Audio re-enable does not repeat winner reveal");
                 Require(Vector3.Dot(camera.transform.forward, Vector3.down) > 0.999f, "Camera finishes overhead");
                 Require(counts.Contains("1 / 5 flasks") && counts.Contains("5 / 5 flasks"), "Each zone's count advances visibly");
                 Require(lobby.GetParticipant(0).transform.position == playerPosition &&
@@ -153,7 +163,10 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(director.IsComplete, "Gamepad submit reaches focused Skip count through UI Toolkit");
+                Require(winner.isPlaying, "Skipped count plays winner cue at reveal");
+                winner.Stop();
                 director.SkipToResults();
+                Require(!winner.isPlaying, "Repeated skip cannot replay winner cue");
                 deadline = Time.realtimeSinceStartup + 1.5f;
                 while (Time.realtimeSinceStartup < deadline) yield return null;
                 Require(director.IsComplete && !root.Q<Button>("playAgain").enabledSelf,

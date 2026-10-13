@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UmdJam.Gameplay;
 using UmdJam.Multiplayer;
+using UmdJam.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
@@ -33,6 +35,10 @@ namespace UmdJam.Editor
                 GameManager round = GameManager.Instance;
                 UIDocument document = Object.FindAnyObjectByType<UIDocument>();
                 VisualElement root = document.rootVisualElement;
+                GameAudioFeedback audio = document.GetComponent<GameAudioFeedback>();
+                AudioSource connection = (AudioSource)typeof(GameAudioFeedback).GetField("connectionSource",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(audio);
+                Require(connection != null && connection.clip != null && !connection.isPlaying, "Connection cue begins silent");
                 panel = document.panelSettings;
                 previousTarget = panel.targetTexture;
                 capture = new RenderTexture(1920, 1080, 0);
@@ -77,6 +83,12 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(1) != null, "Simultaneous controller joins");
+                Require(connection.isPlaying, "Human joins play connection audio");
+                connection.Stop();
+                Require(lobby.TryCyclePlayerColor(0, 1) && !connection.isPlaying, "Color changes do not replay connection audio");
+                audio.enabled = false;
+                audio.enabled = true;
+                Require(!connection.isPlaying, "Re-enable seeds connections without replay");
                 Require(root.Q<Label>("playerCharacter1").text == "Testudo" &&
                     !root.Q("characterSelector1").ClassListContains("is-hidden"), "Default character selector");
                 Require(!lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
@@ -95,14 +107,19 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(!lobby.CanStart, "Disconnected controller blocks start");
+                Require(!connection.isPlaying, "Disconnection does not announce a connection");
                 Require(root.Q<Label>("connectionState2").text == "Reconnect device", "Reconnect prompt");
                 Require(!lobby.TrySetPlayerColor(0, lobby.GetParticipant(1).ColorIndex), "Disconnected player keeps its color");
                 Require(!lobby.TryStartGame(), "Start rejects disconnected controller");
                 InputSystem.AddDevice(second);
                 yield return null;
                 yield return null;
+                Require(connection.isPlaying, "Human reconnect plays connection audio");
                 Require(!lobby.CanStart && lobby.TrySetPlayerReady(1, true), "Reconnection requires a fresh ready confirmation");
                 Require(lobby.CanStart, "Fresh confirmation restores readiness");
+                AudioSource readyAudio = (AudioSource)typeof(GameAudioFeedback).GetField("readySource",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(audio);
+                Require(connection.volume == readyAudio.volume, "Connection uses the shared normalized cue gain");
 
                 Require(lobby.TryLeave(0), "Leave slot");
                 Require(!lobby.TryStartGame(), "Pending leave blocks same-frame start");

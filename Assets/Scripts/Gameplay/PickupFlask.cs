@@ -9,6 +9,7 @@ namespace UmdJam.Gameplay
     public sealed class PickupFlask : MonoBehaviour
     {
         private static readonly List<PickupFlask> activeFlasks = new();
+        public static event Action<PickupFlask> PickedUp;
         public static IReadOnlyList<PickupFlask> ActiveFlasks => activeFlasks;
         [SerializeField] private Flask flask;
 
@@ -62,7 +63,11 @@ namespace UmdJam.Gameplay
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetRegistry() => activeFlasks.Clear();
+        private static void ResetRegistry()
+        {
+            activeFlasks.Clear();
+            PickedUp = null;
+        }
 
         private void OnEnable()
         {
@@ -219,6 +224,7 @@ namespace UmdJam.Gameplay
             // Preserve the flask's authored world scale while attaching it to the hand.
             transform.SetParent(holdPoint, true);
             transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+            PickedUp?.Invoke(this);
             return true;
         }
 
