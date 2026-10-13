@@ -27,12 +27,24 @@ namespace UmdJam.Multiplayer
             new("Coral", 236, 117, 120)
         };
 
-        private static readonly int[] DefaultColors = { 10, 0, 5, 11 };
+        private static int[] defaultColors = { 0, 1, 5, 2 };
 
         public static int Count => Entries.Length;
         public static bool IsValid(int index) => index >= 0 && index < Count;
         public static Entry Get(int index) => Entries[index];
-        public static int DefaultForSlot(int slot) => DefaultColors[slot];
+        public static int DefaultForSlot(int slot) => defaultColors[Mathf.Clamp(slot, 0, defaultColors.Length - 1)];
+
+        public static void ConfigureDefaults(int[] colors)
+        {
+            if (colors == null || colors.Length < CouchMultiplayerManager.MaximumPlayers) return;
+            int[] validated = new int[CouchMultiplayerManager.MaximumPlayers];
+            for (int i = 0; i < validated.Length; i++)
+            {
+                if (!IsValid(colors[i])) return;
+                validated[i] = colors[i];
+            }
+            defaultColors = validated;
+        }
 
         public readonly struct Entry
         {

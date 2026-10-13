@@ -1,0 +1,326 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/Styles/CouchConnectionMenu.uss?fileID=7433441132597879392&amp;guid=7b6296f5bce329344bf8554be994d811&amp;type=3#CouchConnectionMenu"/>
+    <ui:VisualElement name="connectionMenu" class="connection-menu">
+        <ui:VisualElement class="lobby-header">
+            <ui:VisualElement picking-mode="Ignore" class="lobby-title-stack">
+                <ui:Label text="Join and select a character." picking-mode="Ignore" class="lobby-title lobby-title-shadow" style="top: -4px; bottom: 5px; right: 0; left: 0;"/>
+                <ui:Label text="Join and select a character." picking-mode="Ignore" class="lobby-title lobby-title-stroke" style="-unity-text-outline-color: rgb(235, 86, 40);"/>
+                <ui:Label text="Join and select a character." picking-mode="Ignore" class="lobby-title lobby-title-fill"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="lobby-stage">
+            <ui:VisualElement class="connection-cards">
+                <ui:VisualElement name="connectionPlayer1" class="connection-card card-tilt-left is-empty player-color-0">
+                    <ui:VisualElement class="waiting-visual"/>
+                    <ui:VisualElement class="player-card-content">
+                        <ui:VisualElement class="device-icon keyboard-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="device-icon controller-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="character-content">
+                            <ui:VisualElement class="character-portrait">
+                                <ui:VisualElement class="character-image"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="characterSelector1" class="character-selector">
+                                <ui:Button name="previousCharacter1" tooltip="Previous character" class="character-arrow arrow-left">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                                <ui:VisualElement class="character-name-stack">
+                                    <ui:Label name="playerCharacterShadow1" text="Testudo" picking-mode="Ignore" class="character-name character-name-shadow"/>
+                                    <ui:Label name="playerCharacterStroke1" text="Testudo" picking-mode="Ignore" class="character-name character-name-stroke"/>
+                                    <ui:Label name="playerCharacter1" text="Testudo" picking-mode="Ignore" class="character-name character-name-fill"/>
+                                </ui:VisualElement>
+                                <ui:Button name="nextCharacter1" tooltip="Next character" class="character-arrow arrow-right">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="cardAction1" class="card-action">
+                        <ui:VisualElement class="card-prompt-content">
+                            <ui:VisualElement name="cardPromptGlyphStack1" class="prompt-glyph-stack input-xbox">
+                                <ui:Label name="cardPromptGlyphShadow1" class="prompt-glyph prompt-glyph-shadow"/>
+                                <ui:Label name="cardPromptGlyphStroke1" class="prompt-glyph prompt-glyph-stroke"/>
+                                <ui:Label name="cardPromptGlyph1" class="prompt-glyph prompt-glyph-fill"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="card-prompt-stack">
+                                <ui:Label name="cardPromptSizer1" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-sizer"/>
+                                <ui:Label name="cardPromptShadow1" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-shadow"/>
+                                <ui:Label name="cardPromptStroke1" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-stroke"/>
+                                <ui:Label name="cardPromptText1" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="selected-pointer">
+                            <ui:VisualElement class="icon-shadow"/>
+                            <ui:VisualElement class="icon-outline"/>
+                            <ui:VisualElement class="icon-art"/>
+                        </ui:VisualElement>
+                    </ui:Button>
+                    <ui:VisualElement class="card-data">
+                        <ui:Label name="connectionDevice1"/>
+                        <ui:Label name="connectionState1"/>
+                        <ui:Button name="leavePlayer1"/>
+                        <ui:Button name="addCpu1"/>
+                        <ui:Button name="cpuDifficulty1"/>
+                        <ui:VisualElement name="colorSelector1">
+                            <ui:Button name="previousColor1"/>
+                            <ui:Label name="playerColor1"/>
+                            <ui:Button name="nextColor1"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="connectionPlayer2" class="connection-card card-tilt-right is-empty player-color-1">
+                    <ui:VisualElement class="waiting-visual"/>
+                    <ui:VisualElement class="player-card-content">
+                        <ui:VisualElement class="device-icon keyboard-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="device-icon controller-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="character-content">
+                            <ui:VisualElement class="character-portrait">
+                                <ui:VisualElement class="character-image"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="characterSelector2" class="character-selector">
+                                <ui:Button name="previousCharacter2" class="character-arrow arrow-left">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                                <ui:VisualElement class="character-name-stack">
+                                    <ui:Label name="playerCharacterShadow2" text="Testudo" picking-mode="Ignore" class="character-name character-name-shadow"/>
+                                    <ui:Label name="playerCharacterStroke2" text="Testudo" picking-mode="Ignore" class="character-name character-name-stroke"/>
+                                    <ui:Label name="playerCharacter2" text="Testudo" picking-mode="Ignore" class="character-name character-name-fill"/>
+                                </ui:VisualElement>
+                                <ui:Button name="nextCharacter2" class="character-arrow arrow-right">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="cardAction2" class="card-action">
+                        <ui:VisualElement class="card-prompt-content">
+                            <ui:VisualElement name="cardPromptGlyphStack2" class="prompt-glyph-stack input-xbox">
+                            <ui:Label name="cardPromptGlyphShadow2" class="prompt-glyph prompt-glyph-shadow"/>
+                            <ui:Label name="cardPromptGlyphStroke2" class="prompt-glyph prompt-glyph-stroke"/>
+                            <ui:Label name="cardPromptGlyph2" class="prompt-glyph prompt-glyph-fill"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="card-prompt-stack">
+                            <ui:Label name="cardPromptSizer2" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-sizer"/>
+                            <ui:Label name="cardPromptShadow2" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-shadow"/>
+                            <ui:Label name="cardPromptStroke2" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-stroke"/>
+                            <ui:Label name="cardPromptText2" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="selected-pointer">
+                            <ui:VisualElement class="icon-shadow"/>
+                            <ui:VisualElement class="icon-outline"/>
+                            <ui:VisualElement class="icon-art"/>
+                        </ui:VisualElement>
+                    </ui:Button>
+                    <ui:VisualElement class="card-data">
+                        <ui:Label name="connectionDevice2"/>
+                        <ui:Label name="connectionState2"/>
+                        <ui:Button name="leavePlayer2"/>
+                        <ui:Button name="addCpu2"/>
+                        <ui:Button name="cpuDifficulty2"/>
+                        <ui:VisualElement name="colorSelector2">
+                            <ui:Button name="previousColor2"/>
+                            <ui:Label name="playerColor2"/>
+                            <ui:Button name="nextColor2"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="connectionPlayer3" class="connection-card card-tilt-left is-empty player-color-5">
+                    <ui:VisualElement class="waiting-visual"/>
+                    <ui:VisualElement class="player-card-content">
+                        <ui:VisualElement class="device-icon keyboard-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="device-icon controller-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="character-content">
+                            <ui:VisualElement class="character-portrait">
+                                <ui:VisualElement class="character-image"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="characterSelector3" class="character-selector">
+                                <ui:Button name="previousCharacter3" class="character-arrow arrow-left">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                                <ui:VisualElement class="character-name-stack">
+                                    <ui:Label name="playerCharacterShadow3" text="Testudo" picking-mode="Ignore" class="character-name character-name-shadow"/>
+                                    <ui:Label name="playerCharacterStroke3" text="Testudo" picking-mode="Ignore" class="character-name character-name-stroke"/>
+                                    <ui:Label name="playerCharacter3" text="Testudo" picking-mode="Ignore" class="character-name character-name-fill"/>
+                                </ui:VisualElement>
+                                <ui:Button name="nextCharacter3" class="character-arrow arrow-right">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="cardAction3" class="card-action">
+                        <ui:VisualElement class="card-prompt-content">
+                            <ui:VisualElement name="cardPromptGlyphStack3" class="prompt-glyph-stack input-xbox">
+                            <ui:Label name="cardPromptGlyphShadow3" class="prompt-glyph prompt-glyph-shadow"/>
+                            <ui:Label name="cardPromptGlyphStroke3" class="prompt-glyph prompt-glyph-stroke"/>
+                            <ui:Label name="cardPromptGlyph3" class="prompt-glyph prompt-glyph-fill"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="card-prompt-stack">
+                            <ui:Label name="cardPromptSizer3" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-sizer"/>
+                            <ui:Label name="cardPromptShadow3" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-shadow"/>
+                            <ui:Label name="cardPromptStroke3" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-stroke"/>
+                            <ui:Label name="cardPromptText3" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="selected-pointer">
+                            <ui:VisualElement class="icon-shadow"/>
+                            <ui:VisualElement class="icon-outline"/>
+                            <ui:VisualElement class="icon-art"/>
+                        </ui:VisualElement>
+                    </ui:Button>
+                    <ui:VisualElement class="card-data">
+                        <ui:Label name="connectionDevice3"/>
+                        <ui:Label name="connectionState3"/>
+                        <ui:Button name="leavePlayer3"/>
+                        <ui:Button name="addCpu3"/>
+                        <ui:Button name="cpuDifficulty3"/>
+                        <ui:VisualElement name="colorSelector3">
+                            <ui:Button name="previousColor3"/>
+                            <ui:Label name="playerColor3"/>
+                            <ui:Button name="nextColor3"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="connectionPlayer4" class="connection-card card-tilt-right is-empty player-color-2">
+                    <ui:VisualElement class="waiting-visual"/>
+                    <ui:VisualElement class="player-card-content">
+                        <ui:VisualElement class="device-icon keyboard-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="device-icon controller-device">
+                            <ui:VisualElement class="device-shadow"/>
+                            <ui:VisualElement class="device-outline"/>
+                            <ui:VisualElement class="device-fill"/>
+                            <ui:VisualElement class="device-stroke"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="character-content">
+                            <ui:VisualElement class="character-portrait">
+                                <ui:VisualElement class="character-image"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement name="characterSelector4" class="character-selector">
+                                <ui:Button name="previousCharacter4" class="character-arrow arrow-left">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                                <ui:VisualElement class="character-name-stack">
+                                    <ui:Label name="playerCharacterShadow4" text="Testudo" picking-mode="Ignore" class="character-name character-name-shadow"/>
+                                    <ui:Label name="playerCharacterStroke4" text="Testudo" picking-mode="Ignore" class="character-name character-name-stroke"/>
+                                    <ui:Label name="playerCharacter4" text="Testudo" picking-mode="Ignore" class="character-name character-name-fill"/>
+                                </ui:VisualElement>
+                                <ui:Button name="nextCharacter4" class="character-arrow arrow-right">
+                                    <ui:VisualElement class="icon-shadow"/>
+                                    <ui:VisualElement class="icon-outline"/>
+                                    <ui:VisualElement class="icon-art"/>
+                                </ui:Button>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Button name="cardAction4" class="card-action">
+                        <ui:VisualElement class="card-prompt-content">
+                            <ui:VisualElement name="cardPromptGlyphStack4" class="prompt-glyph-stack input-xbox">
+                            <ui:Label name="cardPromptGlyphShadow4" class="prompt-glyph prompt-glyph-shadow"/>
+                            <ui:Label name="cardPromptGlyphStroke4" class="prompt-glyph prompt-glyph-stroke"/>
+                            <ui:Label name="cardPromptGlyph4" class="prompt-glyph prompt-glyph-fill"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="card-prompt-stack">
+                            <ui:Label name="cardPromptSizer4" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-sizer"/>
+                            <ui:Label name="cardPromptShadow4" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-shadow"/>
+                            <ui:Label name="cardPromptStroke4" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-stroke"/>
+                            <ui:Label name="cardPromptText4" text="Join" picking-mode="Ignore" class="card-prompt-text card-prompt-fill"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="selected-pointer">
+                            <ui:VisualElement class="icon-shadow"/>
+                            <ui:VisualElement class="icon-outline"/>
+                            <ui:VisualElement class="icon-art"/>
+                        </ui:VisualElement>
+                    </ui:Button>
+                    <ui:VisualElement class="card-data">
+                        <ui:Label name="connectionDevice4"/>
+                        <ui:Label name="connectionState4"/>
+                        <ui:Button name="leavePlayer4"/>
+                        <ui:Button name="addCpu4"/>
+                        <ui:Button name="cpuDifficulty4"/>
+                        <ui:VisualElement name="colorSelector4">
+                            <ui:Button name="previousColor4"/>
+                            <ui:Label name="playerColor4"/>
+                            <ui:Button name="nextColor4"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="lobby-footer">
+            <ui:Button name="startGame" text="OK!" class="start-game">
+                <ui:VisualElement picking-mode="Ignore" class="start-text-stack">
+                    <ui:Label text="OK!" picking-mode="Ignore" name="Label" class="start-text start-text-shadow"/>
+                    <ui:Label text="OK!" picking-mode="Ignore" class="start-text start-text-stroke" style="-unity-text-outline-color: rgb(235, 86, 40);"/>
+                    <ui:Label name="startGameText" text="OK!" picking-mode="Ignore" class="start-text start-text-fill"/>
+                </ui:VisualElement>
+                <ui:VisualElement class="selected-pointer start-pointer">
+                    <ui:VisualElement class="icon-shadow"/>
+                    <ui:VisualElement class="icon-outline"/>
+                    <ui:VisualElement class="icon-art"/>
+                </ui:VisualElement>
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement class="lobby-hidden-controls">
+            <ui:Button name="previousPlayerCount"/>
+            <ui:Label name="playerCount"/>
+            <ui:Button name="nextPlayerCount"/>
+            <ui:Label name="connectionStatus"/>
+            <ui:Button name="randomEvents"/>
+            <ui:VisualElement name="eventOptions">
+                <ui:Button name="eventEarthquake"/>
+                <ui:Button name="eventTornadoes"/>
+                <ui:Button name="eventLightning"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,50 +1,7 @@
-.is-hidden {
+.is-hidden,
+.card-data,
+.lobby-hidden-controls {
     display: none;
-}
-
-.random-events {
-    width: 340px;
-    height: 42px;
-    margin-bottom: 10px;
-    background-color: rgb(49, 42, 80);
-    color: white;
-    border-radius: 16px;
-    font-size: 20px;
-}
-
-.random-events.is-on {
-    background-color: rgb(116, 63, 162);
-}
-
-.event-options {
-    flex-direction: row;
-    width: 90%;
-    max-width: 720px;
-    margin-bottom: 8px;
-}
-
-.event-option {
-    flex-grow: 1;
-    flex-shrink: 1;
-    width: 0;
-    min-width: 0;
-    height: 36px;
-    margin: 0 4px;
-    font-size: 16px;
-    border-radius: 12px;
-}
-
-.event-options:disabled {
-    opacity: 0.45;
-}
-
-.random-event-status {
-    font-size: 22px;
-    color: rgb(255, 217, 109);
-    -unity-text-align: middle-center;
-    background-color: rgba(15, 12, 43, 0.85);
-    border-radius: 12px;
-    padding: 4px 12px;
 }
 
 .connection-menu {
@@ -53,234 +10,555 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background-color: rgba(15, 12, 43, 0.97);
+    background-color: #f4f1ee;
+    background-image: url("project://database/Assets/Textures/UI/beakerBg.png");
+    -unity-background-scale-mode: scale-and-crop;
+    color: #2d2925;
+    -unity-font: url("project://database/Assets/Fonts/Fredoka-Regular.ttf");
+}
+
+.lobby-header {
+    height: 160px;
+    flex-shrink: 0;
     align-items: center;
-    justify-content: center;
-    color: rgb(247, 246, 255);
-    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
+    justify-content: flex-end;
+    padding-bottom: 32px;
+    background-color: #eb5628;
 }
 
-.connection-content {
-    width: 88%;
-    max-width: 1600px;
-    align-items: center;
-}
-
-.connection-eyebrow {
-    font-size: 17px;
-    color: rgb(167, 158, 203);
-    margin-bottom: 8px;
-    -unity-font-style: bold;
-}
-
-.connection-title {
-    font-size: 48px;
-    -unity-font-style: bold;
-    margin-bottom: 22px;
-}
-
-.player-count-selector {
-    width: 84%;
-    height: 120px;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    background-color: rgb(224, 13, 91);
-    border-width: 4px;
-    border-color: rgb(252, 114, 164);
-    border-radius: 64px;
-    padding-left: 50px;
-    padding-right: 50px;
-}
-
-.count-arrow {
-    width: 80px;
+.lobby-title-stack {
+    position: relative;
+    width: 100%;
     height: 80px;
-    margin: 0;
-    padding: 0;
-    background-color: rgba(0, 0, 0, 0);
-    border-width: 0;
-    border-radius: 40px;
-    color: rgb(255, 233, 119);
-    font-size: 72px;
+}
+
+.lobby-title {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    color: #f4f1ee;
+    font-size: 64px;
+    -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset");
     -unity-text-align: middle-center;
+    white-space: nowrap;
 }
 
-.count-arrow:hover {
-    background-color: rgba(255, 255, 255, 0.16);
+.lobby-title-shadow {
+    color: rgba(0, 0, 0, 0.25);
+    -unity-text-outline-color: rgba(0, 0, 0, 0.25);
+    -unity-text-outline-width: 12px;
+    translate: 0 8px;
 }
 
-.count-arrow:disabled {
-    opacity: 0.25;
+.lobby-title-stroke {
+    color: #c94721;
+    -unity-text-outline-color: #c94721;
+    -unity-text-outline-width: 12px;
 }
 
-.player-count {
-    font-size: 72px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
+.lobby-title-fill {
+    color: #f4f1ee;
 }
 
-.connection-subtitle {
-    margin-top: 14px;
-    margin-bottom: 36px;
-    font-size: 19px;
-    color: rgb(189, 181, 218);
+.lobby-stage {
+    flex-grow: 1;
+    min-height: 0;
+    align-items: center;
+    justify-content: flex-end;
+    padding-left: 155px;
+    padding-right: 155px;
 }
 
 .connection-cards {
     width: 100%;
+    height: 652px;
     flex-direction: row;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
 }
 
 .connection-card {
-    width: 23.5%;
-    height: 455px;
-    padding: 20px 12px;
+    --player-color: #eb5628;
+    width: 360px;
+    height: 640px;
+    min-width: 250px;
+    flex-shrink: 1;
+    margin-left: 16px;
+    margin-right: 16px;
+    padding: 16px 16px 32px 16px;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.025);
-    border-width: 2px;
-    border-color: rgb(70, 62, 106);
-    border-radius: 16px;
-    color: rgb(108, 101, 140);
-}
-
-.connection-card.is-selected {
-    background-color: rgb(40, 33, 70);
-    border-color: rgb(139, 127, 179);
-    color: rgb(222, 216, 242);
-}
-
-.connection-card.is-connected {
-    background-color: rgb(246, 243, 255);
-    color: rgb(37, 25, 64);
-    border-width: 6px;
-}
-
-
-.connection-card.is-disconnected {
-    border-color: rgb(255, 181, 102);
-}
-
-.slot-title {
-    font-size: 19px;
-    -unity-font-style: bold;
-}
-
-.controller-icon {
-    width: 120px;
-    height: 76px;
-    margin-top: 25px;
-    margin-bottom: 25px;
-    border-width: 3px;
-    border-color: rgb(123, 111, 159);
+    justify-content: space-between;
+    overflow: visible;
+    background-color: #e7e2da;
     border-radius: 24px;
+}
+
+.card-tilt-left { rotate: -2deg; }
+.card-tilt-right { rotate: 2deg; }
+
+.player-card-content {
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+    align-items: center;
+}
+
+.device-icon {
+    position: relative;
+    width: 96px;
+    height: 98px;
+    flex-shrink: 0;
+}
+
+.device-icon > .device-shadow,
+.device-icon > .device-outline,
+.device-icon > .device-fill,
+.device-icon > .device-stroke {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.device-icon > .device-shadow,
+.device-icon > .device-outline {
+    top: -3px;
+    right: -3px;
+    bottom: -3px;
+    left: -3px;
+}
+
+.device-icon > .device-shadow {
+    translate: 0 4px;
+    -unity-background-image-tint-color: rgba(45, 41, 37, 0.28);
+}
+
+.device-icon > .device-outline {
+    -unity-background-image-tint-color: #f4f1ee;
+}
+
+.keyboard-device > .device-shadow,
+.keyboard-device > .device-outline,
+.keyboard-device > .device-fill { background-image: url("project://database/Assets/UI/Lobby/KeyboardLockFill.png"); }
+.keyboard-device > .device-stroke { background-image: url("project://database/Assets/UI/Lobby/KeyboardLockStroke.png"); }
+.controller-device > .device-shadow,
+.controller-device > .device-outline,
+.controller-device > .device-fill { background-image: url("project://database/Assets/UI/Lobby/ControllerFill.png"); }
+.controller-device > .device-stroke { background-image: url("project://database/Assets/UI/Lobby/ControllerStroke.png"); }
+
+.device-fill { -unity-background-image-tint-color: #a3a09a; }
+.device-stroke { display: none; }
+.keyboard-device { display: none; }
+.connection-card.is-keyboard > .player-card-content > .keyboard-device { display: flex; }
+.connection-card.is-keyboard > .player-card-content > .controller-device { display: none; }
+
+.character-content {
+    width: 100%;
+    flex-grow: 1;
+    min-height: 0;
+    padding-top: 24px;
+    align-items: center;
+    overflow: hidden;
+}
+
+.character-portrait {
+    width: 256px;
+    height: 256px;
+    flex-shrink: 0;
+    border-width: 4px;
+    border-color: var(--player-color);
+    border-radius: 128px;
+    background-color: var(--player-color);
+    background-image: url("project://database/Assets/UI/Lobby/TestudoPortrait.png");
+    -unity-background-scale-mode: scale-and-crop;
+    overflow: visible;
+}
+
+.character-image {
+    display: none;
+}
+
+.character-selector {
+    width: 100%;
+    height: 96px;
+    flex-shrink: 0;
     flex-direction: row;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-between;
 }
 
-.is-connected .controller-icon {
-    background-color: rgb(48, 31, 84);
-    border-color: rgb(48, 31, 84);
-    color: rgb(246, 243, 255);
-}
-
-.controller-dpad { font-size: 46px; -unity-font-style: bold; }
-.controller-buttons { font-size: 25px; }
-
-.slot-device {
-    font-size: 21px;
-    -unity-font-style: bold;
-    -unity-text-align: middle-center;
-}
-
-.slot-state {
-    margin-top: 9px;
-    font-size: 16px;
-    -unity-text-align: middle-center;
-}
-
-.slot-leave {
-    margin-top: 14px;
-    padding: 4px 18px;
-    font-size: 15px;
+.character-arrow {
+    position: relative;
+    width: 72px;
+    height: 112px;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    background-color: rgba(0, 0, 0, 0);
     border-width: 0;
-    border-radius: 12px;
-    background-color: rgb(226, 220, 240);
-    color: rgb(62, 44, 93);
 }
 
-.slot-leave:hover { background-color: rgb(209, 196, 233); }
+.icon-shadow,
+.icon-outline,
+.icon-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
 
-.connection-status {
-    margin-top: 24px;
-    margin-bottom: 12px;
-    font-size: 19px;
+.icon-shadow,
+.icon-outline {
+    top: -3px;
+    right: -3px;
+    bottom: -3px;
+    left: -3px;
+}
+
+.icon-shadow {
+    translate: 0 4px;
+    -unity-background-image-tint-color: rgba(45, 41, 37, 0.28);
+}
+
+.icon-outline { -unity-background-image-tint-color: #f4f1ee; }
+
+.character-arrow > .icon-shadow,
+.character-arrow > .icon-outline,
+.character-arrow > .icon-art {
+    background-image: url("project://database/Assets/Textures/UI/curvedArrow.png");
+}
+
+.character-arrow > .icon-shadow,
+.character-arrow > .icon-outline {
+    display: none;
+}
+
+.character-arrow > .icon-art { -unity-background-image-tint-color: #c7c0ad; }
+
+.arrow-right { rotate: 180deg; }
+.character-arrow:disabled { opacity: 0.25; }
+
+.character-name-stack {
+    flex-grow: 1;
+    height: 96px;
+    position: relative;
+}
+
+.character-name {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    color: var(--player-color);
+    font-size: 48px;
+    -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset");
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 0;
+    white-space: nowrap;
+}
+
+.character-name-shadow {
+    color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-width: 6px;
+    translate: 0 2px;
+}
+
+.character-name-stroke {
+    color: #f4f1ee;
+    -unity-text-outline-color: #f4f1ee;
+    -unity-text-outline-width: 6px;
+}
+
+.card-action {
+    position: relative;
+    width: 100%;
+    height: 64px;
+    min-height: 64px;
+    margin: 0;
+    padding: 8px 32px;
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    background-color: #f5f1ee;
+    border-width: 0;
+    border-radius: 32px;
+    color: #eb5628;
+}
+
+.card-action:hover,
+.card-action:focus {
+    background-color: #f5f1ee;
+}
+
+.prompt-glyph-stack {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.card-prompt-content {
+    width: 100%;
+    height: 48px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    translate: 0 -8px;
+}
+
+.prompt-glyph {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0;
+    overflow: visible;
+    color: #eb5628;
+    font-size: 84px;
+    -unity-text-align: middle-center;
+}
+
+.prompt-glyph-shadow {
+    color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-width: 6px;
+    translate: 0 2px;
+}
+
+.prompt-glyph-stroke {
+    color: #ffffff;
+    -unity-text-outline-color: #ffffff;
+    -unity-text-outline-width: 6px;
+}
+
+.input-keyboard > .prompt-glyph { -unity-font: url("project://database/Assets/Fonts/KenneyInput-KeyboardMouse.ttf"); }
+.input-switch > .prompt-glyph { -unity-font: url("project://database/Assets/Fonts/KenneyInput-NintendoSwitch.ttf"); }
+.input-xbox > .prompt-glyph { -unity-font: url("project://database/Assets/Fonts/KenneyInput-XboxSeries.ttf"); }
+
+.card-prompt-text {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0;
+    color: #eb5628;
+    font-size: 36px;
+    -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset");
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 0;
+    white-space: nowrap;
+}
+
+.card-prompt-stack {
+    position: relative;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.card-prompt-sizer {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    height: 48px;
+    opacity: 0;
+}
+
+.card-prompt-shadow {
+    color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-width: 6px;
+    translate: 0 2px;
+}
+
+.card-prompt-stroke {
+    color: #ffffff;
+    -unity-text-outline-color: #ffffff;
+    -unity-text-outline-width: 6px;
+}
+
+.waiting-visual {
+    display: none;
+    width: 100%;
+    flex-grow: 1;
+    background-image: url("project://database/Assets/Textures/UI/waitingBg.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.connection-card.is-empty {
+    background-color: #cbc8c1;
+}
+
+.connection-card.is-empty > .waiting-visual { display: flex; }
+.connection-card.is-empty > .player-card-content { display: none; }
+.connection-card.is-empty > .card-action > .card-prompt-content > .prompt-glyph-stack { display: none; }
+.connection-card.is-empty > .card-action > .card-prompt-content > .card-prompt-stack > .card-prompt-fill {
+    color: #4fafc1;
+    font-size: 36px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Fredoka-Lobby-SDF.asset");
+    -unity-text-outline-width: 0;
+}
+
+.connection-card.is-empty > .card-action > .card-prompt-content > .card-prompt-stack > .card-prompt-shadow,
+.connection-card.is-empty > .card-action > .card-prompt-content > .card-prompt-stack > .card-prompt-stroke,
+.connection-card.is-empty > .card-action > .card-prompt-content > .card-prompt-stack > .card-prompt-sizer {
+    font-size: 36px;
+    -unity-font-definition: url("project://database/Assets/Fonts/Fredoka-Lobby-SDF.asset");
+}
+
+.connection-card.is-unselected { opacity: 1; }
+
+.connection-card.is-ready {
+    background-color: var(--player-color);
+}
+
+.connection-card.is-ready .device-fill { -unity-background-image-tint-color: #ffffff; }
+.connection-card.is-ready .device-stroke {
+    display: flex;
+    -unity-background-image-tint-color: var(--player-color);
+}
+.connection-card.is-ready .character-content { padding-top: 24px; }
+.connection-card.is-ready .character-portrait { margin-bottom: -32px; }
+.connection-card.is-ready .character-arrow { display: none; }
+.connection-card.is-ready .character-selector { justify-content: center; }
+.connection-card.is-ready .character-name {
+    color: #ffffff;
+    font-size: 64px;
+}
+.connection-card.is-ready .character-name-shadow {
+    color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    translate: 0 4px;
+}
+.connection-card.is-ready .character-name-stroke {
+    color: var(--player-color);
+    -unity-text-outline-color: var(--player-color);
+}
+.connection-card.is-ready > .card-action { background-color: #f5f1ee; }
+
+.selected-pointer {
+    display: none;
+    position: absolute;
+    width: 72px;
+    height: 72px;
+    right: -42px;
+    bottom: -42px;
+    rotate: 0deg;
+}
+
+.selected-pointer > .icon-shadow,
+.selected-pointer > .icon-outline,
+.selected-pointer > .icon-art {
+    background-image: url("project://database/Assets/Textures/UI/selectedPointer.png");
+}
+
+.selected-pointer > .icon-shadow { -unity-background-image-tint-color: rgba(45, 41, 37, 0.28); }
+.selected-pointer > .icon-outline { -unity-background-image-tint-color: #2d2925; }
+.selected-pointer > .icon-art { -unity-background-image-tint-color: #f4f1ee; }
+
+.card-action:focus > .selected-pointer { display: flex; }
+
+.lobby-footer {
+    height: 208px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    padding-top: 64px;
+    padding-bottom: 64px;
 }
 
 .start-game {
-    width: 420px;
-    height: 74px;
+    position: relative;
+    width: 360px;
+    height: 96px;
     margin: 0;
-    background-color: rgb(249, 246, 255);
-    color: rgb(39, 25, 69);
-    border-width: 2px;
-    border-color: rgb(249, 246, 255);
-    border-radius: 40px;
-    font-size: 29px;
-    -unity-font-style: bold;
-}
-
-.start-game:hover {
-    background-color: rgb(255, 233, 119);
-    border-color: rgb(255, 233, 119);
-}
-
-.start-game:disabled {
-    background-color: rgb(62, 52, 88);
-    border-color: rgb(92, 80, 123);
-    color: rgb(169, 159, 194);
-}
-
-.keyboard-keys {
-    display: none;
-    font-size: 22px;
-    -unity-font-style: bold;
-}
-
-.is-keyboard .controller-icon {
-    border-radius: 8px;
-}
-
-.is-keyboard .controller-dpad,
-.is-keyboard .controller-buttons {
-    display: none;
-}
-
-.is-keyboard .keyboard-keys {
-    display: flex;
-}
-
-.controller-dpad,
-.controller-buttons {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+    padding: 16px 32px;
+    overflow: visible;
+    background-color: #eb5628;
+    border-width: 0;
+    border-radius: 48px;
+    color: rgba(0, 0, 0, 0);
+    font-size: 48px;
+    -unity-font: url("project://database/Assets/Fonts/FredokaOne-Regular.ttf");
     -unity-text-align: middle-center;
 }
 
-.cpu-icon { display: none; font-size: 26px; -unity-font-style: bold; }
-.is-cpu .cpu-icon { display: flex; }
-.is-cpu .controller-dpad, .is-cpu .controller-buttons { display: none; }
+.start-pointer {
+    width: 102px;
+    height: 102px;
+    right: -53px;
+    bottom: -51px;
+}
 
-.color-selector { flex-direction: row; align-items: center; justify-content: space-between; width: 190px; height: 34px; margin-top: 12px; border-radius: 12px; flex-shrink: 0; }
-.color-name { font-size: 16px; -unity-font-style: bold; }
-.color-arrow { width: 34px; height: 34px; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; font-size: 26px; }
-.color-arrow:hover { background-color: rgba(127, 127, 127, 0.35); }
+.start-game:hover > .start-pointer,
+.start-game:focus > .start-pointer {
+    display: flex;
+}
 
-.character-selector { flex-direction: row; align-items: center; justify-content: space-between; width: 190px; height: 34px; margin-top: 8px; border-width: 1px; border-color: rgb(139, 127, 179); border-radius: 12px; flex-shrink: 0; }
-.character-name { font-size: 15px; -unity-font-style: bold; }
-.character-arrow { width: 34px; height: 34px; margin: 0; padding: 0; background-color: rgba(0, 0, 0, 0); border-width: 0; color: rgb(222, 216, 242); font-size: 26px; }
-.character-arrow:hover { background-color: rgba(127, 127, 127, 0.35); }
-.character-arrow:disabled { opacity: 0.25; }
+.start-text-stack {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.start-text {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    color: #f4f1ee;
+    font-size: 48px;
+    -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset");
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 0;
+    white-space: nowrap;
+}
+
+.start-text-shadow {
+    color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-width: 6px;
+    translate: 0 3px;
+}
+
+.start-text-stroke {
+    color: #c94721;
+    -unity-text-outline-color: #c94721;
+    -unity-text-outline-width: 6px;
+}
+
+.connection-card.player-color-0 { --player-color: #eb5628; }
+.connection-card.player-color-1 { --player-color: #4570bc; }
+.connection-card.player-color-2 { --player-color: #117f2d; }
+.connection-card.player-color-3 { --player-color: #ed54ba; }
+.connection-card.player-color-4 { --player-color: #ef7d0e; }
+.connection-card.player-color-5 { --player-color: #f5f557; }
+.connection-card.player-color-6 { --player-color: #3f474e; }
+.connection-card.player-color-7 { --player-color: #d6e0f0; }
+.connection-card.player-color-8 { --player-color: #6b2fbb; }
+.connection-card.player-color-9 { --player-color: #71491e; }
+.connection-card.player-color-10 { --player-color: #38fedc; }
+.connection-card.player-color-11 { --player-color: #50ef39; }
+.connection-card.player-color-12 { --player-color: #6b2b3a; }
+.connection-card.player-color-13 { --player-color: #ecc0d3; }
+.connection-card.player-color-14 { --player-color: #fffebe; }
+.connection-card.player-color-15 { --player-color: #708496; }
+.connection-card.player-color-16 { --player-color: #928776; }
+.connection-card.player-color-17 { --player-color: #ec7578; }

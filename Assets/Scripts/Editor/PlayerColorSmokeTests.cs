@@ -29,9 +29,9 @@ namespace UmdJam.Editor
             Require(!lobby.TrySetPlayerColor(0, lobby.GetParticipant(1).ColorIndex), "Taken color rejected");
             Require(!lobby.TrySetPlayerColor(-1, 0) && !lobby.TrySetPlayerColor(4, 0) &&
                 !lobby.TrySetPlayerColor(0, -1) && !lobby.TrySetPlayerColor(0, PlayerColorPalette.Count), "Invalid color and slot rejected");
-            Require(lobby.TrySetPlayerColor(0, 17) && lobby.TryCyclePlayerColor(0, 1) && first.ColorIndex == 1,
-                "Forward cycling wraps and skips occupied Red");
-            Require(lobby.TryCyclePlayerColor(0, -1) && first.ColorIndex == 17, "Backward cycling skips occupied Red");
+            Require(lobby.TrySetPlayerColor(0, 17) && lobby.TryCyclePlayerColor(0, 1) && first.ColorIndex == 0,
+                "Forward cycling wraps to available Red");
+            Require(lobby.TryCyclePlayerColor(0, -1) && first.ColorIndex == 17, "Backward cycling wraps to Coral");
             for (int index = 0; index < PlayerColorPalette.Count; index++)
             {
                 bool available = CouchPlayerController.IsColorAvailable(index, first);

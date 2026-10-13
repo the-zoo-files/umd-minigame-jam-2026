@@ -4355,7 +4355,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.CouchMultiplayerManager
   gameManager: {fileID: 247665704}
-  selectedPlayerCount: 2
+  selectedPlayerCount: 4
+  defaultPlayerColors: 00000000010000000500000002000000i
 --- !u!114 &788590085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7444,7 +7445,7 @@ MonoBehaviour:
   version: 2
   globalVolume: 0
   mode: 1
-  size: {x: 15.00005, y: 15.050012, z: 15.000045}
+  size: {x: 15.00005, y: 15.050011, z: 15.000045}
   overrideRendererFilters: 0
   minRendererVolumeSize: 0.1
   objectLayerMask:
@@ -7482,7 +7483,7 @@ Transform:
   m_GameObject: {fileID: 1579112267}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.000006198883, y: 6.0249944, z: 0.00001859665}
+  m_LocalPosition: {x: -0.000006198883, y: 6.024994, z: 0.00001859665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

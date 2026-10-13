@@ -23,6 +23,14 @@ namespace UmdJam.UI
         private readonly Button[] eventButtons = new Button[3];
         private readonly Action[] eventCallbacks = new Action[3];
         private readonly VisualElement[] cards = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Button[] cardActions = new Button[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptGlyphs = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptGlyphShadowLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptGlyphStrokeLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly VisualElement[] promptGlyphStacks = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptTexts = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptSizerLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Action[] cardActionCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
         private readonly Label[] deviceLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly Label[] stateLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly Button[] leaveButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
@@ -39,6 +47,10 @@ namespace UmdJam.UI
         private readonly Action[] nextColorCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
         private readonly VisualElement[] characterSelectors = new VisualElement[CouchMultiplayerManager.MaximumPlayers];
         private readonly Label[] characterLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] characterShadowLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] characterStrokeLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptShadowLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
+        private readonly Label[] promptStrokeLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly Button[] previousCharacterButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
         private readonly Button[] nextCharacterButtons = new Button[CouchMultiplayerManager.MaximumPlayers];
         private readonly Action[] previousCharacterCallbacks = new Action[CouchMultiplayerManager.MaximumPlayers];
@@ -83,6 +95,15 @@ namespace UmdJam.UI
             {
                 int number = slot + 1;
                 cards[slot] = root.Q($"connectionPlayer{number}");
+                cardActions[slot] = root.Q<Button>($"cardAction{number}");
+                promptGlyphs[slot] = root.Q<Label>($"cardPromptGlyph{number}");
+                promptGlyphShadowLabels[slot] = root.Q<Label>($"cardPromptGlyphShadow{number}");
+                promptGlyphStrokeLabels[slot] = root.Q<Label>($"cardPromptGlyphStroke{number}");
+                promptGlyphStacks[slot] = root.Q($"cardPromptGlyphStack{number}");
+                promptTexts[slot] = root.Q<Label>($"cardPromptText{number}");
+                promptSizerLabels[slot] = root.Q<Label>($"cardPromptSizer{number}");
+                promptShadowLabels[slot] = root.Q<Label>($"cardPromptShadow{number}");
+                promptStrokeLabels[slot] = root.Q<Label>($"cardPromptStroke{number}");
                 deviceLabels[slot] = root.Q<Label>($"connectionDevice{number}");
                 stateLabels[slot] = root.Q<Label>($"connectionState{number}");
                 leaveButtons[slot] = root.Q<Button>($"leavePlayer{number}");
@@ -94,13 +115,21 @@ namespace UmdJam.UI
                 nextColorButtons[slot] = root.Q<Button>($"nextColor{number}");
                 characterSelectors[slot] = root.Q($"characterSelector{number}");
                 characterLabels[slot] = root.Q<Label>($"playerCharacter{number}");
+                characterShadowLabels[slot] = root.Q<Label>($"playerCharacterShadow{number}");
+                characterStrokeLabels[slot] = root.Q<Label>($"playerCharacterStroke{number}");
                 previousCharacterButtons[slot] = root.Q<Button>($"previousCharacter{number}");
                 nextCharacterButtons[slot] = root.Q<Button>($"nextCharacter{number}");
-                if (cards[slot] == null || deviceLabels[slot] == null ||
+                if (cards[slot] == null || cardActions[slot] == null || promptGlyphs[slot] == null ||
+                    promptGlyphShadowLabels[slot] == null || promptGlyphStrokeLabels[slot] == null ||
+                    promptGlyphStacks[slot] == null ||
+                    promptTexts[slot] == null || promptSizerLabels[slot] == null ||
+                    promptShadowLabels[slot] == null ||
+                    promptStrokeLabels[slot] == null || deviceLabels[slot] == null ||
                     stateLabels[slot] == null || leaveButtons[slot] == null ||
                     cpuButtons[slot] == null || difficultyButtons[slot] == null || colorSelectors[slot] == null ||
                     colorLabels[slot] == null || previousColorButtons[slot] == null || nextColorButtons[slot] == null ||
                     characterSelectors[slot] == null || characterLabels[slot] == null ||
+                    characterShadowLabels[slot] == null || characterStrokeLabels[slot] == null ||
                     previousCharacterButtons[slot] == null || nextCharacterButtons[slot] == null)
                 {
                     Debug.LogError($"Connection menu is missing elements for Player {number}.", this);
@@ -109,6 +138,8 @@ namespace UmdJam.UI
                 }
 
                 int playerSlot = slot;
+                cardActionCallbacks[slot] = () => ToggleReady(playerSlot);
+                cardActions[slot].clicked += cardActionCallbacks[slot];
                 leaveCallbacks[slot] = () => multiplayer.TryLeave(playerSlot);
                 leaveButtons[slot].clicked += leaveCallbacks[slot];
                 cpuCallbacks[slot] = () => multiplayer.TryAddCpu(playerSlot);
@@ -159,6 +190,8 @@ namespace UmdJam.UI
             }
             for (int slot = 0; slot < leaveButtons.Length; slot++)
             {
+                if (cardActions[slot] != null && cardActionCallbacks[slot] != null)
+                    cardActions[slot].clicked -= cardActionCallbacks[slot];
                 if (leaveButtons[slot] != null && leaveCallbacks[slot] != null)
                 {
                     leaveButtons[slot].clicked -= leaveCallbacks[slot];
@@ -202,6 +235,14 @@ namespace UmdJam.UI
             multiplayer.TryStartGame();
         }
 
+        private void ToggleReady(int slot)
+        {
+            CouchPlayerController participant = multiplayer.GetParticipant(slot);
+            if (participant == null) return;
+            if (participant.IsCpu) multiplayer.TryLeave(slot);
+            else multiplayer.TrySetPlayerReady(slot, !multiplayer.IsPlayerReady(participant));
+        }
+
         private void Refresh()
         {
             randomEventsButton.text = multiplayer.RandomEventsEnabled ? "Random Events: On" : "Random Events: Off";
@@ -230,20 +271,25 @@ namespace UmdJam.UI
             countLabel.text = selected.ToString();
             previousButton.SetEnabled(multiplayer.CanSelectPlayerCount(selected - 1));
             nextButton.SetEnabled(multiplayer.CanSelectPlayerCount(selected + 1));
-            startButton.SetEnabled(multiplayer.CanStart);
+            startButton.SetEnabled(true);
             for (int slot = 0; slot < cards.Length; slot++)
             {
                 CouchPlayerController participant = multiplayer.GetParticipant(slot);
                 PlayerInput player = participant != null ? participant.HumanInput : null;
                 bool isCpu = participant != null && participant.IsCpu;
                 bool isConnected = CouchMultiplayerManager.IsReady(participant);
+                bool isReady = multiplayer.IsPlayerReady(participant);
                 bool isSelected = slot < selected;
-                if (isConnected) connected++;
+                if (isReady) connected++;
                 cards[slot].EnableInClassList("is-selected", isSelected);
                 cards[slot].EnableInClassList("is-connected", isConnected);
+                cards[slot].EnableInClassList("is-ready", isReady);
+                cards[slot].EnableInClassList("is-empty", participant == null);
+                cards[slot].EnableInClassList("is-unselected", !isSelected);
                 cards[slot].EnableInClassList("is-disconnected", participant != null && !isConnected);
                 cards[slot].EnableInClassList("is-cpu", isCpu);
                 cards[slot].EnableInClassList("is-keyboard", player != null && player.currentControlScheme == "Keyboard&Mouse");
+                UpdatePrompt(slot, participant, player, isReady);
                 deviceLabels[slot].text = isCpu ? "CPU" : player == null
                     ? (isSelected ? "Waiting for player" : "Not selected")
                     : (player.currentControlScheme == "Keyboard&Mouse" ? "Keyboard / Mouse" : "Controller");
@@ -257,20 +303,16 @@ namespace UmdJam.UI
                 if (isCpu) difficultyButtons[slot].text = participant.Cpu.Difficulty.ToString();
                 colorSelectors[slot].EnableInClassList("is-hidden", participant == null);
                 characterSelectors[slot].EnableInClassList("is-hidden", participant == null);
-                StyleColor border = participant != null ? new StyleColor(participant.PlayerColor) : new StyleColor(StyleKeyword.Null);
-                cards[slot].style.borderTopColor = border;
-                cards[slot].style.borderRightColor = border;
-                cards[slot].style.borderBottomColor = border;
-                cards[slot].style.borderLeftColor = border;
                 if (participant != null)
                 {
                     PlayerColorPalette.Entry color = PlayerColorPalette.Get(participant.ColorIndex);
+                    for (int i = 0; i < PlayerColorPalette.Count; i++)
+                        cards[slot].RemoveFromClassList($"player-color-{i}");
+                    cards[slot].AddToClassList($"player-color-{participant.ColorIndex}");
                     colorLabels[slot].text = color.Name;
-                    colorSelectors[slot].style.backgroundColor = color.Color;
-                    colorLabels[slot].style.color = color.TextColor;
-                    previousColorButtons[slot].style.color = color.TextColor;
-                    nextColorButtons[slot].style.color = color.TextColor;
                     characterLabels[slot].text = participant.CharacterName;
+                    characterShadowLabels[slot].text = participant.CharacterName;
+                    characterStrokeLabels[slot].text = participant.CharacterName;
                     bool hasMultipleCharacters = participant.CharacterCount > 1;
                     previousCharacterButtons[slot].SetEnabled(hasMultipleCharacters);
                     nextCharacterButtons[slot].SetEnabled(hasMultipleCharacters);
@@ -279,6 +321,70 @@ namespace UmdJam.UI
 
             statusLabel.text = multiplayer.StartFailure ??
                 (multiplayer.CanStart ? "Ready to start" : $"{connected} / {selected} ready");
+        }
+
+        private void UpdatePrompt(int slot, CouchPlayerController participant, PlayerInput player, bool isReady)
+        {
+            Label glyph = promptGlyphs[slot];
+            Label glyphShadow = promptGlyphShadowLabels[slot];
+            Label glyphStroke = promptGlyphStrokeLabels[slot];
+            VisualElement glyphStack = promptGlyphStacks[slot];
+            glyphStack.RemoveFromClassList("input-keyboard");
+            glyphStack.RemoveFromClassList("input-switch");
+            glyphStack.RemoveFromClassList("input-xbox");
+
+            if (participant == null)
+            {
+                glyph.text = string.Empty;
+                glyphShadow.text = string.Empty;
+                glyphStroke.text = string.Empty;
+                promptTexts[slot].text = "Join";
+                promptSizerLabels[slot].text = "Join";
+                promptShadowLabels[slot].text = "Join";
+                promptStrokeLabels[slot].text = "Join";
+                cardActions[slot].SetEnabled(true);
+                return;
+            }
+
+            cardActions[slot].SetEnabled(true);
+            promptTexts[slot].text = isReady || participant.IsCpu ? "Cancel" : "Ready!";
+            promptSizerLabels[slot].text = promptTexts[slot].text;
+            promptShadowLabels[slot].text = promptTexts[slot].text;
+            promptStrokeLabels[slot].text = promptTexts[slot].text;
+            if (player != null && player.currentControlScheme == "Keyboard&Mouse")
+            {
+                glyphStack.AddToClassList("input-keyboard");
+                glyph.text = isReady ? "\uE063" : "\uE05F";
+                glyphShadow.text = glyph.text;
+                glyphStroke.text = glyph.text;
+                return;
+            }
+
+            if (IsNintendoController(player))
+            {
+                glyphStack.AddToClassList("input-switch");
+                glyph.text = isReady ? "\uE005" : "\uE007";
+                glyphShadow.text = glyph.text;
+                glyphStroke.text = glyph.text;
+                return;
+            }
+
+            glyphStack.AddToClassList("input-xbox");
+            glyph.text = isReady || participant.IsCpu ? "\uE007" : "\uE005";
+            glyphShadow.text = glyph.text;
+            glyphStroke.text = glyph.text;
+        }
+
+        private static bool IsNintendoController(PlayerInput player)
+        {
+            if (player == null) return false;
+            foreach (InputDevice device in player.devices)
+            {
+                string identity = $"{device.layout} {device.description.manufacturer} {device.description.product}";
+                if (identity.IndexOf("Nintendo", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    identity.IndexOf("Switch", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+            return false;
         }
 
         private void ToggleRandomEvents() => multiplayer.TrySetRandomEvents(!multiplayer.RandomEventsEnabled);

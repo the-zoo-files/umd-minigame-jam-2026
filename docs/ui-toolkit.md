@@ -3,7 +3,9 @@
 ## Files and Responsibilities
 
 - `Assets/UI/Documents/CouchPlayerHud.uxml`: hierarchy, element names, default label text, and editing-time state.
+- `Assets/UI/Documents/Lobby.uxml`: the reusable four-card lobby hierarchy and prompt elements.
 - `Assets/UI/Styles/CouchPlayerHud.uss`: visual styling, corner anchors, colors, typography, and connected-state visibility.
+- `Assets/UI/Styles/CouchConnectionMenu.uss`: the Figma-matched lobby layout, card variants, palette classes, and device prompts.
 - `Assets/Scripts/UI/CouchPlayerHud.cs`: player and score event binding, label text updates, and runtime class toggling.
 - `Assets/UI/Fonts/CascadiaMono.ttf`: monospaced HUD font.
 
@@ -18,15 +20,19 @@ are authoritative in `CouchMultiplayerManager` and remain selected when toggling
 
 The `randomEvents` button toggles the manager's authoritative **Random Events: Off / On** setting before play. `is-on` styles the enabled option. The gameplay `randomEventStatus` label lives below the timer, listens to event transitions, and shows Earthquake, Tornadoes, or Lightning; it is hidden during quiet intervals and results. Both controls use the existing document and do not own hazard state.
 
-The document contains `connectionMenu` and `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the initial local multiplayer menu, headed **Players**, with a **Start Game** action. The button remains disabled until every selected slot has a ready CPU or a human with the required device(s). Connected cards keep a light background with a thicker border in the selected palette color; empty cards use their USS state styles. The menu uses four color-coded cards, a pink count selector, and a dark background; graphics are UI Toolkit elements and need no external art.
+The document contains a `Lobby.uxml` template instance named `connectionMenu` plus `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the Figma lobby headed **Join and select a character.**, with four alternating tilted cards and an **OK!** action. The button remains disabled until every selected slot has a ready CPU or an explicitly confirmed human with the required device(s). Empty, joined, and ready card states are USS classes; joined cards stay neutral with participant-colored portrait/name accents, while ready cards use the participant color as their surface.
 
-Connection bindings are `playerCount`, `connectionStatus`, `previousPlayerCount`, `nextPlayerCount`, and `startGame`. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states are `is-selected`, `is-connected`, and `is-disconnected`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list.
+Connection bindings retain `playerCount`, `connectionStatus`, `previousPlayerCount`, `nextPlayerCount`, and `startGame` for compatibility. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `cardActionN`, `cardPromptGlyphN`, `cardPromptTextN`, `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states include `is-empty`, `is-connected`, `is-ready`, `is-disconnected`, `is-keyboard`, and `player-color-N`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list and clears explicit readiness.
 
 Each occupied card also exposes `characterSelectorN`, `playerCharacterN`, `previousCharacterN`, and `nextCharacterN`. The selector reads from the participant's shared `CharacterSkinCatalog`; arrows are disabled when only one skin is installed and selection locks after the round starts.
 
-CPU controls are `addCpuN` and `cpuDifficultyN`. Empty selected slots show **Add CPU**; CPU slots show **Ready**, a cycling difficulty button, and **Remove**. The `is-cpu` class replaces the controller glyph with **CPU**. Readiness counts humans with connected devices and initialized CPUs. The status uses **{ready} / {selected} ready**, and the gameplay HUD names bots **CPU N**. No device bindings are displayed on buttons.
+CPU controls `addCpuN` and `cpuDifficultyN` remain in the hidden compatibility data region used by tooling. CPUs are immediately ready, keep their difficulty/color APIs before play, and the visible card action removes them. Readiness counts only explicitly confirmed humans plus initialized CPUs. The hidden status uses **{ready} / {selected} ready**, and the gameplay HUD names bots **CPU N**.
 
-Menu wording: **Players**, **Start Game**, **Leave**, **Waiting for player**, **Connected**, **Reconnect device**, **Not selected**, **Open slot**, **Ready to start**, and **{ready} / {selected} ready**. Waiting selected slots show **Not connected**; the menu omits keybind instructions.
+Visible menu wording is **Join and select a character.**, **Join**, **Ready!**, **Cancel**, and **OK!**. Device-specific glyphs come from the imported Kenney input prompt fonts; title/name/button typography uses Fredoka One and the waiting prompt uses Fredoka. Unknown gamepads deliberately fall back to Xbox-style glyphs.
+
+The lobby title's 6px outside stroke is represented by three labels in `lobby-title-stack`: a shifted, fully outlined shadow silhouette; an orange outlined duplicate; and an unoutlined cream foreground label. All three use `FredokaOne-Lobby-SDF.asset`, generated through **Tools > UmdJam > Configure Lobby Font Asset** with 24px atlas padding so the outline and shadow have enough distance-field range. The backing labels use a 12px centered outline; the foreground label masks the orange layer's inner half, leaving the intended 6px outside edge. The shadow duplicates that complete outlined silhouette so it follows the outside edge rather than the raw glyph. Keep their text, font, size, alignment, and bounds identical.
+
+Character names, card prompts, and the OK label use the same three-layer construction as the header: a stroked shadow silhouette, an outside-stroke backing label, and an unoutlined foreground label. Their 6px centered backing outlines leave 3px visible after the foreground masks the inner half. Runtime code must update all three members of each dynamic stack. Fredoka One and Fredoka Regular each have a 24px-padded lobby SDF asset so these outlines do not clamp. Join and OK remain enabled as UI elements even when their actions are unavailable; the multiplayer manager remains the authority that rejects an invalid ready/start request. This avoids runtime-theme disabled fading. The OK pointer is hidden normally and appears only while the button is hovered or focused by navigation.
 
 A CPU navigation failure displays **CPU cannot reach its collector. Check arena navigation and try again.** The manager owns this failure state and throttles repeated unchanged start attempts to one per unscaled second. A lobby change clears the failure and permits an immediate fresh attempt.
 
@@ -57,7 +63,7 @@ Global HUD tokens live under `:root`:
 }
 ```
 
-Use custom properties for values shared by several selectors. Player colors come from `PlayerColorPalette` and the controller's `ColorIndex`. Runtime inline border colors reflect that selection; USS controls layout rather than duplicating the palette.
+Use custom properties for values shared by several selectors. Player colors come from `PlayerColorPalette` and the controller's `ColorIndex`. The lobby maps those indices to `player-color-N` USS classes so the same color drives the ready surface, portrait border, device outline, and character name without per-element inline styles.
 
 Corner labels use absolute positioning:
 

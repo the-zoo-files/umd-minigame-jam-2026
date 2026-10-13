@@ -29,7 +29,8 @@ namespace UmdJam.Editor
                 Object.FindAnyObjectByType<MachineFlaskShooter>().enabled = false;
                 var lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
                 device = InputSystem.AddDevice<Gamepad>();
-                Require(lobby.TrySetPlayerCount(1) && lobby.TryJoin(device) && lobby.TryStartGame(), "Movement fixture starts");
+                Require(lobby.TrySetPlayerCount(1) && lobby.TryJoin(device) && lobby.TrySetPlayerReady(0, true) &&
+                    lobby.TryStartGame(), "Movement fixture starts");
                 CouchPlayerController player = lobby.GetParticipant(0);
                 player.enabled = false;
                 Func<Vector2, float, Vector2> smooth = (Func<Vector2, float, Vector2>)Delegate.CreateDelegate(

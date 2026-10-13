@@ -249,7 +249,7 @@ namespace UmdJam.Editor
                 PickupFlask flaskPrefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab");
                 List<CouchPlayerController> players = new();
                 Vector3[] spawns = { new(-3, 1, 3), new(3, 1, 3), new(3, 1, -3), new(-3, 1, -3) };
-                Color[] colors = { PlayerColorPalette.Get(10).Color, PlayerColorPalette.Get(0).Color, PlayerColorPalette.Get(5).Color, PlayerColorPalette.Get(11).Color };
+                Color[] colors = { PlayerColorPalette.Get(0).Color, PlayerColorPalette.Get(1).Color, PlayerColorPalette.Get(5).Color, PlayerColorPalette.Get(2).Color };
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -283,6 +283,7 @@ namespace UmdJam.Editor
 
                 yield return null;
                 Require(CouchPlayerController.ActivePlayers.Count == 4, "One roster entry per player");
+                for (int i = 0; i < 4; i++) Require(lobby.TrySetPlayerReady(i, true), $"Player {i + 1} ready");
                 Require(lobby.TryStartGame(), "Start gameplay smoke test round");
                 VisualElement root = Object.FindAnyObjectByType<UIDocument>().rootVisualElement;
                 for (int i = 1; i <= 4; i++)

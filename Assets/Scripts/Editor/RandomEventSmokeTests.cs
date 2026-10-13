@@ -36,7 +36,8 @@ namespace UmdJam.Editor
                     toggle.SendEvent(submit);
                 }
                 Require(lobby.RandomEventsEnabled && toggle.text == "Random Events: On", "Menu event enables authoritative setting");
-                Require(lobby.TryJoin(device) && lobby.TryAddCpu(1, CpuDifficulty.God) && lobby.TryStartGame(), "Mixed event round starts");
+                Require(lobby.TryJoin(device) && lobby.TrySetPlayerReady(0, true) &&
+                    lobby.TryAddCpu(1, CpuDifficulty.God) && lobby.TryStartGame(), "Mixed event round starts");
                 Require(!lobby.TrySetRandomEvents(false), "Event option locks during round");
                 RandomEventDirector director = RandomEventDirector.Instance;
                 Require(director != null && director.ActiveEvent == RandomEventKind.None, "Round starts with a quiet interval");

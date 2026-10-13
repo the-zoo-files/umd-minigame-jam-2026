@@ -42,12 +42,13 @@ namespace UmdJam.Editor
                 Require(lobby.IsLobbyOpen && !round.IsPlaying && Time.timeScale == 0, "Lobby pauses simulation");
                 Require(!root.Q("connectionMenu").ClassListContains("is-hidden"), "Menu visible");
                 Require(root.Q("gameplayHud").ClassListContains("is-hidden"), "HUD hidden");
-                Require(root.Q<Label>("playerCount").text == "2", "Default player count");
-                Require(root.Q<Button>("startGame").text == "Start Game", "Start wording");
+                Require(root.Q<Label>("playerCount").text == "4", "Default player count");
+                Require(root.Q<Button>("startGame").text == "OK!", "Figma start wording");
                 Require(root.Q<Button>("randomEvents").text == "Random Events: Off" && !lobby.RandomEventsEnabled,
                     "Random event toggle defaults off");
                 Require(!lobby.TryStartGame(), "Cannot start empty lobby");
                 Require(!lobby.TrySetPlayerCount(0) && !lobby.TrySetPlayerCount(5), "Count bounds");
+                Require(lobby.TrySetPlayerCount(2), "Two-player selection");
                 float initialTime = round.RemainingTime;
                 float deadline = Time.realtimeSinceStartup + 1;
                 while (Time.realtimeSinceStartup < deadline) yield return null;
@@ -70,8 +71,13 @@ namespace UmdJam.Editor
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(1) != null, "Simultaneous controller joins");
                 Require(root.Q<Label>("playerCharacter1").text == "Testudo" &&
                     !root.Q("characterSelector1").ClassListContains("is-hidden"), "Default character selector");
+                Require(!lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
+                    "Joining does not skip the explicit ready step while OK stays visually enabled");
+                Require(lobby.TrySetPlayerReady(0, true) && lobby.TrySetPlayerReady(1, true), "Players confirm readiness");
                 Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
-                    $"Two connected players ready (roster={lobby.CanStart}, button={root.Q<Button>("startGame").enabledSelf})");
+                    $"Two ready players enable OK (roster={lobby.CanStart}, button={root.Q<Button>("startGame").enabledSelf})");
+                Require(root.Q("connectionPlayer1").ClassListContains("is-ready") &&
+                    root.Q<Label>("cardPromptText1").text == "Cancel", "Ready card uses selected variant");
                 Require(!lobby.TryJoin(first), "Duplicate join rejected");
                 Require(!lobby.TryJoin(third), "Unselected slot cannot join");
                 Require(!lobby.TrySetPlayerCount(1), "Count cannot remove a joined slot");
@@ -87,7 +93,8 @@ namespace UmdJam.Editor
                 InputSystem.AddDevice(second);
                 yield return null;
                 yield return null;
-                Require(lobby.CanStart, "Reconnection restores readiness");
+                Require(!lobby.CanStart && lobby.TrySetPlayerReady(1, true), "Reconnection requires a fresh ready confirmation");
+                Require(lobby.CanStart, "Fresh confirmation restores readiness");
 
                 Require(lobby.TryLeave(0), "Leave slot");
                 Require(!lobby.TryStartGame(), "Pending leave blocks same-frame start");
@@ -96,6 +103,7 @@ namespace UmdJam.Editor
                 Require(lobby.GetPlayer(0) == null && !lobby.CanStart, "Leave frees slot and blocks start");
                 Require(lobby.TryJoin(first), "Join fills lowest vacant slot");
                 Require(lobby.GetPlayer(0).devices[0] == first, "Rejoined device ownership");
+                Require(lobby.TrySetPlayerReady(0, true), "Rejoined player confirms readiness");
                 Require(lobby.TrySetPlayerCount(4), "Four-player selection");
 
                 Keyboard keyboard = InputSystem.AddDevice<Keyboard>();
@@ -106,8 +114,10 @@ namespace UmdJam.Editor
                 Require(lobby.GetPlayer(2).currentControlScheme == "Keyboard&Mouse", "Keyboard scheme");
                 Require(!lobby.TryJoin(keyboard), "Keyboard cannot fill two slots");
                 Require(lobby.TryJoin(third), "Fourth player joins");
-                Require(lobby.CanStart && PlayerInput.all.Count == 4, "Four players ready");
+                Require(!lobby.CanStart && PlayerInput.all.Count == 4, "New players begin joined but not ready");
                 Require(root.Q<Label>("connectionDevice3").text == "Keyboard / Mouse", "Keyboard card");
+                Require(root.Q("cardPromptGlyphStack3").ClassListContains("input-keyboard"),
+                    "Keyboard prompt uses the keyboard input font");
                 int keyboardColor = lobby.GetParticipant(2).ColorIndex;
                 int firstColor = lobby.GetParticipant(0).ColorIndex;
                 yield return null;
@@ -125,6 +135,8 @@ namespace UmdJam.Editor
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState());
                 yield return null;
                 yield return null;
+                Require(lobby.TrySetPlayerReady(2, true) && lobby.TrySetPlayerReady(3, true), "Final players confirm readiness");
+                Require(lobby.CanStart, "Four ready players enable start");
                 SaveCapture(capture, ".utmp/connection-menu-ready.png");
                 RenderTexture wideCapture = capture;
                 capture = new RenderTexture(1440, 1080, 0);
@@ -139,12 +151,6 @@ namespace UmdJam.Editor
                 Rect menuBounds = root.Q("connectionMenu").worldBound;
                 Rect startBounds = root.Q("startGame").worldBound;
                 Require(menuBounds.Contains(startBounds.min) && menuBounds.Contains(startBounds.max), "Start button fits 4:3");
-                foreach (string name in new[] { "eventEarthquake", "eventTornadoes", "eventLightning" })
-                {
-                    Rect bounds = root.Q<Button>(name).worldBound;
-                    Require(bounds.width >= 160f && menuBounds.Contains(bounds.min) && menuBounds.Contains(bounds.max),
-                        "Individual event toggle is readable and fits 4:3");
-                }
                 for (int slot = 1; slot <= 4; slot++)
                 {
                     Rect cardBounds = root.Q($"connectionPlayer{slot}").worldBound;
@@ -187,20 +193,15 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Rect cpuCard = root.Q("connectionPlayer4").worldBound;
-                Rect difficultyBounds = root.Q("cpuDifficulty4").worldBound;
-                Rect removeBounds = root.Q("leavePlayer4").worldBound;
-                Rect colorBounds = root.Q("colorSelector4").worldBound;
                 Rect characterBounds = root.Q("characterSelector4").worldBound;
-                Require(cpuCard.Contains(difficultyBounds.min) && cpuCard.Contains(difficultyBounds.max) &&
-                    cpuCard.Contains(removeBounds.min) && cpuCard.Contains(removeBounds.max), "CPU controls fit card at 4:3");
-                Require(cpuCard.Contains(colorBounds.min) && cpuCard.Contains(colorBounds.max), "Color selector fits 4:3 card");
                 Require(cpuCard.Contains(characterBounds.min) && cpuCard.Contains(characterBounds.max),
                     "Character selector fits 4:3 card");
                 SaveCapture(capture, ".utmp/connection-menu-cpu.png");
                 Require(lobby.TryLeave(3), "Remove CPU before human rejoin");
                 yield return null;
                 yield return null;
-                Require(lobby.TryJoin(third) && lobby.CanStart, "Human can rejoin former CPU slot");
+                Require(lobby.TryJoin(third) && lobby.TrySetPlayerReady(3, true) && lobby.CanStart,
+                    "Human can rejoin and ready former CPU slot");
 
                 InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.Start));
                 yield return null;

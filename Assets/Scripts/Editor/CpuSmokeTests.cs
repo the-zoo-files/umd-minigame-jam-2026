@@ -57,6 +57,7 @@ namespace UmdJam.Editor
                 Require(lobby.TrySetPlayerColor(1, PlayerColorPalette.DefaultForSlot(0)), "Reserve next human's preferred color");
                 device = InputSystem.AddDevice<Gamepad>();
                 Require(lobby.TryJoin(device), "Human joins CPU vacancy");
+                Require(lobby.TrySetPlayerReady(0, true), "Human confirms ready state");
                 Require(lobby.GetPlayer(0) != null && lobby.GetPlayer(0).devices.Count == 1, "Human pairing preserved");
                 Require(lobby.GetParticipant(0).ColorIndex != lobby.GetParticipant(1).ColorIndex,
                     "Human joining chooses an unused color when its preferred color is taken");

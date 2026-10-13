@@ -13,12 +13,14 @@ namespace UmdJam.Multiplayer
         public event Action LobbyChanged;
 
         [SerializeField] private GameManager gameManager;
-        [SerializeField, Range(1, MaximumPlayers)] private int selectedPlayerCount = 2;
+        [SerializeField, Range(1, MaximumPlayers)] private int selectedPlayerCount = MaximumPlayers;
+        [SerializeField] private int[] defaultPlayerColors = { 0, 1, 5, 2 };
 
         private PlayerInputManager manager;
         private InputActionMap lobbyActions;
         private bool refreshPending;
         private readonly HashSet<CouchPlayerController> leavingPlayers = new();
+        private readonly HashSet<CouchPlayerController> readyPlayers = new();
         private CpuNavigation navigation;
         private float retryStartAt;
 
@@ -61,7 +63,7 @@ namespace UmdJam.Multiplayer
 
                 for (int slot = 0; slot < selectedPlayerCount; slot++)
                 {
-                    if (!IsReady(GetParticipant(slot)))
+                    if (!IsPlayerReady(GetParticipant(slot)))
                     {
                         return false;
                     }
@@ -91,6 +93,25 @@ namespace UmdJam.Multiplayer
         {
             return player != null && player.isActiveAndEnabled &&
                 (player.IsCpu ? player.Cpu.isActiveAndEnabled : IsConnected(player.HumanInput));
+        }
+
+        public bool IsPlayerReady(CouchPlayerController player)
+        {
+            return IsReady(player) && (player.IsCpu || readyPlayers.Contains(player));
+        }
+
+        public bool TrySetPlayerReady(int slot, bool ready)
+        {
+            CouchPlayerController player = GetParticipant(slot);
+            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || player.IsCpu ||
+                leavingPlayers.Contains(player) || !IsReady(player))
+            {
+                return false;
+            }
+
+            bool changed = ready ? readyPlayers.Add(player) : readyPlayers.Remove(player);
+            if (changed) RefreshLobby();
+            return changed;
         }
 
         public bool TryAddCpu(int slot, CpuDifficulty difficulty = CpuDifficulty.Noob)
@@ -139,7 +160,7 @@ namespace UmdJam.Multiplayer
         {
             CouchPlayerController player = GetParticipant(slot);
             if (!isActiveAndEnabled || !IsLobbyOpen || player == null || leavingPlayers.Contains(player) ||
-                !player.TrySetColor(colorIndex)) return false;
+                readyPlayers.Contains(player) || !player.TrySetColor(colorIndex)) return false;
             RefreshLobby();
             return true;
         }
@@ -160,7 +181,7 @@ namespace UmdJam.Multiplayer
         {
             CouchPlayerController player = GetParticipant(slot);
             if (!isActiveAndEnabled || !IsLobbyOpen || player == null || leavingPlayers.Contains(player) ||
-                (direction != -1 && direction != 1) || player.CharacterCount == 0)
+                readyPlayers.Contains(player) || (direction != -1 && direction != 1) || player.CharacterCount == 0)
             {
                 return false;
             }
@@ -245,6 +266,7 @@ namespace UmdJam.Multiplayer
                 return false;
             }
 
+            readyPlayers.Remove(player);
             Destroy(player.gameObject);
             RefreshLobby();
             return true;
@@ -295,6 +317,7 @@ namespace UmdJam.Multiplayer
 
         private void Awake()
         {
+            PlayerColorPalette.ConfigureDefaults(defaultPlayerColors);
             manager = GetComponent<PlayerInputManager>();
             manager.joinBehavior = PlayerJoinBehavior.JoinPlayersManually;
             manager.notificationBehavior = PlayerNotifications.InvokeCSharpEvents;
@@ -308,13 +331,20 @@ namespace UmdJam.Multiplayer
             }
 
             lobbyActions = new InputActionMap("Lobby");
-            AddButton("Join", "<Keyboard>/enter", "<Gamepad>/buttonSouth", context => TryJoin(context.control.device));
+            AddButton("Join", "<Keyboard>/enter", "<Gamepad>/buttonSouth", context =>
+            {
+                PlayerInput player = PlayerInput.FindFirstPairedToDevice(context.control.device);
+                if (player != null) TrySetPlayerReady(player.playerIndex, true);
+                else TryJoin(context.control.device);
+            });
             AddButton("Leave", "<Keyboard>/escape", "<Gamepad>/buttonEast", context =>
             {
                 PlayerInput player = PlayerInput.FindFirstPairedToDevice(context.control.device);
                 if (player != null)
                 {
-                    TryLeave(player.playerIndex);
+                    CouchPlayerController participant = GetParticipant(player.playerIndex);
+                    if (IsPlayerReady(participant)) TrySetPlayerReady(player.playerIndex, false);
+                    else TryLeave(player.playerIndex);
                 }
             });
             AddButton("Previous", "<Keyboard>/leftArrow", "<Gamepad>/dpad/left", _ => TrySetPlayerCount(selectedPlayerCount - 1));
@@ -435,6 +465,7 @@ namespace UmdJam.Multiplayer
 
         private void OnParticipantLeft(CouchPlayerController player)
         {
+            readyPlayers.Remove(player);
             leavingPlayers.Remove(player);
             refreshPending = true;
         }
@@ -462,6 +493,7 @@ namespace UmdJam.Multiplayer
             if (refreshPending)
             {
                 refreshPending = false;
+                readyPlayers.RemoveWhere(player => player == null || !IsReady(player));
                 RefreshLobby();
             }
         }

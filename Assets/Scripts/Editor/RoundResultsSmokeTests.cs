@@ -45,6 +45,7 @@ namespace UmdJam.Editor
                 device = InputSystem.AddDevice<Gamepad>();
                 Require(lobby.TrySetPlayerCount(3) && lobby.TryJoin(device) &&
                     lobby.TryAddCpu(1) && lobby.TryAddCpu(2), "Mixed results roster");
+                Require(lobby.TrySetPlayerReady(0, true), "Human confirms results fixture readiness");
                 Require(lobby.TryStartGame(), "Results fixture starts");
                 lobby.GetParticipant(1).Cpu.enabled = false;
                 lobby.GetParticipant(2).Cpu.enabled = false;
