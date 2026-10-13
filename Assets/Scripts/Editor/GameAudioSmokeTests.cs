@@ -19,6 +19,11 @@ namespace UmdJam.Editor
             var lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
             var audio = Object.FindAnyObjectByType<GameAudioFeedback>();
             Require(audio != null, "HUD installs shared audio feedback");
+            AudioSource music = Source(audio, "musicSource");
+            yield return new WaitForSecondsRealtime(0.5f);
+            Require(music.clip.name == "AmbientMagic" && music.clip.length > 60f && music.isPlaying &&
+                music.loop && music.spatialBlend == 0f && music.volume > 0f && music.volume <= 0.15f,
+                "Quiet looping background music plays in the lobby");
             AudioSource click = Source(audio, "clickSource");
             AudioSource ready = Source(audio, "readySource");
             AudioSource point = Source(audio, "pointSource");
@@ -65,7 +70,10 @@ namespace UmdJam.Editor
             Require(lobby.TryCyclePlayerColor(0, 1) && !ready.isPlaying, "Unchanged readiness does not replay sound");
             audio.enabled = false;
             Require(!click.isPlaying, "Disable stops sounds");
+            Require(!music.isPlaying, "Disable stops background music");
             audio.enabled = true;
+            yield return new WaitForSecondsRealtime(0.5f);
+            Require(music.isPlaying, "Re-enable resumes background music");
             Require(!ready.isPlaying, "Re-enable seeds readiness without announcing it again");
             Require(lobby.TrySetPlayerCount(2) && lobby.TryAddCpu(1) && !ready.isPlaying, "CPU addition does not repeat unchanged readiness");
             Require(lobby.TryStartGame(), "Audio scoring fixture starts");
@@ -121,6 +129,7 @@ namespace UmdJam.Editor
                 .Invoke(GameManager.Instance, null);
             Require(GameManager.Instance.IsRoundOver && Time.timeScale == 0f && end.isPlaying && end.volume == pickup.volume,
                 "Timer expiry plays the normalized end cue immediately, even with gameplay paused");
+            Require(music.isPlaying, "Music continues through round end and gameplay pause");
             end.Stop();
             GameManager.Instance.EndRound();
             Require(!end.isPlaying, "Repeated round end cannot replay end audio");

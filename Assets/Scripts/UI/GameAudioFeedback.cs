@@ -11,6 +11,7 @@ namespace UmdJam.UI
     public sealed class GameAudioFeedback : MonoBehaviour
     {
         [SerializeField, Range(0f, 1f)] private float soundVolume = 0.5f;
+        [SerializeField, Range(0f, 1f)] private float musicVolume = 0.15f;
 
         private readonly List<Button> buttons = new();
         private CouchMultiplayerManager lobby;
@@ -23,6 +24,7 @@ namespace UmdJam.UI
         private AudioSource endSource;
         private AudioSource winnerSource;
         private AudioSource throwSource;
+        private AudioSource musicSource;
         private readonly CouchPlayerController[] connectedPlayers = new CouchPlayerController[CouchMultiplayerManager.MaximumPlayers];
         private readonly bool[] connected = new bool[CouchMultiplayerManager.MaximumPlayers];
         private bool wasReady;
@@ -38,10 +40,21 @@ namespace UmdJam.UI
             endSource = CreateSource("Audio/End");
             winnerSource = CreateSource("Audio/Winner");
             throwSource = CreateSource("Audio/Throw");
+            musicSource = CreateSource("Audio/AmbientMagic");
+            if (musicSource != null)
+            {
+                musicSource.loop = true;
+                musicSource.priority = 192;
+            }
         }
 
         private void OnEnable()
         {
+            if (musicSource != null)
+            {
+                musicSource.volume = musicVolume;
+                if (musicVolume > 0f) musicSource.Play();
+            }
             GetComponent<UIDocument>().rootVisualElement.Query<Button>().ToList(buttons);
             foreach (Button button in buttons) button.clicked += OnButtonClicked;
             lobby = FindAnyObjectByType<CouchMultiplayerManager>();
@@ -76,6 +89,7 @@ namespace UmdJam.UI
             if (endSource != null) endSource.Stop();
             if (winnerSource != null) winnerSource.Stop();
             if (throwSource != null) throwSource.Stop();
+            if (musicSource != null) musicSource.Stop();
         }
 
         private void OnDestroy()
@@ -89,6 +103,7 @@ namespace UmdJam.UI
             if (endSource != null) Destroy(endSource);
             if (winnerSource != null) Destroy(winnerSource);
             if (throwSource != null) Destroy(throwSource);
+            if (musicSource != null) Destroy(musicSource);
         }
 
         private void OnButtonClicked() => Play(clickSource);
@@ -154,7 +169,7 @@ namespace UmdJam.UI
                 Debug.LogWarning($"Missing game sound at Resources/{resourcePath}; this cue will be silent.", this);
                 return null;
             }
-            clip.LoadAudioData();
+            if (clip.loadType != AudioClipLoadType.Streaming) clip.LoadAudioData();
             AudioSource source = gameObject.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.spatialBlend = 0f;
