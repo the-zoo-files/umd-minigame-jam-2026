@@ -12,12 +12,21 @@ namespace UmdJam.Multiplayer
 
         [SerializeField, Range(1, 4)] private int playerNumber = 1;
         [SerializeField, Min(0f)] private float directThrowPadding = 2.5f;
+        [SerializeField] private Renderer indicatorRenderer;
+        [SerializeField, Min(0)] private int indicatorMaterialIndex;
 
         private Collider collectorCollider;
         private Material collectorMaterial;
         private Color idleColor;
         private int colorProperty;
         private System.Action<PickupFlask> transferCompleted;
+        private Material indicatorMaterial;
+        private Material originalIndicatorMaterial;
+        private float indicatorEmissionStrength;
+
+        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+        private static readonly int LegacyColor = Shader.PropertyToID("_Color");
+        private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
 
         public Vector3 CollectionPoint => collectorCollider.bounds.center;
         public int PlayerNumber => playerNumber;
@@ -59,10 +68,25 @@ namespace UmdJam.Multiplayer
                     idleColor = collectorMaterial.GetColor(colorProperty);
                 }
             }
+            if (indicatorRenderer != null)
+            {
+                Material[] materials = indicatorRenderer.sharedMaterials;
+                if (indicatorMaterialIndex >= 0 && indicatorMaterialIndex < materials.Length &&
+                    materials[indicatorMaterialIndex] != null)
+                {
+                    originalIndicatorMaterial = materials[indicatorMaterialIndex];
+                    indicatorMaterial = new Material(originalIndicatorMaterial);
+                    indicatorEmissionStrength = indicatorMaterial.HasProperty(EmissionColor)
+                        ? indicatorMaterial.GetColor(EmissionColor).maxColorComponent : 0f;
+                    materials[indicatorMaterialIndex] = indicatorMaterial;
+                    indicatorRenderer.sharedMaterials = materials;
+                }
+            }
         }
 
         private void OnEnable()
         {
+            ResetIndicatorColor();
             CouchPlayerController.PlayerJoined += OnPlayerColorChanged;
             CouchPlayerController.ColorChanged += OnPlayerColorChanged;
             CouchPlayerController.PlayerLeft += OnPlayerLeft;
@@ -84,18 +108,49 @@ namespace UmdJam.Multiplayer
         private void OnDestroy()
         {
             if (collectorMaterial != null) Destroy(collectorMaterial);
+            if (indicatorMaterial != null)
+            {
+                if (indicatorRenderer != null)
+                {
+                    Material[] materials = indicatorRenderer.sharedMaterials;
+                    if (indicatorMaterialIndex >= 0 && indicatorMaterialIndex < materials.Length &&
+                        materials[indicatorMaterialIndex] == indicatorMaterial)
+                    {
+                        materials[indicatorMaterialIndex] = originalIndicatorMaterial;
+                        indicatorRenderer.sharedMaterials = materials;
+                    }
+                }
+                Destroy(indicatorMaterial);
+            }
         }
 
         private void OnPlayerColorChanged(CouchPlayerController player)
         {
-            if (player.PlayerNumber == playerNumber && collectorMaterial != null)
-                collectorMaterial.SetColor(colorProperty, player.PlayerColor);
+            if (player.PlayerNumber != playerNumber) return;
+            if (collectorMaterial != null) collectorMaterial.SetColor(colorProperty, player.PlayerColor);
+            if (indicatorMaterial == null) return;
+            if (indicatorMaterial.HasProperty(BaseColor)) indicatorMaterial.SetColor(BaseColor, player.PlayerColor);
+            if (indicatorMaterial.HasProperty(LegacyColor)) indicatorMaterial.SetColor(LegacyColor, player.PlayerColor);
+            if (indicatorMaterial.HasProperty(EmissionColor))
+                indicatorMaterial.SetColor(EmissionColor, player.PlayerColor * indicatorEmissionStrength);
         }
 
         private void OnPlayerLeft(CouchPlayerController player)
         {
-            if (player.PlayerNumber == playerNumber && collectorMaterial != null)
-                collectorMaterial.SetColor(colorProperty, idleColor);
+            if (player.PlayerNumber != playerNumber) return;
+            if (collectorMaterial != null) collectorMaterial.SetColor(colorProperty, idleColor);
+            ResetIndicatorColor();
+        }
+
+        private void ResetIndicatorColor()
+        {
+            if (indicatorMaterial == null || originalIndicatorMaterial == null) return;
+            if (indicatorMaterial.HasProperty(BaseColor))
+                indicatorMaterial.SetColor(BaseColor, originalIndicatorMaterial.GetColor(BaseColor));
+            if (indicatorMaterial.HasProperty(LegacyColor))
+                indicatorMaterial.SetColor(LegacyColor, originalIndicatorMaterial.GetColor(LegacyColor));
+            if (indicatorMaterial.HasProperty(EmissionColor))
+                indicatorMaterial.SetColor(EmissionColor, originalIndicatorMaterial.GetColor(EmissionColor));
         }
 
         private void OnTriggerEnter(Collider other)
