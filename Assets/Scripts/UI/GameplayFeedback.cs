@@ -12,12 +12,10 @@ namespace UmdJam.UI
     {
         [SerializeField, Range(3, 30)] private int countdownSeconds = 10;
         [SerializeField, Range(0.2f, 3f)] private float scoringDuration = 0.85f;
-        [SerializeField, Range(4, 128)] private int maximumPenaltyMarkers = 32;
         [SerializeField, Range(0f, 1f)] private float soundVolume = 0.3f;
 
         private VisualElement root;
         private Label timer;
-        private Label warning;
         private Camera arenaCamera;
         private readonly Label[] riskLabels = new Label[CouchMultiplayerManager.MaximumPlayers];
         private readonly CouchPlayerController[] participants = new CouchPlayerController[CouchMultiplayerManager.MaximumPlayers];
@@ -25,8 +23,6 @@ namespace UmdJam.UI
         private readonly int[] displayedPenalties = new int[CouchMultiplayerManager.MaximumPlayers];
         private readonly Color[] riskColors = new Color[CouchMultiplayerManager.MaximumPlayers];
         private readonly CollectionPresentation[] collections = new CollectionPresentation[CouchMultiplayerManager.MaximumPlayers];
-        private PenaltyPresentation[] markers;
-        private int visibleMarkers;
         private int displayedSeconds = -1;
         private bool urgent;
         private bool timerPulsing;
@@ -44,25 +40,15 @@ namespace UmdJam.UI
             public bool Active;
         }
 
-        private sealed class PenaltyPresentation
-        {
-            public Label Label;
-            public int PlayerNumber;
-            public int Points;
-            public Color Color;
-        }
-
         private void OnEnable()
         {
             root = GetComponent<UIDocument>().rootVisualElement.Q("feedbackOverlay");
             VisualElement document = GetComponent<UIDocument>().rootVisualElement;
             timer = document.Q<Label>("roundTimer");
-            warning = document.Q<Label>("countdownWarning");
-            VisualElement penaltyRoot = root?.Q("penaltyMarkers");
             VisualElement collectionRoot = root?.Q("collectionFeedback");
             arenaCamera = Camera.main;
             for (int i = 0; i < riskLabels.Length; i++) riskLabels[i] = root?.Q<Label>($"zoneRisk{i + 1}");
-            if (root == null || timer == null || warning == null || penaltyRoot == null || collectionRoot == null ||
+            if (root == null || timer == null || collectionRoot == null ||
                 arenaCamera == null || System.Array.Exists(riskLabels, label => label == null))
             {
                 Debug.LogError("Gameplay feedback requires its camera and named HUD elements.", this);
@@ -81,15 +67,6 @@ namespace UmdJam.UI
                 collectionRoot.Add(popup);
                 collections[i] = new CollectionPresentation { Popup = popup, Pulse = pulse };
                 displayedPenalties[i] = -1;
-            }
-            markers = new PenaltyPresentation[Mathf.Clamp(maximumPenaltyMarkers, 4, 128)];
-            for (int i = 0; i < markers.Length; i++)
-            {
-                Label label = new() { pickingMode = PickingMode.Ignore };
-                label.AddToClassList("penalty-marker");
-                label.AddToClassList("is-hidden");
-                penaltyRoot.Add(label);
-                markers[i] = new PenaltyPresentation { Label = label };
             }
             CreateAudio();
             GameManager.RoundTimeChanged += OnRoundTimeChanged;
@@ -110,9 +87,6 @@ namespace UmdJam.UI
                 collection?.Popup.RemoveFromHierarchy();
                 collection?.Pulse.RemoveFromHierarchy();
             }
-            if (markers != null)
-                foreach (PenaltyPresentation marker in markers) marker.Label.RemoveFromHierarchy();
-            markers = null;
         }
 
         private void OnDestroy()
@@ -133,7 +107,6 @@ namespace UmdJam.UI
                 timer.EnableInClassList("is-urgent", urgent);
                 timer.EnableInClassList("is-critical", urgent && remainingTime <= 3f);
             }
-            warning?.EnableInClassList("is-hidden", !urgent);
             if (!urgent)
             {
                 if (wasUrgent) HideRisks();
@@ -209,7 +182,6 @@ namespace UmdJam.UI
                 if (player != null && player.PlayerNumber >= 1 && player.PlayerNumber <= participants.Length)
                     participants[player.PlayerNumber - 1] = player;
             }
-            int used = 0;
             var flasks = PickupFlask.ActiveFlasks;
             for (int i = 0; i < flasks.Count; i++)
             {
@@ -218,25 +190,7 @@ namespace UmdJam.UI
                 if (number == 0 || participants[number - 1] == null || flask.PointValue <= 0) continue;
                 int points = flask.PointValue;
                 penalties[number - 1] += points;
-                if (used >= markers.Length) continue; // Totals still include flasks beyond the visual budget.
-                PenaltyPresentation marker = markers[used++];
-                Color color = participants[number - 1].PlayerColor;
-                if (marker.PlayerNumber != number || marker.Points != points)
-                {
-                    marker.Label.text = $"P{number} −{points}";
-                    marker.PlayerNumber = number;
-                    marker.Points = points;
-                }
-                if (!marker.Color.Equals(color))
-                {
-                    SetBorder(marker.Label, color);
-                    marker.Color = color;
-                }
-                marker.Label.RemoveFromClassList("is-hidden");
-                Position(marker.Label, flask.transform.position + Vector3.up * 0.6f, 0f);
             }
-            for (int i = used; i < visibleMarkers; i++) markers[i].Label.AddToClassList("is-hidden");
-            visibleMarkers = used;
             for (int i = 0; i < riskLabels.Length; i++)
             {
                 bool occupied = participants[i] != null;
@@ -291,8 +245,6 @@ namespace UmdJam.UI
         private void HideRisks()
         {
             foreach (Label label in riskLabels) label?.AddToClassList("is-hidden");
-            for (int i = 0; i < visibleMarkers; i++) markers[i].Label.AddToClassList("is-hidden");
-            visibleMarkers = 0;
         }
 
         private static void HideCollection(CollectionPresentation collection)
@@ -307,7 +259,6 @@ namespace UmdJam.UI
             urgent = false;
             timer?.RemoveFromClassList("is-urgent");
             timer?.RemoveFromClassList("is-critical");
-            warning?.AddToClassList("is-hidden");
             ResetTimerPulse();
             HideRisks();
             foreach (CollectionPresentation collection in collections)
