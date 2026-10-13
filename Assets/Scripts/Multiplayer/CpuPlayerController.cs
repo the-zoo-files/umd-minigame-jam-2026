@@ -18,6 +18,13 @@ namespace UmdJam.Multiplayer
         private CpuSettings god = new(0.08f, 0f, 2f, 0f, 1f,
             awareness: 18f, commitment: 0.45f, advantage: 0.1f, acceleration: 7f, preparation: 0.08f);
         [SerializeField, Range(0f, 1f)] private float stagingFraction = 0.35f;
+        [SerializeField, Range(0f, 1f)] private float noobStunChance = 0.04f;
+        [SerializeField, Range(0f, 1f)] private float proStunChance = 0.08f;
+        [SerializeField, Range(0f, 1f)] private float hackerStunChance = 0.12f;
+        [SerializeField, Range(0f, 1f)] private float godStunChance = 0.18f;
+        [SerializeField, Min(0.1f)] private float stunCheckInterval = 4f;
+        [SerializeField, Min(1f)] private float stunCooldown = 20f;
+        [SerializeField, Min(0.1f)] private float stunAimTimeout = 2f;
 
         private NavMeshPath queryPath;
         private readonly Vector3[] queryCorners = new Vector3[64];
@@ -45,6 +52,13 @@ namespace UmdJam.Multiplayer
         private float passingSide = 1f;
         private float recoveryUntil;
         private Vector2 recoveryMovement;
+        private System.Random stunRandom;
+        private CouchPlayerController stunTarget;
+        private float nextStunCheck;
+        private float nextStunAt;
+        private float stunReadyAt;
+        private float stunAimUntil;
+        private bool stunAttackIssued;
 
         public CpuDifficulty Difficulty { get; private set; }
         public CpuSettings Settings => Difficulty switch
@@ -65,7 +79,9 @@ namespace UmdJam.Multiplayer
             navigation = map;
             round = game;
             Difficulty = difficulty;
-            random = new System.Random(UnityEngine.Random.Range(1, int.MaxValue));
+            int seed = UnityEngine.Random.Range(1, int.MaxValue);
+            random = new System.Random(seed);
+            stunRandom = new System.Random(seed ^ 0x5F3759DF);
             lastProgressPosition = transform.position;
         }
 
@@ -91,7 +107,7 @@ namespace UmdJam.Multiplayer
             BuildCommand(out Vector2 desired, out attack);
             if (round == null || !round.IsPlaying || !isActiveAndEnabled ||
                 player == null || player.MoveSpeed <= 0f || navigation == null || !navigation.IsReady ||
-                collector == null || player.IsStunned || throwReadyAt >= 0f)
+                collector == null || player.IsStunned || throwReadyAt >= 0f || stunTarget != null)
             {
                 steering = Vector2.zero;
             }
@@ -116,6 +132,7 @@ namespace UmdJam.Multiplayer
             if (player.MoveSpeed <= 0f) return;
             if (player.IsStunned)
             {
+                stunTarget = null;
                 throwReadyAt = -1f;
                 recoveryUntil = 0f;
                 lastProgressPosition = transform.position;
@@ -128,6 +145,7 @@ namespace UmdJam.Multiplayer
             bool carrying = player.IsCarrying;
             if (carrying != wasCarrying)
             {
+                stunTarget = null;
                 wasCarrying = carrying;
                 target = null;
                 routeCount = 0;
@@ -139,6 +157,7 @@ namespace UmdJam.Multiplayer
 
             if (carrying && PlayerFlaskCollector.TryGetNearby(player.PlayerNumber, transform.position, out _))
             {
+                stunTarget = null;
                 Vector3 towardCollector = Vector3.ProjectOnPlane(collector.CollectionPoint - transform.position, Vector3.up);
                 if (towardCollector.sqrMagnitude > 0.0001f)
                 {
@@ -157,6 +176,8 @@ namespace UmdJam.Multiplayer
                 return;
             }
             throwReadyAt = -1f;
+
+            if (carrying && TryStunCommand(settings, out attack)) return;
 
             if (target != null && (!target.IsAvailable ||
                 !round.IsInPlayerZone(player.PlayerNumber, target.transform.position) ||
@@ -223,6 +244,68 @@ namespace UmdJam.Multiplayer
                 recoveryUntil = Time.time + 0.25f;
                 movement = recoveryMovement;
             }
+        }
+
+        private bool TryStunCommand(CpuSettings settings, out bool attack)
+        {
+            attack = false;
+            if (stunTarget != null && (Time.time >= stunAimUntil || StunValue(stunTarget) <= 0f ||
+                player.GetStunTarget(stunTarget.transform.position - transform.position) != stunTarget))
+            {
+                stunTarget = null;
+            }
+            if (stunTarget == null)
+            {
+                if (Time.time < nextStunAt || Time.time < nextStunCheck) return false;
+                nextStunCheck = Time.time + Mathf.Max(0.1f, stunCheckInterval);
+                float chance = Difficulty switch
+                {
+                    CpuDifficulty.Noob => noobStunChance,
+                    CpuDifficulty.Pro => proStunChance,
+                    CpuDifficulty.Hacker => hackerStunChance,
+                    _ => godStunChance
+                };
+                if (stunRandom.NextDouble() >= Mathf.Clamp01(chance)) return false;
+                float best = 0f;
+                for (int i = 0; i < CouchPlayerController.ActivePlayers.Count; i++)
+                {
+                    CouchPlayerController other = CouchPlayerController.ActivePlayers[i];
+                    float value = StunValue(other);
+                    if (value <= best || player.GetStunTarget(other.transform.position - transform.position) != other) continue;
+                    stunTarget = other;
+                    best = value;
+                }
+                if (stunTarget == null) return false;
+                stunAttackIssued = false;
+                stunReadyAt = Time.time + settings.ReactionDelay + settings.ThrowPreparation;
+                stunAimUntil = stunReadyAt + Mathf.Max(0.1f, stunAimTimeout);
+            }
+
+            Vector3 direction = Vector3.ProjectOnPlane(stunTarget.transform.position - transform.position, Vector3.up);
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                Quaternion facing = Quaternion.LookRotation(direction);
+                transform.rotation = UsesNaturalBehavior
+                    ? Quaternion.RotateTowards(transform.rotation, facing, 360f * Time.deltaTime)
+                    : facing;
+            }
+            if (!stunAttackIssued && Time.time >= stunReadyAt &&
+                player.GetStunTarget(transform.forward) == stunTarget)
+            {
+                attack = true;
+                stunAttackIssued = true;
+                // Even God keeps tactical restraint; this is separate from its movement handicaps.
+                nextStunAt = Time.time + Mathf.Max(1f, stunCooldown) * (1.5f - 0.2f * (int)Difficulty);
+            }
+            return true;
+        }
+
+        private float StunValue(CouchPlayerController other)
+        {
+            if (other == null || other == player || !other.isActiveAndEnabled || other.IsStunned) return 0f;
+            float deniedDelivery = other.CarriedFlaskPoints * 1.5f;
+            float leaderPressure = Mathf.Clamp((other.Score - player.Score) * 0.25f, 0f, 2f);
+            return Mathf.Max(0f, deniedDelivery + leaderPressure - Mathf.Max(1, player.CarriedFlaskPoints));
         }
 
         private void Plan(bool carrying, CpuSettings settings)

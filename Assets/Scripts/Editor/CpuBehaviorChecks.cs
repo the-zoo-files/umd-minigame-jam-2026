@@ -108,6 +108,99 @@ namespace UmdJam.Editor
             Require(command == Vector2.zero && !attack, "Round end stops smoothed movement immediately");
             IEnumerator godChecks = CheckGod(prefab);
             while (godChecks.MoveNext()) yield return godChecks.Current;
+            IEnumerator stunChecks = ExerciseStuns();
+            while (stunChecks.MoveNext()) yield return stunChecks.Current;
+        }
+
+        public static IEnumerator ExerciseStuns()
+        {
+            PickupFlask prefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab");
+            EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));
+            yield return null;
+            yield return null;
+            Object.FindAnyObjectByType<MachineFlaskShooter>().enabled = false;
+            CouchMultiplayerManager lobby = Object.FindAnyObjectByType<CouchMultiplayerManager>();
+            Require(lobby.TrySetPlayerCount(2) && lobby.TryAddCpu(0, CpuDifficulty.God) && lobby.TryAddCpu(1),
+                "Stun fixture joins");
+            Require(lobby.TryStartGame(), "Stun fixture starts");
+            CouchPlayerController player = lobby.GetParticipant(0);
+            CouchPlayerController rival = lobby.GetParticipant(1);
+            CpuPlayerController cpu = player.Cpu;
+            rival.Cpu.enabled = false;
+            player.enabled = false; // Keep fixture positions stable while exercising commands and the real transfer.
+            MovePlayer(player, new Vector3(-0.25f, 1f, 3f));
+            MovePlayer(rival, new Vector3(1.75f, 1f, 3f));
+            Require(!PlayerFlaskCollector.TryGetNearby(player.PlayerNumber, player.transform.position, out _),
+                "Tactical fixture is outside direct-delivery range");
+            player.transform.rotation = Quaternion.LookRotation(Vector3.left);
+            GiveFlask(player, prefab);
+            Physics.SyncTransforms();
+            SetStunField(cpu, "godStunChance", 1f);
+            cpu.ReadCommand(out _, out bool attack);
+            Require(!attack, "An empty-handed rival with no score lead is not worth a flask");
+            GiveFlask(rival, prefab);
+            MovePlayer(rival, new Vector3(8f, 1f, 3f));
+            Physics.SyncTransforms();
+            SetStunField(cpu, "nextStunCheck", 0f);
+            cpu.ReadCommand(out _, out attack);
+            Require(!attack, "A worthwhile rival outside throw range is ignored");
+            MovePlayer(rival, new Vector3(1.75f, 1f, 3f));
+            Physics.SyncTransforms();
+            SetStunField(cpu, "godStunChance", 0.18f);
+            for (int difficulty = 0; difficulty < 4; difficulty++)
+            {
+                SetStunField(cpu, "<Difficulty>k__BackingField", (CpuDifficulty)difficulty);
+                SetStunField(cpu, "nextStunCheck", 0f);
+                SetStunField(cpu, "stunRandom", new System.Random(18));
+                cpu.ReadCommand(out _, out attack);
+                Require(attack == (difficulty == 3), "Same uncommon opportunity is taken only at the highest difficulty");
+            }
+            // Start a fresh opportunity to verify actual delivery, after the probability comparison.
+            SetStunField(cpu, "stunTarget", null);
+            SetStunField(cpu, "nextStunAt", 0f);
+            SetStunField(cpu, "nextStunCheck", 0f);
+            SetStunField(cpu, "godStunChance", 1f);
+            cpu.ReadCommand(out Vector2 movement, out attack);
+            Require(attack && movement == Vector2.zero &&
+                Vector3.Dot(player.transform.forward, (rival.transform.position - player.transform.position).normalized) > 0.99f,
+                "CPU aims at a worthwhile nearby rival and requests a normal throw");
+            typeof(CouchPlayerController).GetMethod("ThrowHeldFlask", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(player, null);
+            float deadline = Time.time + 1f;
+            while (!rival.IsStunned && Time.time < deadline) yield return null;
+            Require(rival.IsStunned && !player.IsCarrying, "CPU stun uses actual flask transfer and costs its carried flask");
+            rival.ClearEnvironmentalEffects();
+            GiveFlask(player, prefab);
+            cpu.ReadCommand(out _, out attack);
+            Require(!attack, "Cooldown prevents immediately attacking again");
+            GameManager.Instance.EndRound();
+            cpu.ReadCommand(out movement, out attack);
+            Require(movement == Vector2.zero && !attack, "Tactical attacks stop with the round");
+        }
+
+        private static void SetStunField(CpuPlayerController cpu, string name, object value)
+        {
+            FieldInfo field = typeof(CpuPlayerController).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Require(field != null, "CPU tactical test configuration exists: " + name);
+            field.SetValue(cpu, value);
+        }
+
+        private static void MovePlayer(CouchPlayerController player, Vector3 position)
+        {
+            CharacterController body = player.GetComponent<CharacterController>();
+            body.enabled = false;
+            player.transform.position = position;
+            body.enabled = true;
+        }
+
+        private static void GiveFlask(CouchPlayerController player, PickupFlask prefab)
+        {
+            PickupFlask flask = Spawn(prefab, player.transform.position + Vector3.up);
+            Transform hold = (Transform)typeof(CouchPlayerController).GetField("holdPoint",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(player);
+            Require(flask.TryPickUp(hold), "Tactical carried flask fixture");
+            typeof(CouchPlayerController).GetField("heldFlask", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(player, flask);
         }
 
         private static IEnumerator CheckGod(PickupFlask prefab)

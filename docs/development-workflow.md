@@ -69,6 +69,8 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Multiplayer changes
 
+- **Tools > UmdJam > Run CPU Stun Checks** (`GameplaySmokeTests.RunCpuStuns`) checks tactical target value/range rejection, seeded difficulty scaling, actual flask transfer/stun, cooldown after an attack, and round-end stopping. The same checks also run at the end of the CPU behavior suite. Run gameplay and CPU smoke suites after changing the shared assisted-target query.
+
 - **Tools > UmdJam > Run CPU Behavior Checks** checks the Noob default, delayed discovery, bounded awareness, target commitment/invalidation, continued movement while observing alternatives, input acceleration, and immediate stopping. **Run CPU Balance Benchmark** runs two seeded flask layouts with all four difficulty-to-spawn rotations (eight 20-second rounds). It writes `.utmp/cpu-balance.csv` with delivered points, zone penalties, final scores, idle seconds, and voluntary target switches. Compare aggregates across rotations; Unity frame/physics timing means seeds do not promise identical results. The benchmark uses falling flasks and does not establish moving-flask interception accuracy or human difficulty.
 
 - The behavior suite checks zero managed allocations across 200 warmed observation passes with active flasks. It also verifies God's immediate arena-wide discovery despite serialized handicap values, immediate movement, switching before a commitment wait, no approach braking, immediate throwing, and stopping at round end. Lower difficulty checks remain unchanged.

@@ -87,6 +87,7 @@ namespace UmdJam.Multiplayer
         public PlayerInput HumanInput => IsCpu ? null : playerInput;
         public float MoveSpeed => moveSpeed;
         public bool IsCarrying => heldFlask != null;
+        internal int CarriedFlaskPoints => heldFlask != null ? heldFlask.PointValue : 0;
         public string DisplayName => IsCpu ? $"CPU {PlayerNumber}" : $"Player {PlayerNumber}";
         public int Score { get; private set; }
         public int ColorIndex { get; private set; } = -1;
@@ -612,6 +613,11 @@ namespace UmdJam.Multiplayer
 
         private CouchPlayerController FindStunTarget()
         {
+            return GetStunTarget(transform.forward);
+        }
+
+        internal CouchPlayerController GetStunTarget(Vector3 direction)
+        {
             if (!characterController.enabled || !float.IsFinite(stunThrowDistance) || stunThrowDistance <= 0f ||
                 !float.IsFinite(stunCastRadius) || stunCastRadius <= 0f) return null;
 
@@ -619,7 +625,8 @@ namespace UmdJam.Multiplayer
             float halfSegment = Mathf.Max(0f, bounds.extents.y - stunCastRadius);
             Vector3 top = bounds.center + Vector3.up * halfSegment;
             Vector3 bottom = bounds.center - Vector3.up * halfSegment;
-            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            Vector3 forward = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+            if (forward.sqrMagnitude < 0.0001f) return null;
             CouchPlayerController nearest = null;
             float nearestDistance = stunThrowDistance * stunThrowDistance;
 
@@ -660,7 +667,8 @@ namespace UmdJam.Multiplayer
                 candidate.PlayerNumber <= 0 || !candidate.characterController.enabled) return;
             Vector3 offset = Vector3.ProjectOnPlane(candidate.transform.position - transform.position, Vector3.up);
             float distance = offset.sqrMagnitude;
-            if (!IsFacing(candidate.transform.position) || distance > nearestDistance) return;
+            if (distance > nearestDistance || (distance > 0.0001f &&
+                Vector3.Dot(offset.normalized, forward) < Mathf.Cos(assistedThrowFacingAngle * Mathf.Deg2Rad))) return;
             nearest = candidate;
             nearestDistance = distance;
         }
