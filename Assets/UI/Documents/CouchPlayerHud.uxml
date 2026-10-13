@@ -9,7 +9,6 @@
         <ui:VisualElement name="gameplayHud" picking-mode="Ignore" class="hud-root is-hidden">
             <ui:VisualElement name="timerContainer" picking-mode="Ignore" class="timer-container">
                 <ui:VisualElement picking-mode="Ignore" class="timer-panel"><ui:VisualElement picking-mode="Ignore" class="timer-icon"/><ui:Label name="roundTimer" text="01:00" class="round-timer"/></ui:VisualElement>
-                <ui:Label name="countdownWarning" text="Clear your zone" picking-mode="Ignore" class="countdown-warning is-hidden"/>
                 <ui:Label name="randomEventStatus" class="random-event-status is-hidden"/>
             </ui:VisualElement>
             <ui:VisualElement name="player1Hud" picking-mode="Ignore" class="player-hud player-one is-connected">
@@ -41,7 +40,6 @@
                 <ui:VisualElement picking-mode="Ignore" class="portrait-frame"><ui:VisualElement name="player4Portrait" picking-mode="Ignore" class="player-portrait"/></ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="feedbackOverlay" picking-mode="Ignore" class="hud-root">
-                <ui:VisualElement name="penaltyMarkers" picking-mode="Ignore" class="hud-root"/>
                 <ui:VisualElement name="collectionFeedback" picking-mode="Ignore" class="hud-root"/>
                 <ui:Label name="zoneRisk1" picking-mode="Ignore" class="zone-risk risk-one is-hidden"/>
                 <ui:Label name="zoneRisk2" picking-mode="Ignore" class="zone-risk risk-two is-hidden"/>

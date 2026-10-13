@@ -8,16 +8,6 @@
     color: rgb(255, 125, 147);
 }
 
-.countdown-warning {
-    margin-top: 8px;
-    padding: 4px 10px;
-    background-color: rgba(10, 15, 25, 0.9);
-    border-radius: 4px;
-    color: rgb(255, 213, 130);
-    font-size: 16px;
-    -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
-}
-
 .zone-risk {
     position: absolute;
     padding: 5px 10px;
@@ -33,7 +23,7 @@
 .risk-three { bottom: 190px; right: var(--hud-edge); }
 .risk-four { bottom: 190px; left: var(--hud-edge); }
 
-.score-popup, .penalty-marker {
+.score-popup {
     position: absolute;
     padding: 3px 8px;
     border-width: 2px;
@@ -46,8 +36,6 @@
 }
 
 .score-popup { font-size: 28px; -unity-font-style: bold; }
-.penalty-marker { font-size: 14px; }
-
 .collector-pulse {
     position: absolute;
     width: 64px;

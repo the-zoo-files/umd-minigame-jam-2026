@@ -38,8 +38,8 @@ namespace UmdJam.Editor
                 Require(feedback != null, "HUD installs feedback without scene YAML changes");
                 VisualElement root = feedback.GetComponent<UIDocument>().rootVisualElement;
                 Label timer = root.Q<Label>("roundTimer");
-                Require(!timer.ClassListContains("is-urgent") && root.Q("countdownWarning").ClassListContains("is-hidden"),
-                    "Lobby has no countdown warning");
+                Require(!timer.ClassListContains("is-urgent") && root.Q("countdownWarning") == null,
+                    "Lobby has no cleanup warning");
                 device = InputSystem.AddDevice<Gamepad>();
                 Require(lobby.TrySetPlayerCount(2) && lobby.TryJoin(device) && lobby.TrySetPlayerReady(0, true) && lobby.TryAddCpu(1) &&
                     lobby.TryStartGame(), "Mixed feedback fixture starts");
@@ -88,6 +88,8 @@ namespace UmdJam.Editor
                 yield return null;
                 yield return null;
                 Require(timer.ClassListContains("is-urgent") && !timer.ClassListContains("is-critical"), "Final ten seconds activate countdown");
+                Require(root.Query(className: "penalty-marker").ToList().Count == 0,
+                    "Final countdown has no flask-attached penalty markers");
                 RoundResults snapshot = RoundResults.Capture(round, CouchPlayerController.ActivePlayers, PickupFlask.ActiveFlasks);
                 Require(snapshot.Players[0].Penalty == 22 && root.Q<Label>("zoneRisk1").text == "At risk: −22" &&
                     root.Q<Label>("zoneRisk2").text == "At risk: −5", "Live risks match authoritative held/transfer/boundary eligibility");
@@ -144,7 +146,7 @@ namespace UmdJam.Editor
                 yield return null;
                 Require(timer.ClassListContains("is-critical") && root.Q<Label>("zoneRisk1").text == "At risk: −19", "Re-enable reconstructs current countdown state");
                 round.EndRound();
-                Require(!timer.ClassListContains("is-urgent") && root.Q("countdownWarning").ClassListContains("is-hidden") &&
+                Require(!timer.ClassListContains("is-urgent") && root.Q("countdownWarning") == null &&
                     root.Q("zoneRisk1").ClassListContains("is-hidden") && root.Q("scorePopup1").ClassListContains("is-hidden"),
                     "Results clear gameplay feedback and penalty deductions create no reward popup");
                 EditorSceneManager.LoadSceneInPlayMode("Assets/Scenes/Game.unity", new LoadSceneParameters(LoadSceneMode.Single));

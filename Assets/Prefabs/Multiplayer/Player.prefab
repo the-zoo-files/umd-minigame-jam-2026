@@ -48,7 +48,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 695887900740172754}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 0
   m_DynamicOccludee: 1
@@ -320,6 +320,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UmdJam.Multiplayer.CouchPlayerController
   moveSpeed: 9.5
   turnSpeed: 30
+  humanTurnSpeed: 90
   movementSmoothingTime: 0.05
   stoppingSmoothingTime: 0.03
   tornadoControlFraction: 0.25
@@ -422,6 +423,13 @@ MonoBehaviour:
     brakingDistance: 0.8
     throwPreparation: 0.08
   stagingFraction: 0.35
+  noobStunChance: 0.04
+  proStunChance: 0.08
+  hackerStunChance: 0.12
+  godStunChance: 0.18
+  stunCheckInterval: 4
+  stunCooldown: 20
+  stunAimTimeout: 2
 --- !u!1 &7216042087169067837
 GameObject:
   m_ObjectHideFlags: 0

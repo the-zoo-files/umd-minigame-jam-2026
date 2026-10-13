@@ -91,6 +91,18 @@ namespace UmdJam.Editor
                 Require(!connection.isPlaying, "Re-enable seeds connections without replay");
                 Require(root.Q<Label>("playerCharacter1").text == "Testudo" &&
                     !root.Q("characterSelector1").ClassListContains("is-hidden"), "Default character selector");
+                CouchPlayerController firstParticipant = lobby.GetParticipant(0);
+                Require(firstParticipant.CharacterCount == 2 && lobby.TryCyclePlayerCharacter(0, 1),
+                    "Frog character is selectable");
+                yield return null;
+                Require(firstParticipant.CharacterName == "Frog" &&
+                    root.Q<Label>("playerCharacter1").text == "Frog", "Frog selection updates the lobby");
+                Transform frog = firstParticipant.transform.Find("CharacterRoot/Frog");
+                Animator frogAnimator = frog != null ? frog.GetComponent<Animator>() : null;
+                Require(frogAnimator != null && frogAnimator.avatar != null && frogAnimator.avatar.isHuman &&
+                    frogAnimator.runtimeAnimatorController != null, "Frog uses the shared Humanoid animation setup");
+                Require(lobby.TryCyclePlayerCharacter(0, -1) && firstParticipant.CharacterName == "Testudo",
+                    "Character selector cycles back to Testudo");
                 Require(!lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
                     "Joining does not skip the explicit ready step while OK stays visually enabled");
                 Require((lobby.IsPlayerReady(lobby.GetParticipant(0)) || lobby.TrySetPlayerReady(0, true)) &&
