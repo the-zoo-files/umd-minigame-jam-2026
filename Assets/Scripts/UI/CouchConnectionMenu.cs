@@ -13,6 +13,7 @@ namespace UmdJam.UI
 
         private VisualElement menu;
         private VisualElement gameplayHud;
+        private CouchGameSetup gameSetup;
         private Label statusLabel;
         private Button startButton;
         private Button randomEventsButton;
@@ -153,11 +154,14 @@ namespace UmdJam.UI
             startButton.clicked += StartGame;
             randomEventsButton.clicked += ToggleRandomEvents;
             multiplayer.LobbyChanged += Refresh;
+            gameSetup = new CouchGameSetup(root, multiplayer);
             Refresh();
         }
 
         private void OnDisable()
         {
+            gameSetup?.Dispose();
+            gameSetup = null;
             for (int i = 0; i < eventButtons.Length; i++)
                 if (eventButtons[i] != null && eventCallbacks[i] != null) eventButtons[i].clicked -= eventCallbacks[i];
             if (randomEventsButton != null) randomEventsButton.clicked -= ToggleRandomEvents;
@@ -204,7 +208,7 @@ namespace UmdJam.UI
 
         private void StartGame()
         {
-            multiplayer.TryStartGame();
+            multiplayer.TryOpenSetup();
         }
 
         private void ToggleReady(int slot)
@@ -231,7 +235,7 @@ namespace UmdJam.UI
             }
             eventOptions.tooltip = multiplayer.SelectedRandomEvents == 0 ?
                 "No events selected: this round will have no hazards." : "Choose which events can appear this round.";
-            menu.EnableInClassList("is-hidden", !isOpen);
+            menu.EnableInClassList("is-hidden", !isOpen || multiplayer.IsSetupOpen);
             gameplayHud.EnableInClassList("is-hidden", isOpen);
             if (!isOpen)
             {

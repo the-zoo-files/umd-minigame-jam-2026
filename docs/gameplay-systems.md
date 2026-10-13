@@ -2,10 +2,10 @@
 
 ## Controls and Joining
 
-The game starts at a four-card local lobby. All players share one screen; online play and split-screen are not implemented. The lobby opens with four empty slots and no player-count selector. Join any human players, confirm each human with **Ready!**, then choose **OK!**. Remaining empty slots automatically receive Noob CPUs; existing participants retain their settings. The round timer, player movement/pickup, and physics wait until the round starts. The scene defaults to four slots, while the manager's existing 1–4 player-count API remains available for alternate flows and tests.
+The game starts at a four-card local lobby. All players share one screen; online play and split-screen are not implemented. The lobby opens with four empty slots and no player-count selector. Join any human players, confirm each human with **Ready!**, then choose **OK!** to open game setup. Choose a shared CPU level and press **Start!** to begin. Remaining empty slots automatically receive CPUs at that level; existing participants retain their identities and all CPUs receive the shared level. The round timer, player movement/pickup, and physics wait until the round starts. The scene defaults to four slots, while the manager's existing 1–4 player-count API remains available for alternate flows and tests.
 
 - Enter or gamepad south button: join the lowest available slot, then confirm that player's ready state. The card prompt uses the matching keyboard, Nintendo, or Xbox-style input font; unknown controllers use the Xbox-style glyphs.
-- Space or gamepad Menu/Start: start when every joined human is explicitly ready and every existing CPU is initialized, filling empty slots with CPUs. The device issuing this command must already be paired to a player. The mouse can also activate **OK!**, including from an empty lobby for a CPU-only match.
+- Space or gamepad Menu/Start: a paired device opens setup when every joined human is explicitly ready and every existing CPU is initialized. A fresh press in setup begins the game and fills empty slots with CPUs. Enter/numpad Enter or gamepad south activates the focused setup control; B/Escape or **Back** returns to the lobby. The mouse can activate **OK!** and **Start!**, including for a CPU-only match.
 - Escape or gamepad east button: cancel ready first, then leave that device's slot on a second press. The ready card's **Cancel** action follows the same rule. A CPU's **Cancel** action removes it.
 - One keyboard/mouse player is supported; every additional player needs a gamepad.
 - Disconnecting a required device blocks starting until it reconnects or the player leaves. Joining and lobby changes lock when the round starts.
@@ -34,7 +34,7 @@ While carrying a flask away from their collector, bots occasionally consider an 
 
 An opponent's carried points (weighted by 1.5) plus a capped score-lead bonus must outweigh the bot's carried flask value. Already-stunned, inactive, out-of-range, and empty-handed non-leading opponents are ignored. Bots use the same capsule targeting, facing gate, throw animation, direct transfer, and stun duration as humans; an attack costs the carried flask. The bot pauses movement while aiming, applies its normal reaction/preparation delays, abandons invalid targets, and resumes delivery afterward. A nearby collector takes priority, and bots never chase a player out of their zone for an attack.
 
-Use **Add CPU** on an empty selected lobby slot. Click its difficulty button to cycle **Noob → Pro → Hacker → God**; the default is **Noob**. **Remove** frees a CPU slot. Humans and CPUs share the four-slot limit, and CPU-only matches are supported through the **Start Game** button. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves.
+Choose the shared **CPU Level** in game setup: **Noob → Normal → Hacker → God**, defaulting to **Normal** (the existing `Pro` difficulty). **Start!** fills empty slots and applies the selection to every CPU. Humans and CPUs share the four-slot limit, and CPU-only matches are supported. Bots do not require or pair devices. Human disconnection still blocks starting until that human reconnects or leaves. The manager retains manual CPU APIs for alternate flows and tests; the current lobby has no manual CPU controls.
 
 All difficulty levels share humans' maximum movement speed, character turning, touch pickup, carrying limit, throw action, collectors, and score/penalty rules. CPU input ramps and brakes like an analog stick; difficulty changes awareness, decisions, and input timing:
 
@@ -67,7 +67,7 @@ After removing God's artificial handicaps, the 2026-10-08 seeded benchmark (eigh
 - Player movement reads `Player/Move`.
 - Flask throw reads `Player/Attack`.
 - Mouse throw: left mouse button.
-- Gamepad throw: south face button (A on Xbox-style controllers, Cross on PlayStation-style controllers).
+- Gamepad throw: south face button (A/Cross) or east face button (B/Circle). The setup-screen B icon is supported without removing the existing A binding.
 
 Do not read devices globally inside a player controller. Always use the actions cloned and paired by that player's `PlayerInput`.
 

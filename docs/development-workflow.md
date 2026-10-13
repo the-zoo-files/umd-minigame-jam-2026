@@ -69,6 +69,8 @@ The PC pipeline already enables the SRP Batcher and GPU Resident Drawer. The are
 
 ### Multiplayer changes
 
+- **Tools > UmdJam > Run Game Setup Smoke Tests** (`GameplaySmokeTests.RunGameSetup`) checks OK/setup/Start gating, paused simulation, Back/selection/roster preservation, rounds selection bounds, uniform difficulty across existing/new CPUs, and setting locks during play. Configure new setup imports through **Configure Game Setup Assets**. Compare the requested setup screen to Figma node `65:142` at 1920×1080 and inspect its uniformly scaled layout at 1440×1080. Round count is UI selection only until the future match system consumes it.
+
 - **Tools > UmdJam > Run CPU Stun Checks** (`GameplaySmokeTests.RunCpuStuns`) checks tactical target value/range rejection, seeded difficulty scaling, actual flask transfer/stun, cooldown after an attack, and round-end stopping. The same checks also run at the end of the CPU behavior suite. Run gameplay and CPU smoke suites after changing the shared assisted-target query.
 
 - **Tools > UmdJam > Run CPU Behavior Checks** checks the Noob default, delayed discovery, bounded awareness, target commitment/invalidation, continued movement while observing alternatives, input acceleration, and immediate stopping. **Run CPU Balance Benchmark** runs two seeded flask layouts with all four difficulty-to-spawn rotations (eight 20-second rounds). It writes `.utmp/cpu-balance.csv` with delivered points, zone penalties, final scores, idle seconds, and voluntary target switches. Compare aggregates across rotations; Unity frame/physics timing means seeds do not promise identical results. The benchmark uses falling flasks and does not establish moving-flask interception accuracy or human difficulty.

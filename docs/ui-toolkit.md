@@ -20,7 +20,7 @@ are authoritative in `CouchMultiplayerManager` and remain selected when toggling
 
 The `randomEvents` button toggles the manager's authoritative **Random Events: Off / On** setting before play. `is-on` styles the enabled option. The gameplay `randomEventStatus` label lives below the timer, listens to event transitions, and shows Earthquake, Tornadoes, or Lightning; it is hidden during quiet intervals and results. Both controls use the existing document and do not own hazard state.
 
-The document contains a `Lobby.uxml` template instance named `connectionMenu` plus `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the Figma lobby headed **Join and select a character.**, with four alternating tilted cards and an **OK!** action. The lobby starts with four empty slots and no player-count selector. OK fills empty slots with Noob CPUs; existing humans must explicitly confirm readiness and have their required devices. Empty, joined, and ready card states are USS classes; joined cards stay neutral with participant-colored portrait/name accents, while ready cards use the participant color as their surface.
+The document contains a `Lobby.uxml` template instance named `connectionMenu` plus `gameplayHud`; the shared `is-hidden` class switches between them. `CouchConnectionMenu` presents the Figma lobby headed **Join and select a character.**, with four alternating tilted cards and an **OK!** action. The lobby starts with four empty slots and no player-count selector. OK opens the game setup screen while keeping gameplay paused; existing humans must explicitly confirm readiness and have their required devices. Setup Start fills empty slots using the shared CPU level. Empty, joined, and ready card states are USS classes; joined cards stay neutral with participant-colored portrait/name accents, while ready cards use the participant color as their surface.
 
 Connection bindings are `connectionStatus` and `startGame`; player-count controls are removed. Card elements are `connectionPlayer1` through `connectionPlayer4`, with matching `cardActionN`, `cardPromptGlyphN`, `cardPromptTextN`, `connectionDeviceN`, `connectionStateN`, and `leavePlayerN` elements. Card states include `is-empty`, `is-connected`, `is-ready`, `is-disconnected`, `is-keyboard`, and `player-color-N`. Labels reflect manager state; buttons call its validated methods. Device loss refreshes after Input System finishes updating the paired-device list and clears explicit readiness.
 
@@ -117,6 +117,14 @@ Use additional semantic classes for future states (`is-ready`, `is-stunned`, or 
 - Verify imported style changes at common aspect ratios; corner anchoring should remain stable.
 
 ## Adding HUD Features
+
+### Game setup
+
+`GameSetup.uxml` and `CouchGameSetup.uss` implement Figma node `65:142` as a second screen after OK. `CouchGameSetup` binds this view and is created/disposed by `CouchConnectionMenu`; it owns no separate roster. The manager owns `IsSetupOpen`, `SelectedCpuDifficulty`, and `SelectedRoundCount`. Back preserves joined players, confirmations, and selections. Start waits for submit release and a short debounce, fills empty slots, applies one shared difficulty to every CPU, and begins the round. A disconnected human blocks starting and the view directs the user Back to reconnect/confirm.
+
+The 1920×1080 Figma composition scales uniformly within the available panel so its preview, typography, controls, and footer fit at 16:9 and 4:3. `setupCanvas` has a top-left transform origin. Practice Mode is the design's static arena preview, not a playable simulation. Figma source assets and compatible PNG versions live together in `Assets/UI/Setup`; `tools/prepare-setup-assets.cjs` preserves the SVGs while rasterizing them at 4× density. `GameSetupAssetSetup.Apply` configures imports, creates a sliced soft-shadow texture, and adds B as an alternate paired throw binding. The original A binding remains.
+
+Bindings are `setupStart`, `setupBack`, `previousSetupRounds`, `nextSetupRounds`, `previousSetupCpu`, `nextSetupCpu`, `setupRounds`, `setupCpuLevel`, and `setupStatus`. The CPU labels are Noob, Normal (the Pro profile), Hacker, and God; Normal is the default. `setupPlayerN` thumbnails reflect actual participants; empty slots preview the CPU that will join. Rounds defaults to 3, supports 1–9, and only stores `SelectedRoundCount` for the future rounds implementation. It does not yet alter the current single-round game or results flow.
 
 ### Round results
 

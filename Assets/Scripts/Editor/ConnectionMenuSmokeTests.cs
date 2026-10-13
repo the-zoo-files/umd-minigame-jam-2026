@@ -93,7 +93,9 @@ namespace UmdJam.Editor
                     !root.Q("characterSelector1").ClassListContains("is-hidden"), "Default character selector");
                 Require(!lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
                     "Joining does not skip the explicit ready step while OK stays visually enabled");
-                Require(lobby.TrySetPlayerReady(0, true) && lobby.TrySetPlayerReady(1, true), "Players confirm readiness");
+                Require((lobby.IsPlayerReady(lobby.GetParticipant(0)) || lobby.TrySetPlayerReady(0, true)) &&
+                    (lobby.IsPlayerReady(lobby.GetParticipant(1)) || lobby.TrySetPlayerReady(1, true)),
+                    "Players confirm readiness");
                 Require(lobby.CanStart && root.Q<Button>("startGame").enabledSelf,
                     $"Two ready players enable OK (roster={lobby.CanStart}, button={root.Q<Button>("startGame").enabledSelf})");
                 Require(root.Q("connectionPlayer1").ClassListContains("is-ready") &&
@@ -239,6 +241,16 @@ namespace UmdJam.Editor
                 InputSystem.QueueStateEvent(first, new GamepadState().WithButton(GamepadButton.Start));
                 yield return null;
                 yield return null;
+                Require(lobby.IsSetupOpen && !round.HasStarted && Time.timeScale == 0f,
+                    "Start input opens setup before gameplay");
+                deadline = Time.realtimeSinceStartup + 0.3f;
+                while (Time.realtimeSinceStartup < deadline) yield return null;
+                Require(!lobby.TryStartGame(), "Held start cannot skip setup");
+                InputSystem.QueueStateEvent(first, new GamepadState());
+                yield return null;
+                yield return null;
+                GameSetupSmokeTests.Click(root, "setupStart");
+                yield return null;
                 Require(round.IsPlaying && !lobby.IsLobbyOpen && Time.timeScale == 1, "Start input begins round");
                 Require(lobby.GetParticipant(0) == human && lobby.GetPlayer(0).devices[0] == first,
                     "Automatic fill preserves human and device ownership");
@@ -247,8 +259,8 @@ namespace UmdJam.Editor
                 for (int slot = 1; slot <= 2; slot++)
                 {
                     CouchPlayerController cpu = lobby.GetParticipant(slot);
-                    Require(cpu != null && cpu.IsCpu && cpu.Cpu.Difficulty == CpuDifficulty.Noob,
-                        "Empty slot starts with default CPU");
+                    Require(cpu != null && cpu.IsCpu && cpu.Cpu.Difficulty == CpuDifficulty.Pro,
+                        "Empty slot starts with shared Normal CPU level");
                 }
                 Require(CouchPlayerController.ActivePlayers.Count == 4 && PlayerInput.all.Count == 1,
                     "Automatic fill completes selected roster without pairing CPU devices");

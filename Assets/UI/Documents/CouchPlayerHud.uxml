@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <ui:Template name="LobbyScreen" src="project://database/Assets/UI/Documents/Lobby.uxml" />
+    <ui:Template name="GameSetupScreen" src="project://database/Assets/UI/Documents/GameSetup.uxml" />
     <Style src="project://database/Assets/UI/Styles/CouchPlayerHud.uss?fileID=7433441132597879392&amp;guid=5d22cfdc1301d204d8ef64cc453064db&amp;type=3#CouchPlayerHud"/>
     <Style src="project://database/Assets/UI/Styles/CouchConnectionMenu.uss"/>
     <Style src="project://database/Assets/UI/Styles/RoundResults.uss"/>
@@ -25,6 +26,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Instance template="LobbyScreen" class="hud-root" />
+        <ui:Instance template="GameSetupScreen" picking-mode="Ignore" class="hud-root" />
         <ui:VisualElement name="legacyConnectionMenu" class="is-hidden">
             <ui:VisualElement class="connection-content">
                 <ui:Label text="LOCAL MULTIPLAYER" class="connection-eyebrow"/>

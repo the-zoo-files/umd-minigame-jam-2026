@@ -23,12 +23,53 @@ namespace UmdJam.Multiplayer
         private readonly HashSet<CouchPlayerController> readyPlayers = new();
         private CpuNavigation navigation;
         private float retryStartAt;
+        private bool setupSubmitReleased;
+        private float setupStartAllowedAt;
 
         public string StartFailure { get; private set; }
 
         public int SelectedPlayerCount => selectedPlayerCount;
+        public bool IsSetupOpen { get; private set; }
+        public CpuDifficulty SelectedCpuDifficulty { get; private set; } = CpuDifficulty.Pro;
+        // Selection only: the future match-round system will consume this value.
+        public int SelectedRoundCount { get; private set; } = 3;
         public bool RandomEventsEnabled { get; private set; }
         public int SelectedRandomEvents { get; private set; } = RandomEventDirector.AllEventsMask;
+
+        public bool TryOpenSetup()
+        {
+            if (!CanStart || IsSetupOpen) return false;
+            IsSetupOpen = true;
+            setupSubmitReleased = !IsSetupSubmitHeld();
+            setupStartAllowedAt = Time.unscaledTime + 0.2f;
+            RefreshLobby();
+            return true;
+        }
+
+        public bool TryCloseSetup()
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen || !IsSetupOpen) return false;
+            IsSetupOpen = false;
+            RefreshLobby();
+            return true;
+        }
+
+        public bool TrySetSharedCpuDifficulty(CpuDifficulty difficulty)
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen || !IsSetupOpen ||
+                difficulty < CpuDifficulty.Noob || difficulty > CpuDifficulty.God) return false;
+            SelectedCpuDifficulty = difficulty;
+            RefreshLobby();
+            return true;
+        }
+
+        public bool TrySetRoundCount(int count)
+        {
+            if (!isActiveAndEnabled || !IsLobbyOpen || !IsSetupOpen || count < 1 || count > 9) return false;
+            SelectedRoundCount = count;
+            RefreshLobby();
+            return true;
+        }
 
         public bool IsRandomEventSelected(RandomEventKind kind) =>
             kind >= RandomEventKind.Earthquake && kind <= RandomEventKind.Lightning &&
@@ -104,7 +145,7 @@ namespace UmdJam.Multiplayer
         public bool TrySetPlayerReady(int slot, bool ready)
         {
             CouchPlayerController player = GetParticipant(slot);
-            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || player.IsCpu ||
+            if (!isActiveAndEnabled || !IsLobbyOpen || IsSetupOpen || player == null || player.IsCpu ||
                 leavingPlayers.Contains(player) || !IsReady(player))
             {
                 return false;
@@ -231,7 +272,7 @@ namespace UmdJam.Multiplayer
 
         public bool TryJoin(InputDevice device)
         {
-            if (!IsLobbyOpen || !isActiveAndEnabled || device == null || !device.added ||
+            if (!IsLobbyOpen || IsSetupOpen || !isActiveAndEnabled || device == null || !device.added ||
                 !(device is Gamepad || device is Keyboard) || PlayerInput.FindFirstPairedToDevice(device) != null)
             {
                 return false;
@@ -262,7 +303,7 @@ namespace UmdJam.Multiplayer
         public bool TryLeave(int slot)
         {
             CouchPlayerController player = GetParticipant(slot);
-            if (!isActiveAndEnabled || !IsLobbyOpen || player == null || !leavingPlayers.Add(player))
+            if (!isActiveAndEnabled || !IsLobbyOpen || IsSetupOpen || player == null || !leavingPlayers.Add(player))
             {
                 return false;
             }
@@ -279,12 +320,14 @@ namespace UmdJam.Multiplayer
             {
                 return false;
             }
+            if (IsSetupOpen && (!setupSubmitReleased || Time.unscaledTime < setupStartAllowedAt)) return false;
             if (Time.unscaledTime < retryStartAt) return false;
             StartFailure = null;
 
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {
-                if (GetParticipant(slot) == null && !TryAddCpu(slot))
+                if (GetParticipant(slot) == null && !TryAddCpu(slot,
+                    IsSetupOpen ? SelectedCpuDifficulty : CpuDifficulty.Noob))
                 {
                     StartFailure = "Could not fill an empty slot with a CPU. Check the player prefab and try again.";
                     retryStartAt = Time.unscaledTime + 1f;
@@ -297,6 +340,7 @@ namespace UmdJam.Multiplayer
             for (int slot = 0; slot < selectedPlayerCount; slot++)
             {
                 CouchPlayerController player = GetParticipant(slot);
+                if (IsSetupOpen && player.IsCpu && !player.Cpu.SetDifficulty(SelectedCpuDifficulty)) return false;
                 if (player.IsCpu && (!navigation.Build(gameManager.ArenaBounds, player.GetComponent<CharacterController>()) ||
                     !player.Cpu.CanNavigate()))
                 {
@@ -322,6 +366,7 @@ namespace UmdJam.Multiplayer
             }
             if (!gameManager.TryStartRound()) return false;
 
+            IsSetupOpen = false;
             manager.DisableJoining();
             lobbyActions.Disable();
             LobbyChanged?.Invoke();
@@ -346,12 +391,22 @@ namespace UmdJam.Multiplayer
             lobbyActions = new InputActionMap("Lobby");
             AddButton("Join", "<Keyboard>/enter", "<Gamepad>/buttonSouth", context =>
             {
+                if (IsSetupOpen)
+                {
+                    // UI Toolkit submit acts on the focused selector or Start button.
+                    return;
+                }
                 PlayerInput player = PlayerInput.FindFirstPairedToDevice(context.control.device);
                 if (player != null) TrySetPlayerReady(player.playerIndex, true);
                 else TryJoin(context.control.device);
             });
             AddButton("Leave", "<Keyboard>/escape", "<Gamepad>/buttonEast", context =>
             {
+                if (IsSetupOpen)
+                {
+                    TryCloseSetup();
+                    return;
+                }
                 PlayerInput player = PlayerInput.FindFirstPairedToDevice(context.control.device);
                 if (player != null)
                 {
@@ -360,15 +415,20 @@ namespace UmdJam.Multiplayer
                     else TryLeave(player.playerIndex);
                 }
             });
+            lobbyActions.FindAction("Join").AddBinding("<Keyboard>/numpadEnter");
             AddButton("PreviousColor", "<Keyboard>/q", "<Gamepad>/leftShoulder", context => ChangeDeviceColor(context.control.device, -1));
             AddButton("NextColor", "<Keyboard>/e", "<Gamepad>/rightShoulder", context => ChangeDeviceColor(context.control.device, 1));
             AddButton("PreviousCharacter", "<Keyboard>/z", "<Gamepad>/dpad/down", context => ChangeDeviceCharacter(context.control.device, -1));
             AddButton("NextCharacter", "<Keyboard>/x", "<Gamepad>/dpad/up", context => ChangeDeviceCharacter(context.control.device, 1));
             AddButton("Start", "<Keyboard>/space", "<Gamepad>/start", context =>
             {
-                if (PlayerInput.FindFirstPairedToDevice(context.control.device) != null)
+                if (IsSetupOpen)
                 {
                     TryStartGame();
+                }
+                else if (PlayerInput.FindFirstPairedToDevice(context.control.device) != null)
+                {
+                    TryOpenSetup();
                 }
             });
         }
@@ -401,6 +461,23 @@ namespace UmdJam.Multiplayer
         {
             // Refresh after all scene components have completed Awake/OnEnable.
             RefreshLobby();
+        }
+
+        private void Update()
+        {
+            if (IsSetupOpen && !setupSubmitReleased && !IsSetupSubmitHeld()) setupSubmitReleased = true;
+        }
+
+        private static bool IsSetupSubmitHeld()
+        {
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null && (keyboard.enterKey.isPressed || keyboard.numpadEnterKey.isPressed ||
+                keyboard.spaceKey.isPressed)) return true;
+            foreach (Gamepad gamepad in Gamepad.all)
+            {
+                if (gamepad.startButton.isPressed || gamepad.buttonSouth.isPressed) return true;
+            }
+            return false;
         }
 
         private void OnDisable()
@@ -524,7 +601,7 @@ namespace UmdJam.Multiplayer
             {
                 if (GetParticipant(slot) == null) hasEmptySlot = true;
             }
-            if (IsLobbyOpen && hasEmptySlot)
+            if (IsLobbyOpen && !IsSetupOpen && hasEmptySlot)
             {
                 manager.EnableJoining();
             }

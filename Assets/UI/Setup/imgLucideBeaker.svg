@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="lucide/beaker">
+<g id="Vector">
+<path d="M24 56V76C24 78.1217 24.8429 80.1566 26.3431 81.6569C27.8434 83.1571 29.8783 84 32 84H64C66.1217 84 68.1566 83.1571 69.6569 81.6569C71.1571 80.1566 72 78.1217 72 76V56H24Z" fill="#E7E2DA" style="fill:#E7E2DA;fill-opacity:1;"/>
+<path d="M18 12H78M24 12V76M24 76C24 78.1217 24.8429 80.1566 26.3431 81.6569C27.8434 83.1571 29.8783 84 32 84H64C66.1217 84 68.1566 83.1571 69.6569 81.6569C71.1571 80.1566 72 78.1217 72 76M24 76V56H72V76M72 76V12" stroke="#E7E2DA" style="stroke:#E7E2DA;stroke-opacity:1;" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</svg>

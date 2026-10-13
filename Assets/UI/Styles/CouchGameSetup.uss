@@ -1,0 +1,107 @@
+.setup-screen {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    background-color: #f4f1ee;
+    overflow: hidden;
+    -unity-font-definition: url("project://database/Assets/Fonts/Fredoka-Setup-Medium-SDF.asset");
+    color: #291c17;
+}
+.setup-screen.is-hidden { display: none; }
+.setup-canvas {
+    position: absolute; width: 1920px; height: 1080px;
+    transform-origin: top left;
+    background-image: url("project://database/Assets/UI/Setup/Background.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+.setup-shadow {
+    position: absolute;
+    background-image: url("project://database/Assets/UI/Setup/SoftShadow.png");
+    -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-left: 48;
+}
+.setup-practice-panel-shadow { left: 101px; top: -24px; width: 1008px; height: 1040px; }
+.setup-practice-panel { position: absolute; left: 125px; top: 0; width: 960px; height: 992px; background-color: #f5f4eb; }
+.setup-heading { position: absolute; height: 58px; }
+.setup-heading > Label {
+    position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+    font-size: 48px; -unity-text-align: middle-center;
+    -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset");
+    white-space: nowrap;
+}
+.setup-heading-shadow { color: rgba(0, 0, 0, 0.25); -unity-text-outline-color: rgba(0, 0, 0, 0.25); -unity-text-outline-width: 8px; translate: 0 3px; }
+.setup-heading-stroke { color: #eb5628; -unity-text-outline-color: #eb5628; -unity-text-outline-width: 8px; }
+.setup-heading-fill { color: #f4f1ee; }
+.setup-practice-title { left: 125px; top: 32px; width: 960px; }
+.setup-preview-shadow { left: 8px; top: 82px; width: 1194px; height: 688px; }
+.setup-practice-preview {
+    position: absolute; left: 32px; top: 106px; width: 1146px; height: 640px;
+    border-width: 8px; border-color: #f4f1ee; border-radius: 24px;
+    background-image: url("project://database/Assets/UI/Setup/imgImage5.png");
+    -unity-background-scale-mode: scale-and-crop;
+}
+.setup-description {
+    position: absolute; left: 253px; top: 781px; width: 704px; height: 176px;
+    font-size: 36px; white-space: normal; -unity-text-align: middle-center;
+
+}
+.setup-settings { position: absolute; left: 1188px; top: 0; width: 700px; height: 992px; }
+.setup-settings-title { left: 0; top: 96px; width: 700px; }
+.setup-setting { position: absolute; left: 64px; width: 572px; height: 72px; }
+.setup-rounds-setting { top: 170px; }
+.setup-cpu-setting { top: 250px; }
+.setup-setting-name { position: absolute; left: 0; top: 12px; height: 48px; font-size: 40px; -unity-text-align: middle-left; }
+.setup-selector { position: absolute; left: 232px; top: 0; width: 340px; height: 72px; background-color: white; border-radius: 56px; }
+.setup-arrow {
+    position: absolute; right: 4px; top: 4px; width: 64px; height: 64px;
+    margin: 0; padding: 0; border-width: 0; border-radius: 32px; background-color: transparent;
+    background-image: url("project://database/Assets/UI/Setup/imgExpandCircleRightRounded1.png");
+    -unity-background-scale-mode: scale-to-fit;
+}
+.setup-arrow-previous { left: 4px; right: auto; scale: -1 1; background-image: url("project://database/Assets/UI/Setup/imgExpandCircleRightRounded.png"); }
+.setup-arrow:hover, .setup-arrow:focus { background-color: rgba(235, 86, 40, 0.12); }
+.setup-arrow:disabled { opacity: 0.35; }
+.setup-setting-value { position: absolute; left: 68px; top: 12px; width: 204px; height: 48px; font-size: 40px; color: #5a534e; -unity-text-align: middle-center; }
+.setup-controls-title { left: 64px; top: 354px; width: 572px; }
+.setup-control-row { position: absolute; left: 64px; width: 572px; height: 64px; flex-direction: row; align-items: center; }
+.setup-move-row { top: 428px; }
+.setup-throw-row { top: 492px; }
+.setup-control-pair { width: 160px; height: 64px; flex-direction: row; align-items: center; }
+.setup-icon-cell { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.setup-small-cell { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+.setup-control-icon { position: absolute; -unity-background-scale-mode: scale-to-fit; }
+.setup-stick { left: 8px; top: 8px; width: 48px; height: 48px; }
+.setup-keys { left: 9px; top: 17px; width: 46px; height: 30px; }
+.setup-b { left: 7px; top: 7px; width: 42px; height: 42px; }
+.setup-mouse { left: 15px; top: 10px; width: 34px; height: 44px; }
+.setup-slash-wrap { position: relative; width: 27px; height: 64px; flex-shrink: 0; }
+.setup-slash { left: 0; top: 7.517px; width: 27px; height: 48.966px; }
+.setup-control-name { margin-left: 16px; font-size: 40px; -unity-text-align: middle-left; }
+.setup-start-shadow { left: 28px; top: 700px; width: 644px; height: 128px; background-image: url("project://database/Assets/UI/Setup/PillShadow.png"); -unity-slice-top: 64; -unity-slice-right: 64; -unity-slice-bottom: 64; -unity-slice-left: 64; }
+.setup-start {
+    position: absolute; left: 52px; top: 724px; width: 596px; height: 80px;
+    margin: 0; padding: 0; border-width: 0; border-radius: 40px;
+    color: transparent; background-color: #f9e34c;
+}
+.setup-start:hover, .setup-start:focus { background-color: #f9e34c; }
+.setup-start-content { position: absolute; top: 0; right: 0; bottom: 0; left: 0; flex-direction: row; align-items: center; justify-content: center; }
+.setup-start-icons { flex-direction: row; align-items: center; height: 64px; margin-right: 24px; }
+.setup-start-icons > .setup-slash-wrap { margin: 0 4px; }
+.setup-start-icon { left: 8px; top: 16px; width: 48px; height: 32px; }
+.setup-enter { left: 8px; top: 8px; width: 48px; height: 48px; }
+.setup-start-text { font-size: 40px; color: #463a3b; -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset"); }
+.setup-player-row { position: absolute; left: 52px; top: 820px; width: 596px; height: 140px; flex-direction: row; justify-content: space-between; }
+.setup-player { position: relative; width: 140px; height: 140px; flex-shrink: 0; background-color: #e7e2da; border-radius: 24px; overflow: hidden; }
+.setup-player-portrait { position: absolute; left: -16px; top: -16px; width: 172px; height: 172px; background-image: url("project://database/Assets/UI/Lobby/TestudoPortrait.png"); -unity-background-scale-mode: scale-and-crop; }
+.setup-player-slot { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+.setup-mini-shadow { left: -24px; top: -24px; width: 188px; height: 188px; background-image: url("project://database/Assets/UI/Setup/MiniShadow.png"); }
+.setup-player-caption { position: absolute; left: 0; top: 96px; width: 140px; height: 40px; rotate: -2deg; }
+.setup-ready { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 32px; -unity-text-align: middle-center; -unity-font-definition: url("project://database/Assets/Fonts/FredokaOne-Lobby-SDF.asset"); }
+.setup-ready-shadow { color: rgba(0, 0, 0, 0.25); -unity-text-outline-color: rgba(0, 0, 0, 0.25); -unity-text-outline-width: 4px; translate: 0 2px; }
+.setup-ready-stroke { color: #eb5628; -unity-text-outline-color: #eb5628; -unity-text-outline-width: 4px; }
+.setup-ready-fill { color: #f4f1ee; }
+.setup-status { position: absolute; left: 64px; top: 616px; width: 572px; height: 72px; white-space: normal; font-size: 26px; -unity-text-align: middle-center; }
+.setup-status.is-hidden { display: none; }
+.setup-footer { position: absolute; left: 0; top: 992px; width: 1920px; height: 88px; background-color: #eb5628; }
+.setup-back { position: absolute; right: 32px; top: 16px; width: 159px; height: 56px; margin: 0; padding: 0; border-width: 0; border-radius: 40px; background-color: #f4f1ee; color: transparent; }
+.setup-back:hover, .setup-back:focus { background-color: white; }
+.setup-back-content { position: absolute; left: 4px; top: 0; right: 12px; bottom: 0; flex-direction: row; align-items: center; }
+.setup-back-icon { left: 7px; top: 7px; width: 42px; height: 42px; }
+.setup-back-text { margin-left: 8px; font-size: 36px; color: #eb5628; }
