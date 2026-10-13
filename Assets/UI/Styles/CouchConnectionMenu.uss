@@ -79,14 +79,36 @@
     justify-content: center;
 }
 
-.connection-card {
-    --player-color: #eb5628;
+.connection-card-frame {
     width: 360px;
     height: 640px;
     min-width: 250px;
     flex-shrink: 1;
-    margin-left: 16px;
-    margin-right: 16px;
+    margin-left: 20px;
+    margin-right: 20px;
+    position: relative;
+    overflow: visible;
+}
+
+.card-shadow {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.01);
+}
+
+.card-shadow-24 { top: -24px; right: -24px; bottom: -24px; left: -24px; border-radius: 48px; background-color: rgba(0, 0, 0, 0.008); }
+.card-shadow-20 { top: -20px; right: -20px; bottom: -20px; left: -20px; border-radius: 44px; background-color: rgba(0, 0, 0, 0.009); }
+.card-shadow-16 { top: -16px; right: -16px; bottom: -16px; left: -16px; border-radius: 40px; background-color: rgba(0, 0, 0, 0.011); }
+.card-shadow-12 { top: -12px; right: -12px; bottom: -12px; left: -12px; border-radius: 36px; background-color: rgba(0, 0, 0, 0.014); }
+.card-shadow-8 { top: -8px; right: -8px; bottom: -8px; left: -8px; border-radius: 32px; background-color: rgba(0, 0, 0, 0.018); }
+.card-shadow-4 { top: -4px; right: -4px; bottom: -4px; left: -4px; border-radius: 28px; background-color: rgba(0, 0, 0, 0.025); }
+
+.connection-card {
+    --player-color: #eb5628;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
     padding: 16px 16px 32px 16px;
     align-items: center;
     justify-content: space-between;
@@ -366,6 +388,7 @@
     position: relative;
     height: 48px;
     flex-shrink: 0;
+    translate: 0 8px;
 }
 
 .card-prompt-sizer {
@@ -442,11 +465,13 @@
 .connection-card.is-ready .character-name-shadow {
     color: rgba(45, 41, 37, 0.28);
     -unity-text-outline-color: rgba(45, 41, 37, 0.28);
+    -unity-text-outline-width: 12px;
     translate: 0 4px;
 }
 .connection-card.is-ready .character-name-stroke {
     color: var(--player-color);
     -unity-text-outline-color: var(--player-color);
+    -unity-text-outline-width: 12px;
 }
 .connection-card.is-ready > .card-action { background-color: #f5f1ee; }
 

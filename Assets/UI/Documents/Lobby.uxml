@@ -10,7 +10,14 @@
         </ui:VisualElement>
         <ui:VisualElement class="lobby-stage">
             <ui:VisualElement class="connection-cards">
-                <ui:VisualElement name="connectionPlayer1" class="connection-card card-tilt-left is-empty player-color-0">
+                <ui:VisualElement class="connection-card-frame card-tilt-left">
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-24"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-20"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-16"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-12"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-8"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-4"/>
+                    <ui:VisualElement name="connectionPlayer1" class="connection-card is-empty player-color-0">
                     <ui:VisualElement class="waiting-visual"/>
                     <ui:VisualElement class="player-card-content">
                         <ui:VisualElement class="device-icon keyboard-device">
@@ -80,8 +87,16 @@
                             <ui:Button name="nextColor1"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="connectionPlayer2" class="connection-card card-tilt-right is-empty player-color-1">
+                <ui:VisualElement class="connection-card-frame card-tilt-right">
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-24"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-20"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-16"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-12"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-8"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-4"/>
+                    <ui:VisualElement name="connectionPlayer2" class="connection-card is-empty player-color-1">
                     <ui:VisualElement class="waiting-visual"/>
                     <ui:VisualElement class="player-card-content">
                         <ui:VisualElement class="device-icon keyboard-device">
@@ -151,8 +166,16 @@
                             <ui:Button name="nextColor2"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="connectionPlayer3" class="connection-card card-tilt-left is-empty player-color-5">
+                <ui:VisualElement class="connection-card-frame card-tilt-left">
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-24"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-20"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-16"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-12"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-8"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-4"/>
+                    <ui:VisualElement name="connectionPlayer3" class="connection-card is-empty player-color-5">
                     <ui:VisualElement class="waiting-visual"/>
                     <ui:VisualElement class="player-card-content">
                         <ui:VisualElement class="device-icon keyboard-device">
@@ -222,8 +245,16 @@
                             <ui:Button name="nextColor3"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
-                <ui:VisualElement name="connectionPlayer4" class="connection-card card-tilt-right is-empty player-color-2">
+                <ui:VisualElement class="connection-card-frame card-tilt-right">
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-24"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-20"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-16"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-12"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-8"/>
+                    <ui:VisualElement picking-mode="Ignore" class="card-shadow card-shadow-4"/>
+                    <ui:VisualElement name="connectionPlayer4" class="connection-card is-empty player-color-2">
                     <ui:VisualElement class="waiting-visual"/>
                     <ui:VisualElement class="player-card-content">
                         <ui:VisualElement class="device-icon keyboard-device">
@@ -292,6 +323,7 @@
                             <ui:Label name="playerColor4"/>
                             <ui:Button name="nextColor4"/>
                         </ui:VisualElement>
+                    </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
