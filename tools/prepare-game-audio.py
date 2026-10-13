@@ -58,6 +58,8 @@ def main():
     cues = {name: prepare(args.source / f"{name}.mp3") for name in names}
     if (args.source / "BottleOpen.mp3").exists():
         cues["Pickup"] = prepare(args.source / "BottleOpen.mp3", first_section=True)
+    if (args.source / "Throw.mp3").exists():
+        cues["Throw"] = prepare(args.source / "Throw.mp3", first_section=True)
     # Reduce the common target if any cue needs more headroom; never distort transients with a limiter.
     target = min(-20.0, *(value[2] - 3.0 - value[3] for value in cues.values()))
     report = {"target_lufs": target, "true_peak_ceiling_db": -3.0, "clips": {}}
@@ -75,6 +77,18 @@ def main():
         report["clips"][name] = {"removed_leading_ms": removed_ms, "onset_ms": onset_ms,
                                 "lufs": actual_lufs, "true_peak_db": actual_peak,
                                 "duration_seconds": len(output) / rate}
+    walking_source = args.source / "Walking.mp3"
+    if walking_source.exists():
+        samples, rate, _, _, removed_ms = prepare(walking_source, first_section=True)
+        samples = samples[:int(rate * 0.22)].mean(axis=1, keepdims=True)
+        fade = min(len(samples), int(rate * 0.02))
+        samples[-fade:] *= np.linspace(1, 0, fade)[:, None]
+        measured = loudness(samples, rate)
+        step_target = min(-30.0, measured - 3.0 - true_peak(samples))
+        soundfile.write(args.output / "Footstep.wav", samples * 10 ** ((step_target - measured) / 20),
+                        rate, subtype="PCM_16")
+        report["footstep"] = {"lufs": step_target, "channels": 1, "removed_leading_ms": removed_ms,
+                              "duration_seconds": len(samples) / rate}
     ambience_source = args.source / "Bubbling.mp3"
     if ambience_source.exists():
         samples, rate, _, _, removed_ms = prepare(ambience_source)

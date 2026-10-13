@@ -222,7 +222,7 @@ Bounce is only applied for sufficiently strong contacts with an upward-facing no
 
 The four `GameManager/PlayerZones` box colliders cover the arena quadrants in the same clockwise order as player slots. At round end, each active `PickupFlask` is assigned to at most one zone based on its world position. Its configured `Flask.Points` value is subtracted from that player's score. Scores are not clamped, so zone penalties can make a score negative.
 
-Players are placed at the center of their assigned quadrant when they join and again when the round starts. During the round, shared movement clamps both human and CPU characters to that zone, including clearance for the `CharacterController` radius. CPU perception and route selection ignore flasks outside the CPU's quadrant.
+Players are placed at the center of their assigned quadrant when they join and again when the round starts. Humans and CPUs can move across all quadrant dividers; zones only determine spawn placement and end-of-round flask penalties. Movement uses normal arena collision without quadrant clamping. CPUs observe nearby flasks across zones, consider rivals across zones, and follow unmodified navigation routes back to their own collectors.
 
 The flask machine launches every `0.8` seconds with an active cap of `20`. During the final 10 seconds, its interval ramps smoothly down to `0.25` seconds while the active cap rises to `36`, ensuring a full arena cannot suppress the visible spawn surge.
 
@@ -251,6 +251,10 @@ The central machine emits the supplied bubbling ambience during gameplay only. `
 The supplied `End.mp3` is prepared as `End.wav` with leading silence trimmed and interaction cue loudness matched. `GameAudioFeedback` subscribes to the authoritative `GameManager.RoundEnded` event, so it sounds once when gameplay ends, before results presentation. Playback continues despite the round setting time scale to zero; repeated end requests and component re-enable cannot repeat the cue. Disable stops it and removes the subscription.
 
 `RoundResultsDirector.WinnersRevealed` publishes when final winners are displayed, after counting or after a skip. `GameAudioFeedback` plays prepared `Winner.wav` for a winner or tie; no winner emits no cue. The source MP3 stays outside Resources, leading silence is trimmed, and loudness matches the other interaction effects. Repeated skip requests after completion and audio re-enable do not replay the cue.
+
+Successful ballistic release and direct transfer publish `PickupFlask.Thrown` after their held/free state transition. `GameAudioFeedback` plays prepared `Throw.wav` at release, including collector/opponent transfers, for both humans and CPUs. Rejected and out-of-round throws stay silent; animation wind-up does not play the cue. The preparation tool keeps the first isolated whoosh and removes trailing source noise.
+
+`CharacterAnimationEvents.Footstep(int)` plays one isolated 220 ms mono step at foot-contact events in the run and carry clips. Importer events are derived from each foot's forward swing followed by its low planted pose, rather than a fixed walking timer. The original walking recording is retained outside Resources; its first step is trimmed, tail-faded, and normalized to -30 LUFS. A spatial voice per model uses volume 0.3 and alternating 0.98/1.02 pitch without changing gameplay RNG. Private serialized fields tune volume and the 0.12 second crossfade-event cooldown. Actual grounded planar velocity gates playback, suppressing idle, blocked, airborne, stunned, disabled, paused, and out-of-round contacts. Round end and disable stop the voice synchronously. Animation import setup preserves other events and is safe to rerun.
 
 ## Safe Extension Points
 

@@ -71,7 +71,7 @@ namespace UmdJam.Editor
                 Require(!lobby.TryAddCpu(0) && !lobby.TrySetCpuDifficulty(1, CpuDifficulty.God), "CPU changes lock during round");
                 Require(root.Q<Label>("player4Name").text.StartsWith("CPU 4"), "HUD identifies CPU");
 
-                // Isolate one bot's route within its assigned quadrant.
+                // Isolate one bot's route across a quadrant divider and back to its own collector.
                 lobby.GetParticipant(1).Cpu.enabled = false;
                 lobby.GetParticipant(2).Cpu.enabled = false;
                 CouchPlayerController god = lobby.GetParticipant(3);
@@ -80,12 +80,18 @@ namespace UmdJam.Editor
                 blocker.transform.position = god.transform.position + new Vector3(0.8f, 0f, 0.8f);
                 blocker.enabled = true;
                 PickupFlask prefab = AssetDatabase.LoadAssetAtPath<PickupFlask>("Assets/Prefabs/Gameplay/FlaskPlaceholder.prefab");
-                PickupFlask target = Object.Instantiate(prefab, new Vector3(-1f, 0.5f, -2f), Quaternion.identity);
+                PickupFlask target = Object.Instantiate(prefab, new Vector3(2f, 0.5f, -4f), Quaternion.identity);
                 Require(god.TryStun(0.15f), "CPU stun accepted during play");
                 god.Cpu.ReadCommand(out Vector2 stunnedMovement, out bool stunnedAttack);
                 Require(stunnedMovement == Vector2.zero && !stunnedAttack, "Stunned CPU stops planning movement and attacks");
                 float deadline = Time.realtimeSinceStartup + 20f;
-                while (god.Score == 0 && Time.realtimeSinceStartup < deadline) yield return null;
+                bool crossedDivider = false;
+                while (god.Score == 0 && Time.realtimeSinceStartup < deadline)
+                {
+                    crossedDivider |= god.transform.position.x > 0f;
+                    yield return null;
+                }
+                Require(crossedDivider, "CPU discovers and navigates to a flask across its quadrant divider");
                 Require(god.Score > 0, $"God navigates, picks up, returns and scores; position {god.transform.position}, target {target}");
                 Require(!god.IsCarrying, "Scoring releases held reference");
                 Require(target == null || target.IsCollected, "Scored flask consumed once");

@@ -10,6 +10,7 @@ namespace UmdJam.Gameplay
     {
         private static readonly List<PickupFlask> activeFlasks = new();
         public static event Action<PickupFlask> PickedUp;
+        public static event Action<PickupFlask> Thrown;
         public static IReadOnlyList<PickupFlask> ActiveFlasks => activeFlasks;
         [SerializeField] private Flask flask;
 
@@ -67,6 +68,7 @@ namespace UmdJam.Gameplay
         {
             activeFlasks.Clear();
             PickedUp = null;
+            Thrown = null;
         }
 
         private void OnEnable()
@@ -252,6 +254,7 @@ namespace UmdJam.Gameplay
             body.angularVelocity = Random.onUnitSphere * ThrownSpinSpeed;
             lastThrowerPlayerNumber = playerNumber;
             IsHeld = false;
+            Thrown?.Invoke(this);
             return true;
         }
 
@@ -312,6 +315,7 @@ namespace UmdJam.Gameplay
             transferDuration = duration;
             transferElapsed = 0f;
             isTransferring = true;
+            Thrown?.Invoke(this);
             return true;
         }
 

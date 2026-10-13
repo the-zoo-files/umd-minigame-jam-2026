@@ -50,40 +50,6 @@ namespace UmdJam.Multiplayer
                 ? GetZonePlayer(flask.transform.position) : 0;
         }
 
-        public bool IsInPlayerZone(int playerNumber, Vector3 position)
-        {
-            if (playerZones == null || playerNumber < 1 || playerNumber > playerZones.Length ||
-                playerZones[playerNumber - 1] == null)
-            {
-                return false;
-            }
-
-            Bounds zone = playerZones[playerNumber - 1].bounds;
-            return position.x >= zone.min.x && position.x <= zone.max.x &&
-                position.z >= zone.min.z && position.z <= zone.max.z;
-        }
-
-        public Vector3 ConstrainToPlayerZone(int playerNumber, Vector3 position, float clearance)
-        {
-            if (playerZones == null || playerNumber < 1 || playerNumber > playerZones.Length ||
-                playerZones[playerNumber - 1] == null)
-            {
-                return position;
-            }
-
-            Bounds zone = playerZones[playerNumber - 1].bounds;
-            float safeClearance = Mathf.Max(0f, clearance);
-            float minX = zone.min.x + safeClearance;
-            float maxX = zone.max.x - safeClearance;
-            float minZ = zone.min.z + safeClearance;
-            float maxZ = zone.max.z - safeClearance;
-            if (minX > maxX) minX = maxX = zone.center.x;
-            if (minZ > maxZ) minZ = maxZ = zone.center.z;
-            position.x = Mathf.Clamp(position.x, minX, maxX);
-            position.z = Mathf.Clamp(position.z, minZ, maxZ);
-            return position;
-        }
-
         public bool TryStartRound()
         {
             if (!isActiveAndEnabled || HasStarted || IsRoundOver)

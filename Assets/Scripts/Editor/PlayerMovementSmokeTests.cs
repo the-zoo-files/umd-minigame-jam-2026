@@ -124,7 +124,73 @@ namespace UmdJam.Editor
                 Require(Input(player) == Vector2.zero, "Disable clears movement state");
                 player.enabled = true;
                 yield return null;
+                foreach (bool crossX in new[] { true, false })
+                {
+                    body.enabled = false;
+                    player.transform.position = crossX ? new Vector3(-0.5f, 1f, 4f) : new Vector3(4f, 1f, 0.5f);
+                    body.enabled = true;
+                    Set(player, "smoothedHumanInput", Vector2.zero);
+                    Physics.SyncTransforms();
+                    InputSystem.QueueStateEvent(device, new GamepadState { leftStick = crossX ? Vector2.right : Vector2.down });
+                    float crossingDeadline = Time.time + 0.35f;
+                    while (Time.time < crossingDeadline) yield return null;
+                    Require(crossX ? player.transform.position.x > 0.5f : player.transform.position.z < -0.5f,
+                        "Human movement freely crosses each quadrant divider");
+                }
+                Animator animator = player.GetComponentInChildren<Animator>();
+                CharacterAnimationEvents animationEvents = animator.GetComponent<CharacterAnimationEvents>();
+                AudioSource footsteps = (AudioSource)typeof(CharacterAnimationEvents).GetField("footstepSource",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(animationEvents);
+                Require(footsteps != null && footsteps.clip.name == "Footstep" && footsteps.clip.channels == 1 &&
+                    footsteps.clip.length <= 0.221f && !footsteps.loop, "One prepared mono step uses a bounded non-looping voice");
+                int runClips = 0;
+                foreach (AnimationClip clip in animator.runtimeAnimatorController.animationClips)
+                {
+                    if (!clip.isLooping || clip.name.IndexOf("Run", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    int contacts = 0;
+                    foreach (AnimationEvent contact in clip.events)
+                        if (contact.functionName == "Footstep") contacts++;
+                    Require(contacts == 2, "Each normal/carry running cycle has both authored foot contacts");
+                    runClips++;
+                }
+                Require(runClips >= 2, "Both normal and carrying locomotion have footstep events");
+                player.PlaceAtSpawn(0);
+                InputSystem.QueueStateEvent(device, new GamepadState { leftStick = Vector2.right * 0.4f });
+                float nextStep = 0f;
+                int soundedContacts = 0;
+                float stepDeadline = Time.time + 0.8f;
+                FieldInfo stepClock = typeof(CharacterAnimationEvents).GetField("nextStepAt", BindingFlags.Instance | BindingFlags.NonPublic);
+                while (Time.time < stepDeadline)
+                {
+                    yield return null;
+                    float current = (float)stepClock.GetValue(animationEvents);
+                    if (current > nextStep)
+                    {
+                        Require(footsteps.isPlaying && body.isGrounded, "Actual animation contact plays while moving on the ground");
+                        soundedContacts++;
+                        nextStep = current;
+                    }
+                }
+                Require(soundedContacts >= 2, "Actual movement animation produces repeated synchronized footsteps");
+                InputSystem.QueueStateEvent(device, new GamepadState());
+                stepDeadline = Time.time + 0.35f;
+                while (Time.time < stepDeadline) yield return null;
+                footsteps.Stop();
+                animationEvents.Footstep(0);
+                Require(!footsteps.isPlaying, "Idle contacts remain silent");
+                Require(player.TryStun(0.2f), "Footstep stun fixture");
+                animationEvents.Footstep(1);
+                Require(!footsteps.isPlaying, "Stunned contacts remain silent");
+                player.ClearEnvironmentalEffects();
+                body.enabled = false;
+                player.transform.position += Vector3.up * 3f;
+                body.enabled = true;
+                yield return null;
+                animationEvents.Footstep(0);
+                Require(!footsteps.isPlaying && !body.isGrounded, "Airborne contacts remain silent");
                 GameManager.Instance.EndRound();
+                animationEvents.Footstep(1);
+                Require(!footsteps.isPlaying, "Round end stops footstep playback");
                 Vector3 stopped = player.transform.position;
                 yield return null;
                 yield return null;

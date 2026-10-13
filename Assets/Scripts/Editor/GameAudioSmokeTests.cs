@@ -27,6 +27,9 @@ namespace UmdJam.Editor
             AudioSource launch = Source(audio, "launchSource");
             AudioSource end = Source(audio, "endSource");
             AudioSource winner = Source(audio, "winnerSource");
+            AudioSource throwing = Source(audio, "throwSource");
+            Require(throwing.clip.name == "Throw", "Supplied whoosh loads");
+            ValidatePreparedClip(throwing.clip);
             Require(winner.clip.name == "Winner" && !winner.isPlaying, "Winner cue loads and begins silent");
             ValidatePreparedClip(winner.clip);
             Require(end.clip.name == "End", "Supplied end clip loads");
@@ -93,6 +96,9 @@ namespace UmdJam.Editor
             Require(flask.TryThrow(Vector3.zero, 1) && flask.TryPickUp(socket) && pickup.isPlaying,
                 "A flask can sound again on a later successful pickup");
             Require(flask.TryThrow(Vector3.zero, 1), "Audio fixture throws a flask");
+            Require(throwing.isPlaying && throwing.volume == pickup.volume, "Successful flask release immediately plays normalized whoosh");
+            throwing.Stop();
+            Require(!flask.TryThrow(Vector3.zero, 1) && !throwing.isPlaying, "Rejected duplicate throw stays silent");
             collector.Collect(flask);
             Require(point.isPlaying && lobby.GetParticipant(0).Score > 0, "Successful scoring plays supplied point sound");
             Require(click.volume == ready.volume && ready.volume == point.volume && point.volume == pickup.volume && pickup.volume == launch.volume,
@@ -100,9 +106,13 @@ namespace UmdJam.Editor
             point.Stop();
             collector.Collect(flask);
             Require(!point.isPlaying, "Duplicate collection cannot replay scoring sound");
+            PickupFlask direct = Object.Instantiate(prefab, socket.position, Quaternion.identity);
+            Require(direct.TryPickUp(socket) && direct.TryThrowDirectly(socket.position, 1, 1f, () => { }) && throwing.isPlaying,
+                "Direct transfer plays the same release whoosh");
             int voices = audio.GetComponents<AudioSource>().Length;
             audio.enabled = false;
             Require(!pickup.isPlaying, "Disable stops the pickup voice");
+            Require(!throwing.isPlaying, "Disable stops the throw voice");
             audio.enabled = true;
             Require(audio.GetComponents<AudioSource>().Length == voices && !point.isPlaying, "Re-enable reuses sources without replaying scores");
             typeof(GameManager).GetField("remainingTime", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -124,6 +134,7 @@ namespace UmdJam.Editor
             Require(!launch.isPlaying, "Non-playing machine launch cannot announce gameplay audio");
             PickupFlask afterRound = Object.Instantiate(prefab, socket.position, Quaternion.identity);
             Require(afterRound.TryPickUp(socket) && !pickup.isPlaying, "Non-playing pickup cannot announce gameplay audio");
+            Require(afterRound.TryThrow(Vector3.zero, 1) && !throwing.isPlaying, "Non-playing throw stays silent");
             yield return null;
             Require(!point.isPlaying, "Penalty deductions do not play reward sounds");
         }

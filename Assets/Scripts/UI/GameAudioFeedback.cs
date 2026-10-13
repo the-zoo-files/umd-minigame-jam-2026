@@ -22,6 +22,7 @@ namespace UmdJam.UI
         private AudioSource launchSource;
         private AudioSource endSource;
         private AudioSource winnerSource;
+        private AudioSource throwSource;
         private readonly CouchPlayerController[] connectedPlayers = new CouchPlayerController[CouchMultiplayerManager.MaximumPlayers];
         private readonly bool[] connected = new bool[CouchMultiplayerManager.MaximumPlayers];
         private bool wasReady;
@@ -36,6 +37,7 @@ namespace UmdJam.UI
             launchSource = CreateSource("Audio/PotionLaunch");
             endSource = CreateSource("Audio/End");
             winnerSource = CreateSource("Audio/Winner");
+            throwSource = CreateSource("Audio/Throw");
         }
 
         private void OnEnable()
@@ -48,6 +50,7 @@ namespace UmdJam.UI
             if (lobby != null) lobby.LobbyChanged += OnLobbyChanged;
             PlayerFlaskCollector.FlaskCollected += OnFlaskCollected;
             PickupFlask.PickedUp += OnFlaskPickedUp;
+            PickupFlask.Thrown += OnFlaskThrown;
             MachineFlaskShooter.FlaskLaunched += OnFlaskLaunched;
             GameManager.RoundEnded += OnRoundEnded;
             RoundResultsDirector.WinnersRevealed += OnWinnersRevealed;
@@ -60,6 +63,7 @@ namespace UmdJam.UI
             if (lobby != null) lobby.LobbyChanged -= OnLobbyChanged;
             PlayerFlaskCollector.FlaskCollected -= OnFlaskCollected;
             PickupFlask.PickedUp -= OnFlaskPickedUp;
+            PickupFlask.Thrown -= OnFlaskThrown;
             MachineFlaskShooter.FlaskLaunched -= OnFlaskLaunched;
             GameManager.RoundEnded -= OnRoundEnded;
             RoundResultsDirector.WinnersRevealed -= OnWinnersRevealed;
@@ -71,6 +75,7 @@ namespace UmdJam.UI
             if (launchSource != null) launchSource.Stop();
             if (endSource != null) endSource.Stop();
             if (winnerSource != null) winnerSource.Stop();
+            if (throwSource != null) throwSource.Stop();
         }
 
         private void OnDestroy()
@@ -83,6 +88,7 @@ namespace UmdJam.UI
             if (launchSource != null) Destroy(launchSource);
             if (endSource != null) Destroy(endSource);
             if (winnerSource != null) Destroy(winnerSource);
+            if (throwSource != null) Destroy(throwSource);
         }
 
         private void OnButtonClicked() => Play(clickSource);
@@ -90,6 +96,12 @@ namespace UmdJam.UI
         private void OnRoundEnded() => Play(endSource);
 
         private void OnWinnersRevealed() => Play(winnerSource);
+
+        private void OnFlaskThrown(PickupFlask flask)
+        {
+            if (flask != null && flask.LastThrowerPlayerNumber > 0 &&
+                GameManager.Instance != null && GameManager.Instance.IsPlaying) Play(throwSource);
+        }
 
         private void OnFlaskPickedUp(PickupFlask flask)
         {

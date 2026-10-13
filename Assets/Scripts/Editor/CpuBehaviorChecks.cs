@@ -49,7 +49,8 @@ namespace UmdJam.Editor
 
             // Both candidates were observed together. Changing relative value now isolates commitment
             // from the separate discovery delay; without commitment the next planning tick switches.
-            better.transform.position = new Vector3(-3f, 0.5f, 3.5f);
+            // Keep this candidate close enough to overcome Noob's existing-target score bonus.
+            better.transform.position = new Vector3(-3f, 0.5f, 3.1f);
             Physics.SyncTransforms();
             float acquired = Time.time;
             while (Time.time - acquired < 1f)
@@ -226,12 +227,20 @@ namespace UmdJam.Editor
             Require(lobby.TryStartGame(), "God fixture starts");
             player.enabled = false;
             player.GetComponent<CharacterController>().enabled = false;
-            player.transform.position = new Vector3(-6f, 1f, 6f);
-            PickupFlask distant = Spawn(prefab, new Vector3(6f, 0.5f, -6f));
+            // Use connected floor locations; this check measures awareness rather than scenery reachability.
+            player.transform.position = new Vector3(-3f, 1f, 3f);
+            PickupFlask distant = Spawn(prefab, new Vector3(2f, 0.5f, -4f));
             cpu.ReadCommand(out Vector2 movement, out _);
-            Require(Target(cpu) == distant, "God notices an arena-wide flask on its first planning tick");
+            CpuNavigation map = Object.FindAnyObjectByType<CpuNavigation>();
+            bool outwardRoute = map.TryPath(player.transform.position, distant.transform.position,
+                new UnityEngine.AI.NavMeshPath(), new Vector3[64], out _, out _);
+            Vector3 approach = PlayerFlaskCollector.GetForPlayer(1).ApproachPoint(distant.transform.position);
+            bool returnRoute = map.TryDistance(distant.transform.position, approach,
+                new UnityEngine.AI.NavMeshPath(), new Vector3[64], out _);
+            Require(outwardRoute && returnRoute, "Arena-wide awareness fixture has reachable pickup and return routes");
+            Require(Target(cpu) == distant, "God notices a flask across the arena on its first planning tick");
             Require(movement.magnitude > 0.99f, "God accelerates immediately without input smoothing");
-            PickupFlask nearer = Spawn(prefab, new Vector3(-6f, 0.5f, 4f));
+            PickupFlask nearer = Spawn(prefab, new Vector3(-3f, 0.5f, 4f));
             float acquired = Time.time;
             float deadline = acquired + 0.5f;
             while (Target(cpu) != nearer && Time.time < deadline)

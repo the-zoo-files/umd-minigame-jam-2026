@@ -93,6 +93,9 @@ namespace UmdJam.Multiplayer
         public int ColorIndex { get; private set; } = -1;
         public Color PlayerColor => PlayerColorPalette.Get(ColorIndex).Color;
         public bool IsStunned => Time.time < stunnedUntil;
+        internal bool IsWalking => isActiveAndEnabled && !IsStunned && characterController != null &&
+            characterController.enabled && characterController.gameObject.activeInHierarchy && characterController.isGrounded &&
+            new Vector2(characterController.velocity.x, characterController.velocity.z).sqrMagnitude > 0.01f;
 
         public bool TryStun(float duration)
         {
@@ -404,16 +407,6 @@ namespace UmdJam.Multiplayer
             }
             Vector3 movement = new(input.x, 0f, input.y);
             Vector3 velocity = movement * moveSpeed;
-            GameManager round = GameManager.Instance;
-            if (round != null)
-            {
-                float clearance = characterController.radius *
-                    Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
-                Vector3 destination = round.ConstrainToPlayerZone(
-                    PlayerNumber, transform.position + velocity * Time.deltaTime, clearance);
-                velocity.x = (destination.x - transform.position.x) / Mathf.Max(Time.deltaTime, 0.0001f);
-                velocity.z = (destination.z - transform.position.z) / Mathf.Max(Time.deltaTime, 0.0001f);
-            }
             MoveWithEnvironment(velocity);
             if (characterAnimator != null)
             {

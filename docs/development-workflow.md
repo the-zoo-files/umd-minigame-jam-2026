@@ -200,3 +200,7 @@ The game audio suite also checks a completed launch versus spawn-cap suppression
 The audio suite checks the end cue decoded readiness/onset/headroom, timer-expiry playback at zero time scale, equal gain, unstarted/duplicate end suppression, and disable/re-enable cleanup.
 
 The audio suite validates the prepared winner clip. The round results suite checks that winner audio waits through counting, plays on normal and skipped tie reveals at zero time scale, and does not replay on repeated skip or audio re-enable.
+
+After changing the character locomotion clips, run **Tools > UmdJam > Configure Footstep Animation Events** (`FootstepAnimationSetup.Apply`). It samples run/carry foot poses, preserves unrelated imported events, and replaces only its own footstep events through Editor APIs. The audio tool accepts optional `Throw.mp3` and `Walking.mp3`; walking produces a shorter, quieter mono `Footstep.wav`. Configure audio imports afterwards. Run Game Audio, Player Movement, Gameplay, and CPU suites. Audio checks cover normal/direct/rejected/out-of-round throws; movement checks cover both locomotion event sets, actual moving foot contacts, idle/stun/airborne suppression, and round-end cleanup.
+
+Player Movement checks verify human travel across both quadrant axes. CPU smoke tests require a bot to reach a flask across a divider and return it to its own collector. Round Results and Gameplay Feedback checks preserve zone penalty attribution; scoring zones are not movement barriers.
