@@ -28,10 +28,10 @@
     -unity-font: url("project://database/Assets/UI/Fonts/CascadiaMono.ttf");
 }
 
-.risk-one { top: 112px; left: var(--hud-edge); }
-.risk-two { top: 112px; right: var(--hud-edge); }
-.risk-three { bottom: 112px; right: var(--hud-edge); }
-.risk-four { bottom: 112px; left: var(--hud-edge); }
+.risk-one { top: 190px; left: var(--hud-edge); }
+.risk-two { top: 190px; right: var(--hud-edge); }
+.risk-three { bottom: 190px; right: var(--hud-edge); }
+.risk-four { bottom: 190px; left: var(--hud-edge); }
 
 .score-popup, .penalty-marker {
     position: absolute;

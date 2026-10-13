@@ -40,16 +40,16 @@ The UXML root is `hudRoot`. Player labels must retain these names:
 
 | Element name | Position |
 |---|---|
-| `player1Name` | top-left |
-| `player2Name` | top-right |
-| `player3Name` | bottom-right |
-| `player4Name` | bottom-left |
+| `player1Hud` | top-left |
+| `player2Hud` | top-right |
+| `player3Hud` | bottom-right |
+| `player4Hud` | bottom-left |
 
-All labels use `player-name`, one player-specific class, and the runtime state class `is-connected`. Their text contains the player name and current score on separate lines. Score cards match the ready-up cards' light lavender surface, dark purple text, and rounded corners, with a compact 4px border in the participant's selected color. Shared styling keeps every player corner consistent; padding preserves clearance above/below the risk labels.
+All corner containers use `player-hud`, one corner anchor class, and the runtime `is-connected` class. They contain a circular portrait with a thin participant-colored rim overlapping a dark numeric score pill with the supplied potion icon, and a character name underneath on a dark bar that fades to transparent at the right. Names and scores use separate cached labels; participant identity is the container tooltip. Shared geometry keeps all four corners consistent.
 
 The `roundTimer` label is inside the full-width `timerContainer`, which anchors it at the top center without fixed-width spacers. It displays the ceiling of the remaining round time in `mm:ss` format and reaches `00:00` before the game pauses. The HUD formats and assigns text only when the displayed second changes, resetting its presentation cache on enable; the authoritative timer and its events remain frame-accurate.
 
-The labels intentionally include `is-connected` in UXML so they remain visible by default in UI Builder. At runtime, `CouchPlayerHud.OnEnable` removes or applies that class based on actual player state.
+The corner containers intentionally include `is-connected` in UXML so they remain visible by default in UI Builder. At runtime, `CouchPlayerHud.OnEnable` removes or applies that class based on actual player state.
 
 The connection menu is the default document preview. To inspect the gameplay labels in UI Builder, temporarily remove `is-hidden` from `gameplayHud` and add it to `connectionMenu`; restore the default classes before saving. Runtime visibility is always derived from lobby state.
 
@@ -79,11 +79,11 @@ Do not add fixed-width spacer elements to position corner HUD items.
 Disconnected labels have zero opacity through the base class. Connected labels override opacity:
 
 ```css
-.player-name {
+.player-hud {
     opacity: 0;
 }
 
-.player-name.is-connected {
+.player-hud.is-connected {
     opacity: 1;
 }
 ```
@@ -146,3 +146,5 @@ Each occupied card exposes `colorSelectorN`, `playerColorN`, `previousColorN`, a
 `GameAudioFeedback` owns the nine prepared WAV sounds under `Assets/Sounds/Resources/Audio`: `ButtonClick`, `Ready`, `Point`, `Pickup`, `Connection`, `PotionLaunch`, `End`, `Winner`, and `Throw`. Original MP3s live outside Resources in `Assets/Sounds/Source`. Prepared assets trim leading silence, share measured BS.1770 loudness, and retain at least 3 dB of true-peak headroom. They import as preloaded PCM; the owner also requests decoded data at initialization to avoid first-interaction loading. The HUD installs it once. Lobby/results buttons share one `clicked` subscription each, covering mouse and UI Toolkit submit. Readiness announces only a false-to-true `CanStart` transition with participants present; an empty auto-fill lobby remains silent; scoring listens to positive `FlaskCollected` rewards. Throws listen to `PickupFlask.Thrown` on successful release during gameplay. Pickup listens to `PickupFlask.PickedUp` after successful attachment, during active rounds only. Winner audio listens to `RoundResultsDirector.WinnersRevealed`, emitted after the winner/tie UI appears on both normal and skipped results sequences. Round end listens to `GameManager.RoundEnded` and plays once when gameplay finishes, including timer expiry. Machine launches listen to `MachineFlaskShooter.FlaskLaunched` after a successful launch. Connection audio announces human joins and reconnects; CPU additions and unchanged lobby edits stay silent. Nine cached 2D sources allow one voice per cue, bounding rapid overlap. Disable unsubscribes and stops playback; re-enable seeds readiness and connections without repeating them. One privately serialized volume applies equally to all prepared cues. Missing clips warn once per cue at initialization and remain silent. `GameplayFeedback` retains only the generated countdown sound.
 
 `GameplayFeedback.uss` styles the urgent/critical timer, `countdownWarning`, the four `zoneRiskN` labels, and the `feedbackOverlay` children `penaltyMarkers` and `collectionFeedback`. The overlay is inside `gameplayHud`, uses ignored picking, and is hidden with gameplay during the lobby/results. Runtime creates bounded marker labels and one `scorePopupN`/`collectorPulseN` pair per slot. Popups and markers project world positions through the same camera-to-panel convention used by results. Color borders identify participants; marker text remains white for readability across all palette choices. Scaled animation time freezes with gameplay. Display caches avoid rebuilding unchanged risk/marker text, and pools eliminate per-frame object creation. Begin/re-enable binds current round state; disable removes transient elements, restores timer scale/classes, stops sounds, and unsubscribes.
+
+Corner HUDs use `playerNHud` containers with circular `playerNPortrait`, numeric `playerNScore`, and character `playerNName`. The portrait overlaps the left end of the score pill and uses a thin rim in the selected player color; the name sits on `HudNameFade.png`, a shared dark-to-transparent bar tucked beneath the pill. Participant identity is available as the container tooltip. Score, character, and color changes update cached elements without per-frame work. Long signed scores reduce font size to fit the pill. `ScorePotion.png` and `TimerIcon.png` are the supplied icons; the clock sits beside `roundTimer` in a rounded top-center panel. Risk labels are offset below/above the taller corner portraits. Absent slots hide as a whole, and results still owns HUD visibility.

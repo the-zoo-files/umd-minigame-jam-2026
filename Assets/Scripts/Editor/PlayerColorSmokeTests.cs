@@ -41,9 +41,10 @@ namespace UmdJam.Editor
                     "Color changes reuse the owned material");
                 Require(first.transform.Find("DirectionGizmo").GetComponent<Renderer>().sharedMaterial.color == first.PlayerColor,
                     "Direction marker color follows selection");
-                Require(root.Q<Label>("playerColor1").text == PlayerColorPalette.Get(index).Name &&
-                    root.Q<Label>("player1Name").style.borderTopColor.value == first.PlayerColor,
-                    "Lobby label and HUD style follow selection");
+                Require(root.Q<Label>("playerColor1").text == PlayerColorPalette.Get(index).Name,
+                    "Lobby label follows selection");
+                Require(root.Q("player1Hud").Q(className: "portrait-frame").style.borderTopColor.value == first.PlayerColor,
+                    "HUD portrait rim follows selection");
             }
         }
 
