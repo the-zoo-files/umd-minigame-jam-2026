@@ -21,3 +21,10 @@ MonoBehaviour:
     localPosition: {x: 0, y: -0.9, z: 0}
     localEulerAngles: {x: 0, y: 0, z: 0}
     localScale: {x: 0.75, y: 0.75, z: 0.75}
+  - displayName: Frog
+    prefab: {fileID: 2769505419239938993, guid: 6535e493ea6176645bee4869871e89c9, type: 3}
+    avatar: {fileID: 9000000, guid: 81ccca01d0d659f4f9a8b4174b16b0d5, type: 3}
+    materialOverride: {fileID: 0}
+    localPosition: {x: 0, y: -0.9, z: 0}
+    localEulerAngles: {x: 0, y: 0, z: 0}
+    localScale: {x: 0.75, y: 0.75, z: 0.75}

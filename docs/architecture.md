@@ -23,7 +23,7 @@ Assets/
 ├── Materials/
 ├── Meshes/
 ├── Prefabs/
-│   ├── Characters/Testudo.prefab
+│   ├── Characters/{Testudo,Frog}.prefab
 │   ├── Gameplay/FlaskPlaceholder.prefab
 │   └── Multiplayer/Player.prefab
 ├── Scripts/
@@ -190,7 +190,7 @@ Held flasks disable their colliders, gravity, collision detection, and Rigidbody
 ## Current Architectural Limits
 
 - Spawn positions remain a static array in `CouchPlayerController`. `PlayerColorPalette` owns the 18 selectable color names/RGB values and preferred slot defaults. Each controller owns its selected `ColorIndex`; uniqueness is derived from the shared participant roster, with no separate reservation table.
-- `CharacterSkinCatalog.asset` owns selectable character prefab/material/placement entries and the shared `AllCharacters.controller`. The Player prefab keeps only an empty `CharacterRoot`; character geometry is instantiated from the catalog so adding a skin does not change the prefab contract.
+- `CharacterSkinCatalog.asset` owns selectable character prefab/material/placement entries and the shared `TestudoAnimController.controller`. The Player prefab keeps only an empty `CharacterRoot`; character geometry is instantiated from the catalog so adding a skin does not change the prefab contract.
 - Ballistic launches support finite, downward-only gravity; unsupported trajectories fail before changing flask state.
 - The HUD supports exactly four player labels.
 - The active flask cap counts live spawned instances; resting flasks remain active. Collected machine flasks are deactivated and reused by definition, with at most the active cap retained per definition. Inactive instances are children of their machine and are cleaned up with it. Standalone flasks are still destroyed on collection.
